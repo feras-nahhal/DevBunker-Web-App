@@ -1,58 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { categories, category_requests, content } from "@/lib/tables";
+import { categories, category_requests } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
-// PUT /api/admin/categories/[id]/approve
-export async function PUT(
-  request: NextRequest,
-  context: { params: { id: string } }
-): Promise<NextResponse> {
-  const authResult = await authMiddleware(request, { roles: ["admin"] });
+// Context type for App Router
+interface Params {
+  params: { id: string };
+}
+
+export async function PUT(req: NextRequest, context: Params): Promise<NextResponse> {
+  const authResult = await authMiddleware(req, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
-  try {
-    const { id } = context.params;
+  const { id } = context.params;
 
-    // 1. Mark request as approve
-    const [requestRow] = await db
-      .update(category_requests)
-      .set({ status: "approve" })
+  try {
+    const [requestRow] = await db.update(category_requests)
+      .set({ status: "approved" })
       .where(eq(category_requests.id, id))
       .returning();
 
     if (!requestRow) {
-      return NextResponse.json(
-        { success: false, error: "Request not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Request not found" }, { status: 404 });
     }
 
-    // 2. Rollback category if it exists
-    const [existingCategory] = await db
-      .select()
-      .from(categories)
-      .where(eq(categories.name, requestRow.category_name));
-
-    if (existingCategory) {
-      // Check if content is using this category
-      const usedContent = await db
-        .select()
-        .from(content)
-        .where(eq(content.category_id, existingCategory.id));
-
-      if (usedContent.length === 0) {
-        await db.delete(categories).where(eq(categories.id, existingCategory.id));
-      }
-    }
+    const [category] = await db.insert(categories)
+      .values({
+        name: requestRow.category_name,
+        description: requestRow.description,
+        created_by: requestRow.user_id,
+        status: "approved",
+      })
+      .onConflictDoNothing({ target: categories.name })
+      .returning();
 
     return NextResponse.json({
       success: true,
-      message: "Category request approve and rolled back if unused",
+      message: category ? "Category approved" : "Category already exists",
+      category,
     });
   } catch (err: unknown) {
-    console.error("Reject category error:", err);
+    console.error("Approve category error:", err);
     return NextResponse.json(
       { success: false, error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
