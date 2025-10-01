@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse,NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { read_later } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
 // GET /api/read-later
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const authResult = await authMiddleware(req, { roles: ["consumer", "admin", "creator"] });
   if (authResult instanceof Response) return authResult;
 
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 }
 
 // POST /api/read-later
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const authResult = await authMiddleware(req, { roles: ["consumer", "admin", "creator"] });
   if (authResult instanceof Response) return authResult;
 

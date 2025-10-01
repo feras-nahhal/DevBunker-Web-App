@@ -1,20 +1,23 @@
-// src/app/api/admin/tags/[id]/approve/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { tags, tag_requests } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
-// PUT /admin/tags/[id]/approve
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// PUT /api/admin/tags/[id]/approve
+export async function PUT(
+  req: NextRequest,
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   const authResult = await authMiddleware(req, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
   try {
     // 1. Approve the request
-    const [request] = await db.update(tag_requests)
+    const [request] = await db
+      .update(tag_requests)
       .set({ status: "approved" })
-      .where(eq(tag_requests.id, params.id))
+      .where(eq(tag_requests.id, context.params.id))
       .returning();
 
     if (!request) {
@@ -25,7 +28,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     // 2. Check if the tag already exists
-    const existing = await db.select().from(tags).where(eq(tags.name, request.tag_name));
+    const existing = await db
+      .select()
+      .from(tags)
+      .where(eq(tags.name, request.tag_name));
 
     if (existing.length > 0) {
       return NextResponse.json({
@@ -36,7 +42,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     // 3. Otherwise, create a new tag
-    const [tag] = await db.insert(tags)
+    const [tag] = await db
+      .insert(tags)
       .values({
         name: request.tag_name,
         created_by: request.user_id,
@@ -49,10 +56,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       message: "Tag approved and created",
       tag,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Approve tag error:", err);
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
     );
   }

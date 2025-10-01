@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { content } from "@/lib/tables";
 import { eq, like, sql } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
 // GET /api/content/research
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const search = url.searchParams.get("q") || "";
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 }
 
 // POST /api/content/research
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 

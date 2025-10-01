@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import {  NextRequest, NextResponse  } from "next/server";
 import { db } from "@/lib/db";
 import { content } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
 // GET /api/content/research/[id]
-export async function GET(req: Request, context: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: { id: string } }) {
   try {
     const researchId = context.params.id;
     const [research] = await db.select().from(content).where(eq(content.id, researchId));
@@ -20,7 +20,7 @@ export async function GET(req: Request, context: { params: { id: string } }) {
 }
 
 // PUT /api/content/research/[id]
-export async function PUT(req: Request, context: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: { id: string } }) {
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 
@@ -39,7 +39,7 @@ export async function PUT(req: Request, context: { params: { id: string } }) {
 }
 
 // DELETE /api/content/research/[id]
-export async function DELETE(req: Request, context: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 

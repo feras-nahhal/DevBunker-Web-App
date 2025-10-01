@@ -1,15 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { categories } from "@/lib/tables";
-import { like, eq, sql } from "drizzle-orm";
+import { like, eq, and } from "drizzle-orm";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const q = url.searchParams.get("q") || "";
 
-  const whereClause = sql`${like(categories.name, `%${q}%`)} AND ${eq(categories.status, "approved")}`;
-
-  const result = await db.select().from(categories).where(whereClause);
+  const result = await db.select().from(categories).where(
+    and(
+      like(categories.name, `%${q}%`),
+      eq(categories.status, "approved")
+    )
+  );
 
   return NextResponse.json({ success: true, categories: result });
 }

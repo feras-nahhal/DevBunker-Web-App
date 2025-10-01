@@ -1,10 +1,11 @@
 // src/app/api/auth/me/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get("Authorization");
+
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }

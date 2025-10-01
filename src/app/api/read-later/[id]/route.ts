@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse,NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { read_later } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { and, eq } from "drizzle-orm";
 
 // DELETE /api/read-later/[id]
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const authResult = await authMiddleware(req, { roles: ["consumer", "admin", "creator"] });
   if (authResult instanceof Response) return authResult;
 

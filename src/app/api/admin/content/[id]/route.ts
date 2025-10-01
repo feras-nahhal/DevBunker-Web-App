@@ -1,23 +1,38 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { content } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
-export async function DELETE(req: Request, context: { params: { id: string } }) {
-  const authResult = await authMiddleware(req, { roles: ["admin"] });
+// DELETE /api/admin/content/[id]
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
+  const authResult = await authMiddleware(request, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const contentId = context.params.id;
+  const contentId = params.id;
 
   try {
-    const deleted = await db.delete(content).where(eq(content.id, contentId));
-    if (!deleted)
-      return NextResponse.json({ success: false, error: "Content not found" }, { status: 404 });
+    const result = await db.delete(content).where(eq(content.id, contentId));
 
-    return NextResponse.json({ success: true, message: "Content deleted" });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message });
+    if (result.rowCount === 0) {
+      return NextResponse.json(
+        { success: false, error: "Content not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Content deleted",
+    });
+  } catch (err: unknown) {
+    console.error("Delete content error:", err);
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }
-// DELETE /admin/content/[id]/route.ts

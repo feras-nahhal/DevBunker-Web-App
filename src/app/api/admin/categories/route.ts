@@ -1,29 +1,37 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { categories } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 
-export async function POST(req: Request) {
-  const authResult = await authMiddleware(req, { roles: ["admin"] });
+// POST /api/admin/categories → create new category (admin only)
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const authResult = await authMiddleware(request, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const user = authResult;
-  const body = await req.json();
+  const user: { id: string } = authResult;
+  const body = await request.json();
 
   if (!body.name) {
     return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 });
   }
 
   try {
-    const [createdCategory] = await db.insert(categories).values({
-      name: body.name,
-      description: body.description || null,
-      status: "approved", // since only admin can create
-      created_by: user.id,
-    }).returning();
+    const [createdCategory] = await db
+      .insert(categories)
+      .values({
+        name: body.name,
+        description: body.description || null,
+        status: "approved", // since only admin can create
+        created_by: user.id,
+      })
+      .returning();
 
     return NextResponse.json({ success: true, category: createdCategory });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    console.error("Create category error:", err);
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }

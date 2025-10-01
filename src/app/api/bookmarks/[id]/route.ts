@@ -1,16 +1,18 @@
-import { NextResponse } from "next/server";
+// src/app/api/bookmarks/[id]/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookmarks } from "@/lib/tables";
-import { authMiddleware } from "@/lib/authMiddleware";
+import { authMiddleware, AuthPayload } from "@/lib/authMiddleware";
 import { and, eq } from "drizzle-orm";
 
 // DELETE /api/bookmarks/[id]
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const authResult = await authMiddleware(req, { roles: ["consumer", "admin", "creator"] });
   if (authResult instanceof Response) return authResult;
 
-  const user = authResult;
-  const [deleted] = await db.delete(bookmarks)
+  const user = authResult as AuthPayload; // <-- properly typed
+  const [deleted] = await db
+    .delete(bookmarks)
     .where(and(eq(bookmarks.id, params.id), eq(bookmarks.user_id, user.id)))
     .returning();
 

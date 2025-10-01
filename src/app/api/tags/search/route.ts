@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse,NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { tags } from "@/lib/tables";
 import { like, eq, sql } from "drizzle-orm";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const q = url.searchParams.get("q") || "";
 

@@ -1,10 +1,10 @@
 // src/app/api/search/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse,NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { content, categories, tags, content_tags } from "@/lib/tables";
 import { and, eq, ilike, inArray } from "drizzle-orm";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q") || "";

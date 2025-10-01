@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { tags } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const authResult = await authMiddleware(req, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
@@ -15,14 +15,21 @@ export async function POST(req: Request) {
   }
 
   try {
-    const [createdTag] = await db.insert(tags).values({
-      name: body.name,
-      status: "approved", // since only admin can create
-      created_by: user.id,
-    }).returning();
+    const [createdTag] = await db
+      .insert(tags)
+      .values({
+        name: body.name,
+        status: "approved", // only admin can create
+        created_by: user.id,
+      })
+      .returning();
 
     return NextResponse.json({ success: true, tag: createdTag });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    console.error("Create tag error:", err);
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }

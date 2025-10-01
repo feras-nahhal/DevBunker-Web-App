@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse,NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { notifications } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
-export async function PUT(req: Request) {
+export async function PUT(req: NextRequest) {
   const user = await authMiddleware(req);
   if (user instanceof Response) return user;
 

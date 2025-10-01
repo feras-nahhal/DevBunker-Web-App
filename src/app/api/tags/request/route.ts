@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse,NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { tag_requests } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const authResult = await authMiddleware(req); // any authenticated user
   if (authResult instanceof Response) return authResult;
 

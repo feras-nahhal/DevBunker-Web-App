@@ -1,15 +1,16 @@
-import { NextResponse } from "next/server";
+// src/app/api/bookmarks/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookmarks } from "@/lib/tables";
-import { authMiddleware } from "@/lib/authMiddleware";
+import { authMiddleware, AuthPayload } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
 // GET /api/bookmarks → list user's bookmarks
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const authResult = await authMiddleware(req, { roles: ["consumer", "admin", "creator"] });
   if (authResult instanceof Response) return authResult;
 
-  const user = authResult; // direct payload
+  const user = authResult as AuthPayload;
   const userBookmarks = await db.query.bookmarks.findMany({
     where: eq(bookmarks.user_id, user.id),
   });
@@ -18,11 +19,11 @@ export async function GET(req: Request) {
 }
 
 // POST /api/bookmarks → add bookmark
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const authResult = await authMiddleware(req, { roles: ["consumer", "admin", "creator"] });
   if (authResult instanceof Response) return authResult;
 
-  const user = authResult;
+  const user = authResult as AuthPayload;
   const body = await req.json();
 
   const [bookmark] = await db.insert(bookmarks)

@@ -1,29 +1,52 @@
 // src/lib/authMiddleware.ts
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { verifyToken } from "./auth";
 
 export interface AuthMiddlewareOptions {
-  roles?: string[];
+  roles?: string[]; // allowed roles for the route
 }
 
-export async function authMiddleware(req: Request, options?: AuthMiddlewareOptions) {
+// Define what the payload of your JWT should look like
+export interface AuthPayload {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+export async function authMiddleware(
+  req: NextRequest,
+  options?: AuthMiddlewareOptions
+): Promise<AuthPayload | NextResponse> {
   try {
     const authHeader = req.headers.get("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const token = authHeader.split(" ")[1];
-    const payload: any = verifyToken(token);
+    const payload = verifyToken(token) as AuthPayload;
 
+    // Check roles if provided
     if (options?.roles && !options.roles.includes(payload.role)) {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
-    // Instead of NextResponse.next(), just return the payload
+    // Optional: attach user info to the request for downstream usage
+    (req as any).user = payload;
+
     return payload;
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: "Invalid or expired token" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Invalid or expired token" },
+      { status: 401 }
+    );
   }
 }
