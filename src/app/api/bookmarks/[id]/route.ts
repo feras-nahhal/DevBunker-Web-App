@@ -6,14 +6,21 @@ import { authMiddleware, AuthPayload } from "@/lib/authMiddleware";
 import { and, eq } from "drizzle-orm";
 
 // DELETE /api/bookmarks/[id]
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> } // ✅ params is a Promise now
+) {
   const authResult = await authMiddleware(req, { roles: ["consumer", "admin", "creator"] });
   if (authResult instanceof Response) return authResult;
 
-  const user = authResult as AuthPayload; // <-- properly typed
+  const user = authResult as AuthPayload; // properly typed
+
+  // ✅ Await the params promise
+  const { id } = await context.params;
+
   const [deleted] = await db
     .delete(bookmarks)
-    .where(and(eq(bookmarks.id, params.id), eq(bookmarks.user_id, user.id)))
+    .where(and(eq(bookmarks.id, id), eq(bookmarks.user_id, user.id)))
     .returning();
 
   if (!deleted) {
