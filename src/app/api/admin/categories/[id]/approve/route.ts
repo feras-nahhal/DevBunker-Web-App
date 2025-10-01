@@ -5,30 +5,32 @@ import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
 // PUT /admin/categories/[id]/approve
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: any) {
   const authResult = await authMiddleware(req, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
+  const { id } = context.params as { id: string }; // cast explicitly
+
   try {
     // 1. Approve request
-    const [request] = await db.update(category_requests)
+    const [requestRow] = await db.update(category_requests)
       .set({ status: "approved" })
-      .where(eq(category_requests.id, params.id))
+      .where(eq(category_requests.id, id))
       .returning();
 
-    if (!request) {
+    if (!requestRow) {
       return NextResponse.json({ success: false, error: "Request not found" }, { status: 404 });
     }
 
     // 2. Insert into categories (ignore duplicates)
     const [category] = await db.insert(categories)
       .values({
-        name: request.category_name,
-        description: request.description,
-        created_by: request.user_id,
+        name: requestRow.category_name,
+        description: requestRow.description,
+        created_by: requestRow.user_id,
         status: "approved",
       })
-      .onConflictDoNothing({ target: categories.name }) // prevents duplicate
+      .onConflictDoNothing({ target: categories.name })
       .returning();
 
     return NextResponse.json({
@@ -37,7 +39,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       category,
     });
   } catch (err: unknown) {
-     console.error("Approve category error:", err);
+    console.error("Approve category error:", err);
     return NextResponse.json(
       { success: false, error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
