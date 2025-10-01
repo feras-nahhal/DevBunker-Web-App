@@ -7,24 +7,24 @@ import { eq } from "drizzle-orm";
 // PUT /api/admin/tags/[id]/reject
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params is now a Promise
 ): Promise<NextResponse> {
   const authResult = await authMiddleware(req, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
+
+  // ✅ Await the params promise
+  const { id } = await context.params;
 
   try {
     // 1. Mark the request as rejected
     const [request] = await db
       .update(tag_requests)
       .set({ status: "rejected" })
-      .where(eq(tag_requests.id, context.params.id))
+      .where(eq(tag_requests.id, id))
       .returning();
 
     if (!request) {
-      return NextResponse.json(
-        { success: false, error: "Request not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Request not found" }, { status: 404 });
     }
 
     // 2. Check if the tag was already created for this request
