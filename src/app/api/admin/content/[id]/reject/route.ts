@@ -7,12 +7,13 @@ import { authMiddleware } from "@/lib/authMiddleware";
 // PUT /api/admin/content/[id]/reject
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // 👈 params is now a Promise
 ): Promise<NextResponse> {
   const authResult = await authMiddleware(request, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const contentId = params.id;
+  // 👇 await the params promise
+  const { id: contentId } = await context.params;
 
   try {
     const [rejected] = await db
