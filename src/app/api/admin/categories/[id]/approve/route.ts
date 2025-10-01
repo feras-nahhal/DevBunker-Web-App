@@ -4,10 +4,13 @@ import { categories, category_requests } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
-// PUT /api/admin/categories/[id]/approve
+interface Params {
+  params: { id: string };
+}
+
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: Params
 ): Promise<NextResponse> {
   const authResult = await authMiddleware(request, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
@@ -15,7 +18,7 @@ export async function PUT(
   try {
     const { id } = context.params;
 
-    // 1. Approve request
+    // Approve request
     const [requestRow] = await db
       .update(category_requests)
       .set({ status: "approved" })
@@ -29,7 +32,7 @@ export async function PUT(
       );
     }
 
-    // 2. Insert into categories (ignore duplicates)
+    // Insert into categories (ignore duplicates)
     const [category] = await db
       .insert(categories)
       .values({
@@ -43,15 +46,16 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: category
-        ? "Category approved"
-        : "Category already exists",
+      message: category ? "Category approved" : "Category already exists",
       category,
     });
   } catch (err: unknown) {
     console.error("Approve category error:", err);
     return NextResponse.json(
-      { success: false, error: err instanceof Error ? err.message : "Unknown error" },
+      {
+        success: false,
+        error: err instanceof Error ? err.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
