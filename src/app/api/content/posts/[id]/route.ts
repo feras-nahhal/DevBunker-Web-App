@@ -4,10 +4,13 @@ import { content } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
+type RouteParams = { params: Promise<{ id: string }> };
+
 // GET /api/content/[id]
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: RouteParams) {
+  const { id: postId } = await context.params;
+
   try {
-    const postId = context.params.id;
     const [post] = await db.select().from(content).where(eq(content.id, postId));
 
     if (!post)
@@ -21,11 +24,12 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
 }
 
 // PUT /api/content/[id]
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: RouteParams) {
+  const { id: postId } = await context.params;
+
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const postId = context.params.id;
   const body = await req.json();
 
   try {
@@ -42,14 +46,15 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
 }
 
 // DELETE /api/content/[id]
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: RouteParams) {
+  const { id: postId } = await context.params;
+
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const postId = context.params.id;
-
   try {
     const deleted = await db.delete(content).where(eq(content.id, postId)).returning();
+
     if (!deleted.length)
       return NextResponse.json({ success: false, error: "Post not found" }, { status: 404 });
 

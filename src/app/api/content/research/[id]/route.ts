@@ -4,10 +4,13 @@ import { content } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
+type RouteParams = { params: Promise<{ id: string }> };
+
 // GET /api/content/research/[id]
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: RouteParams) {
+  const { id: researchId } = await context.params;
+
   try {
-    const researchId = context.params.id;
     const [research] = await db.select().from(content).where(eq(content.id, researchId));
 
     if (!research) {
@@ -22,18 +25,16 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
 }
 
 // PUT /api/content/research/[id]
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: RouteParams) {
+  const { id: researchId } = await context.params;
+
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 
   const body = await req.json();
-  const researchId = context.params.id;
 
   try {
-    const [updated] = await db.update(content)
-      .set(body)
-      .where(eq(content.id, researchId))
-      .returning();
+    const [updated] = await db.update(content).set(body).where(eq(content.id, researchId)).returning();
 
     if (!updated) {
       return NextResponse.json({ success: false, error: "Research not found" }, { status: 404 });
@@ -47,15 +48,16 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
 }
 
 // DELETE /api/content/research/[id]
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: RouteParams) {
+  const { id: researchId } = await context.params;
+
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const researchId = context.params.id;
-
   try {
-    const deleted = await db.delete(content).where(eq(content.id, researchId));
-    if (!deleted) {
+    const deleted = await db.delete(content).where(eq(content.id, researchId)).returning();
+
+    if (!deleted.length) {
       return NextResponse.json({ success: false, error: "Research not found" }, { status: 404 });
     }
 

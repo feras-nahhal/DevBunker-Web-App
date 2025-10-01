@@ -4,9 +4,13 @@ import { content } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+type RouteParams = { params: Promise<{ id: string }> };
+
+// GET /api/content/[id]
+export async function GET(req: NextRequest, context: RouteParams) {
+  const { id: mindmapId } = await context.params;
+
   try {
-    const mindmapId = params.id;
     const [mindmap] = await db.select().from(content).where(eq(content.id, mindmapId));
 
     if (!mindmap) {
@@ -20,11 +24,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+// PUT /api/content/[id]
+export async function PUT(req: NextRequest, context: RouteParams) {
+  const { id: mindmapId } = await context.params;
+
   const authResponse = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResponse instanceof Response) return authResponse;
 
-  const mindmapId = params.id;
   const body = await req.json();
 
   try {
@@ -41,11 +47,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+// DELETE /api/content/[id]
+export async function DELETE(req: NextRequest, context: RouteParams) {
+  const { id: mindmapId } = await context.params;
+
   const authResponse = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResponse instanceof Response) return authResponse;
-
-  const mindmapId = params.id;
 
   try {
     const deleted = await db.delete(content).where(eq(content.id, mindmapId)).returning();

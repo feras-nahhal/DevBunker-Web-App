@@ -4,12 +4,14 @@ import { content } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
+type RouteParams = { params: Promise<{ id: string }> };
+
 // POST /api/content/research/[id]/request-approval
-export async function POST(req: NextRequest, context: { params: { id: string } }) {
+export async function POST(req: NextRequest, context: RouteParams) {
+  const { id: researchId } = await context.params;
+
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
-
-  const researchId = context.params.id;
 
   try {
     const [updated] = await db.update(content)
