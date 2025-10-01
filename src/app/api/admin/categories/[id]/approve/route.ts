@@ -7,16 +7,17 @@ import { eq } from "drizzle-orm";
 // PUT /api/admin/categories/[id]/approve
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // 👈 params is now a Promise
 ): Promise<NextResponse> {
   const authResult = await authMiddleware(req, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const { id } = context.params;
+  // 👇 await the promise
+  const { id } = await context.params;
 
   try {
-    // Approve the request
-    const [requestRow] = await db.update(category_requests)
+    const [requestRow] = await db
+      .update(category_requests)
       .set({ status: "approved" })
       .where(eq(category_requests.id, id))
       .returning();
@@ -25,8 +26,8 @@ export async function PUT(
       return NextResponse.json({ success: false, error: "Request not found" }, { status: 404 });
     }
 
-    // Insert into categories (ignore duplicates)
-    const [category] = await db.insert(categories)
+    const [category] = await db
+      .insert(categories)
       .values({
         name: requestRow.category_name,
         description: requestRow.description,
