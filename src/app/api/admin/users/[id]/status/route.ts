@@ -1,4 +1,3 @@
-// src/app/api/admin/users/[id]/status/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/tables";
@@ -11,13 +10,15 @@ type UserStatus = (typeof ALLOWED_STATUS)[number];
 // PUT /api/admin/users/[id]/status
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params is a Promise now
 ) {
   try {
     const authResult = await authMiddleware(req, { roles: ["admin"] });
     if (authResult instanceof Response) return authResult;
 
-    const userId = context.params.id;
+    // ✅ Await the params
+    const { id: userId } = await context.params;
+
     const body = await req.json();
     const status: string = body.status;
 
