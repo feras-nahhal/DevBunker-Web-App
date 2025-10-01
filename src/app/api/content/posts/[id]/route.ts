@@ -14,8 +14,9 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
       return NextResponse.json({ success: false, error: "Post not found" }, { status: 404 });
 
     return NextResponse.json({ success: true, post });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -24,7 +25,6 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
   const authResult = await authMiddleware(req, { roles: ["creator", "admin"] });
   if (authResult instanceof Response) return authResult;
 
-  const user = authResult;
   const postId = context.params.id;
   const body = await req.json();
 
@@ -35,8 +35,9 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
       return NextResponse.json({ success: false, error: "Post not found" }, { status: 404 });
 
     return NextResponse.json({ success: true, post: updated });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -48,12 +49,13 @@ export async function DELETE(req: NextRequest, context: { params: { id: string }
   const postId = context.params.id;
 
   try {
-    const deleted = await db.delete(content).where(eq(content.id, postId));
-    if (!deleted)
+    const deleted = await db.delete(content).where(eq(content.id, postId)).returning();
+    if (!deleted.length)
       return NextResponse.json({ success: false, error: "Post not found" }, { status: 404 });
 
     return NextResponse.json({ success: true, message: "Post deleted" });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
