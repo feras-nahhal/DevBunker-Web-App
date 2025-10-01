@@ -31,7 +31,7 @@ export async function DELETE(
   } catch (err: unknown) {
     console.error("Delete user error:", err);
     const errorMessage =
-      err instanceof Error ? err.message : "An unknown error occurred";
+      err instanceof Error ? err.message : String(err);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
