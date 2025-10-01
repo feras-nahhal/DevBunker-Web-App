@@ -27,8 +27,9 @@ export async function GET(req: NextRequest) {
     const mindmaps = await db.select().from(content).where(whereClause);
 
     return NextResponse.json({ success: true, mindmaps });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -51,7 +52,8 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return NextResponse.json({ success: true, mindmap: newMindmap });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

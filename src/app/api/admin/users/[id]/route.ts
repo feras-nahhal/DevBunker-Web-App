@@ -10,21 +10,28 @@ export async function DELETE(
   req: NextRequest,
   context: { params: { id: string } }
 ) {
-  // ✅ Use NextRequest here
-  const authResult = await authMiddleware(req, { roles: ["admin"] });
-  if (authResult instanceof Response) return authResult;
-
-  const userId = context.params.id;
-
   try {
+    // Authenticate admin
+    const authResult = await authMiddleware(req, { roles: ["admin"] });
+    if (authResult instanceof Response) return authResult;
+
+    const userId = context.params.id;
+
+    // Delete user
     const deleted = await db.delete(users).where(eq(users.id, userId)).returning();
-    if (!deleted.length) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+
+    if (!deleted || deleted.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, message: "User deleted" });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Delete user error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    const errorMessage =
+      err instanceof Error ? err.message : "An unknown error occurred";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

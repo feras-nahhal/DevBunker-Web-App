@@ -1,10 +1,10 @@
+// src/app/api/admin/users/[id]/status/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware, AuthPayload } from "@/lib/authMiddleware";
 
-// Allowed status values
 const ALLOWED_STATUS = ["active", "banned", "pending", "rejected"] as const;
 type UserStatus = (typeof ALLOWED_STATUS)[number];
 
@@ -12,25 +12,22 @@ type UserStatus = (typeof ALLOWED_STATUS)[number];
 export async function PUT(
   req: NextRequest,
   context: { params: { id: string } }
-): Promise<NextResponse> {
-  // ✅ Use the correct parameter `req`
-  const authResult = await authMiddleware(req, { roles: ["admin"] });
-  if (authResult instanceof Response) return authResult;
-
-  const adminUser = authResult as AuthPayload;
-  const userId = context.params.id;
-
-  const body = await req.json();
-  const status: string = body.status;
-
-  if (!ALLOWED_STATUS.includes(status as UserStatus)) {
-    return NextResponse.json(
-      { success: false, error: "Invalid status" },
-      { status: 400 }
-    );
-  }
-
+) {
   try {
+    const authResult = await authMiddleware(req, { roles: ["admin"] });
+    if (authResult instanceof Response) return authResult;
+
+    const userId = context.params.id;
+    const body = await req.json();
+    const status: string = body.status;
+
+    if (!ALLOWED_STATUS.includes(status as UserStatus)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid status" },
+        { status: 400 }
+      );
+    }
+
     const [updated] = await db
       .update(users)
       .set({ status })
@@ -45,10 +42,12 @@ export async function PUT(
     }
 
     return NextResponse.json({ success: true, user: updated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Update user status error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "An unknown error occurred";
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

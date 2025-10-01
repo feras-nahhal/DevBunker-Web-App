@@ -40,12 +40,14 @@ export async function authMiddleware(
     }
 
     // Optional: attach user info to the request for downstream usage
-    (req as any).user = payload;
+    // using a type assertion instead of 'any'
+    (req as unknown as { user?: AuthPayload }).user = payload;
 
     return payload;
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Invalid or expired token";
     return NextResponse.json(
-      { success: false, error: "Invalid or expired token" },
+      { success: false, error: errorMessage },
       { status: 401 }
     );
   }

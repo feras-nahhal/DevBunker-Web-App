@@ -17,11 +17,20 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
       .where(eq(content.id, researchId))
       .returning();
 
-    if (!updated)
-      return NextResponse.json({ success: false, error: "Research not found" }, { status: 404 });
+    if (!updated) {
+      return NextResponse.json(
+        { success: false, error: "Research not found" },
+        { status: 404 }
+      );
+    }
 
-    return NextResponse.json({ success: true, research: updated, message: "Approval requested" });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message });
+    return NextResponse.json({
+      success: true,
+      research: updated,
+      message: "Approval requested",
+    });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

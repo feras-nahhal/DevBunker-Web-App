@@ -8,7 +8,8 @@ export async function GET() {
   try {
     const result = await db.select().from(tags).where(eq(tags.status, "approved"));
     return NextResponse.json({ success: true, tags: result });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage });
   }
 }

@@ -12,9 +12,10 @@ export async function GET(req: NextRequest) {
   try {
     const allUsers = await db.select().from(users);
     return NextResponse.json({ success: true, users: allUsers });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Get users error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -29,8 +30,9 @@ export async function POST(req: NextRequest) {
     // Optional: validate body here, e.g., email, password, role
     const [newUser] = await db.insert(users).values(body).returning();
     return NextResponse.json({ success: true, user: newUser });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Create user error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 400 });
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 400 });
   }
 }

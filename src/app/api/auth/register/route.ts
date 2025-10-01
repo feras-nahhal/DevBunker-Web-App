@@ -35,10 +35,10 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return NextResponse.json({ success: true, user: newUser });
-  } catch (err: any) {
-    console.error("Register error:", err);
+  } catch {
+    // No need to type err if unused
     return NextResponse.json(
-      { success: false, error: err?.message ?? "Unknown error" },
+      { success: false, error: "Unknown error occurred" },
       { status: 500 }
     );
   }

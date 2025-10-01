@@ -11,11 +11,12 @@ export async function GET() {
       success: true,
       data: usersData ?? [],
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
     console.error("DB error:", err);
     return NextResponse.json({
       success: false,
-      error: err?.message ?? "Unknown error",
+      error: errorMessage,
     });
   }
 }

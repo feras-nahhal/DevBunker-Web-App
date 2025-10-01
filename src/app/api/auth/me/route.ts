@@ -14,7 +14,11 @@ export async function GET(req: NextRequest) {
     const payload = verifyToken(token);
 
     return NextResponse.json({ success: true, user: payload });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: "Invalid or expired token" }, { status: 401 });
+  } catch {
+    // No need to declare 'err' if you aren't using it
+    return NextResponse.json(
+      { success: false, error: "Invalid or expired token" },
+      { status: 401 }
+    );
   }
 }

@@ -18,12 +18,16 @@ export async function GET(req: NextRequest) {
     if (categoryId) conditions.push(eq(content.category_id, categoryId));
     if (search) conditions.push(like(content.title, `%${search}%`));
 
-    const posts = await db.select().from(content).where(conditions.length ? and(...conditions) : undefined);
+    const posts = await db
+      .select()
+      .from(content)
+      .where(conditions.length ? and(...conditions) : undefined);
 
     return NextResponse.json({ success: true, posts });
-  } catch (err: any) {
-    console.error("Fetch posts error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Fetch posts error:", errorMessage);
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -43,8 +47,9 @@ export async function POST(req: NextRequest) {
     }).returning();
 
     return NextResponse.json({ success: true, post: newPost });
-  } catch (err: any) {
-    console.error("Create post error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Create post error:", errorMessage);
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
 // src/app/api/search/route.ts
-import { NextResponse,NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { content, categories, tags, content_tags } from "@/lib/tables";
+import { content, tags, content_tags } from "@/lib/tables";
 import { and, eq, ilike, inArray } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -12,14 +12,12 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category");
     const tagsFilter = searchParams.getAll("tags"); // supports multiple tags ?tags=AI&tags=ML
 
-    let conditions = [];
-
+    const conditions = [];
     if (q) conditions.push(ilike(content.title, `%${q}%`));
     if (type) conditions.push(eq(content.content_type, type));
     if (category) conditions.push(eq(content.category_id, category));
 
-    // Build base query
-    let query = db
+    const query = db
       .select({
         id: content.id,
         title: content.title,
@@ -49,8 +47,9 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, results });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Search error:", err);
-    return NextResponse.json({ success: false, error: "Search failed" }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Search failed";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

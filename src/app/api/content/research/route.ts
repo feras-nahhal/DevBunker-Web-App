@@ -25,8 +25,9 @@ export async function GET(req: NextRequest) {
     const researchItems = await db.select().from(content).where(whereClause);
 
     return NextResponse.json({ success: true, research: researchItems });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest) {
     }).returning();
 
     return NextResponse.json({ success: true, research: newResearch });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

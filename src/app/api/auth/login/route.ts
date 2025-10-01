@@ -31,8 +31,9 @@ export async function POST(req: NextRequest) {
       token,
       user: { id: user.id, email: user.email, role: user.role },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Login error:", err);
-    return NextResponse.json({ success: false, error: err?.message ?? "Unknown error" }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
