@@ -7,14 +7,15 @@ import { eq } from "drizzle-orm";
 // PUT /api/admin/categories/[id]/reject
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // 👈 note: params is now a Promise
 ): Promise<NextResponse> {
   const authResult = await authMiddleware(request, { roles: ["admin"] });
   if (authResult instanceof Response) return authResult;
 
-  try {
-    const { id } = context.params;
+  // 👇 await the params promise
+  const { id } = await context.params;
 
+  try {
     // 1. Mark request as rejected
     const [requestRow] = await db
       .update(category_requests)
@@ -36,7 +37,6 @@ export async function PUT(
       .where(eq(categories.name, requestRow.category_name));
 
     if (existingCategory) {
-      // Check if content is using this category
       const usedContent = await db
         .select()
         .from(content)
