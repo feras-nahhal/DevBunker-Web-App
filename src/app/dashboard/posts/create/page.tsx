@@ -7,7 +7,16 @@ import Sidebar from "@/components/layout/Sidebar";
 import CreatePageHeader from "@/components/layout/CreatePageHeader";
 import { useContent, ContentType } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
+import { AnyContent} from "@/types/content"; 
+import { CONTENT_STATUS } from "@/lib/enums";
+
 import "./PostPage.css";
+
+// ✅ Define Tag type (or import from types/content.ts)
+interface Tag {
+  id: string;
+  name: string;
+}
 
 // ✅ Dynamically import to avoid SSR issues
 const CreatePostEditor = dynamic(
@@ -19,10 +28,10 @@ export default function PostPage() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<any[]>([]); // tags lifted from editor
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  const { user, loading: authLoading, token, isAuthenticated } = useAuth();
+  const { loading: authLoading, token, isAuthenticated } = useAuth();
   const router = useRouter();
 
   const { createContent, loading: contentLoading, refetch } = useContent({
@@ -46,11 +55,17 @@ export default function PostPage() {
     setSaving(true);
     try {
       console.log("🧭 Final Category ID Sent:", selectedCategoryId);
-      const newPostData: any = {
+      
+      // ✅ Explicitly type newPostData to match Partial<AnyContent> (allows category_id: string | null)
+      const newPostData: Partial<AnyContent> & { 
+        tag_ids?: string[]; 
+        status: string; 
+        category_id?: string | null; // ✅ Explicit null allowance
+      } = {
         title,
-        body,
-        status: isPublished ? "published" : "draft",
-        category_id: selectedCategoryId,
+        content_body: body, // Maps to content_body in schema
+        status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT, // Use enum values
+        category_id: selectedCategoryId ?? undefined, // ✅ Send null directly (schema allows it)
         tag_ids: selectedTags.map((t) => t.id),
       };
 
@@ -122,7 +137,6 @@ export default function PostPage() {
             onTagsChange={setSelectedTags} 
             onCategoryChange={setSelectedCategoryId}
           />
-          
         </div>
       </div>
     </div>
