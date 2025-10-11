@@ -49,10 +49,10 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, comments: rootComments });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Fetch comments error:", err);
     return NextResponse.json(
-      { success: false, error: err.message || "Unknown error" },
+      { success: false, error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
     );
   }
@@ -85,10 +85,10 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return NextResponse.json({ success: true, comment: newComment });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Add comment error:", err);
     return NextResponse.json(
-      { success: false, error: err.message || "Unknown error" },
+      { success: false, error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }
     );
   }
