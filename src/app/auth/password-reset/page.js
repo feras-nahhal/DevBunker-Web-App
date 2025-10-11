@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
                   Forgot your password?
                 </h1>
                 <p className="text-gray-400 text-sm mb-4">
-                  We've sent a 6-digit confirmation email to your email. 
+                  We&apos;ve sent a 6-digit confirmation email to your email. 
                   Please enter the code in below box to verify your email.
                 </p>
               </div>
