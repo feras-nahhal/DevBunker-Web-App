@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { comments, users } from "@/lib/tables";
-import { eq, isNull, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
+
+type FlatComment = {
+  id: string;
+  text: string;
+  parent_id: string | null;
+  created_at: Date | null;
+  user_id: string;
+  authorEmail: string | null;
+};
+
+type NestedComment = FlatComment & {
+  replies: NestedComment[];
+};
 
 // 🟢 GET: Fetch comments (and nested replies) for a content item
 export async function GET(req: NextRequest) {
@@ -18,7 +31,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch all comments for that content
-    const allComments = await db
+    const allComments: FlatComment[] = await db
       .select({
         id: comments.id,
         text: comments.text,
@@ -33,8 +46,8 @@ export async function GET(req: NextRequest) {
       .orderBy(comments.created_at);
 
     // Group comments into nested structure
-    const commentMap: Record<string, any> = {};
-    const rootComments: any[] = [];
+    const commentMap: Record<string, NestedComment> = {};
+    const rootComments: NestedComment[] = [];
 
     allComments.forEach((comment) => {
       commentMap[comment.id] = { ...comment, replies: [] };
