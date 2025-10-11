@@ -122,4 +122,14 @@ export const category_requests = pgTable("category_requests", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+// comments table
+export const comments = pgTable("comments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  content_id: uuid("content_id").references(() => content.id).notNull(),
+  user_id: uuid("user_id").references(() => users.id).notNull(),
+  text: text("text").notNull(),
+  parent_id: uuid("parent_id"), // <-- just remove `.default(null)`
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
 

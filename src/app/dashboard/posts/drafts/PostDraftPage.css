@@ -1,0 +1,28 @@
+/* Dashboard layout */
+.dashboard {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+
+}
+
+/* Main content wrapper */
+.main-content {
+  margin-left: 248px; /* same as sidebar width */
+  width: calc(100% - 248px);
+  position: relative; /* makes Header absolute relative to this */
+  min-height: 100vh;
+}
+
+/* Explore page content */
+.post-container {
+  position: relative;
+  margin-top: 106px;
+  padding: 24px;
+  color: white;
+  max-width: 1435px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+}

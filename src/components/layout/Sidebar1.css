@@ -1,0 +1,166 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  gap: 12px;
+
+  position: fixed;
+  top: 10px;                  /* 10px gap from top */
+  left: 5px;                 /* 10px gap from left */
+  width: 240px;
+  height: calc(100vh - 20px); /* leaves 10px top + 10px bottom gap */
+
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(80, 80, 80, 0.24);
+  border-radius: 20px;
+  box-shadow: inset 0px 0px 7px rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(75px);
+
+  overflow: hidden;
+}
+
+
+/* Menu container */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 18px; /* space between blocks */
+  width: 100%;
+}
+
+/* Section block */
+.menu-block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 4px;
+}
+
+/* Section title */
+.menu-label {
+  padding: 0 8px;
+  font-family: 'Public Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #777;
+}
+
+/* Sub-items (Post list, Draft, Add New, etc.) */
+.menu-subitem,
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px; /* ✅ smaller */
+  border-radius: 10px;
+  padding-left: 20px;
+
+  color: #888;
+  font-family: 'Public Sans', sans-serif;
+  font-size: 13px; /* ✅ smaller font */
+  line-height: 18px;
+  text-decoration: none;
+  width: 90%;
+  transition: all 0.2s ease-in-out;
+}
+
+.menu-subitem:hover,
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* Active Menu Item */
+.menu-item.active,
+.menu-subitem.active {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  width: 200px;
+  height: 48px;
+  padding: 12px 11px;
+  border-radius: 7px;
+
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.16);
+  color: #00A76F;
+
+  font-family: 'Public Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+
+  isolation: isolate;
+  transition: all 0.25s ease-in-out;
+  transform: scale(1.05); /* slightly bigger when active */
+  z-index: 3;
+}
+
+/* Icon */
+.menu-item.active svg,
+.menu-subitem.active svg {
+  width: 24px;
+  height: 24px;
+}
+
+
+/* Glow oval (only left side, perfectly centered vertically) */
+.menu-item.active::before,
+.menu-subitem.active::before {
+  content: "";
+  position: absolute;
+  width: 39px;
+  height: 16px;
+
+  /* center it vertically inside the 48px button */
+  top: 50%;
+  left: -12px;
+  transform: translateY(-50%) rotate(90deg);
+
+  background: #00A76F;
+  opacity: 0.4;
+  filter: blur(7px);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+
+
+/* left glow */
+.menu-item.active::before,
+.menu-subitem.active::before {
+  left: -6px;
+}
+
+
+/* Traveling glow */
+.sidebar-glow {
+  position: absolute;
+  width: 131px;
+  height: 42px;
+  right: -40px;
+  background: #00A76F;
+  opacity: 0.69;
+  filter: blur(72px);
+  border-radius: 50%;
+  transition: top 0.3s ease;
+  z-index: 0;
+}
+
+.sidebar-glow-left {
+  position: absolute;
+  width: 39px;
+  height: 60px;
+  left: -40px;          /* position on the left */
+  top: 0;                /* will be updated dynamically */
+  background: #00A76F;
+  opacity: 0.68;
+  filter: blur(42px);
+  border-radius: 50%;
+  transition: top 0.3s ease;
+  z-index: 2;
+}
