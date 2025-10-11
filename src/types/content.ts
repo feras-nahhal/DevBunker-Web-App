@@ -103,3 +103,5 @@ export interface Notification {
   read: boolean;
   created_at?: string;
 }
+
+export { CONTENT_STATUS };

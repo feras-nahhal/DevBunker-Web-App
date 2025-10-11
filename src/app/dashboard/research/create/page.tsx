@@ -1,82 +1,85 @@
 "use client";
-
 import { useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation"; // ✅ For navigation
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import CreatePageHeader from "@/components/layout/CreatePageHeader";
-import { useContent, ContentType } from "@/hooks/useContent"; // Adjust path to your hook
-import { useAuth } from "@/hooks/useAuth"; // Adjust path to your useAuth hook (e.g., "@/hooks/useAuth")
+import { useContent, ContentType } from "@/hooks/useContent";
+import { useAuth } from "@/hooks/useAuth";
+import { AnyContent} from "@/types/content"; 
+import { CONTENT_STATUS } from "@/lib/enums";
+
 import "./PostPage.css";
 
-// ✅ Dynamically import the editor to avoid SSR issues
+// ✅ Define Tag type (or import from types/content.ts)
+interface Tag {
+  id: string;
+  name: string;
+}
+
+// ✅ Dynamically import to avoid SSR issues
 const CreatePostEditor = dynamic(
   () => import("@/components/content/CreatePostEditor"),
   { ssr: false }
 );
 
 export default function PostPage() {
-  // Lifted state from editor
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  // ✅ Use your auth hook (with exposed token and isAuthenticated)
-  const { user, loading: authLoading, token, isAuthenticated } = useAuth();
-
-  // ✅ Router for navigation
+  const { loading: authLoading, token, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  // Use the content hook for posts
   const { createContent, loading: contentLoading, refetch } = useContent({
-    type: "post" as ContentType,
+    type: "research" as ContentType,
     autoFetch: false,
   });
 
-  // Combined loading state
   const isLoading = authLoading || contentLoading || saving;
 
-  // ✅ Cancel handler: Reset form and navigate to posts dashboard
+  // ✅ Cancel → clear & navigate
   const handleCancel = () => {
-    // Optional: Reset form before leaving
     setTitle("");
     setBody("");
-    // Navigate to /dashboard/posts (your posts list page)
-    router.push("/dashboard/posts");
+    router.push("/dashboard/research");
   };
 
-  // Handler for Save (published: true) or Save as Draft (published: false)
+  // ✅ Save handler
   const handleSave = async (isPublished: boolean) => {
-    if (!title.trim() || !body.trim() || !isAuthenticated || !token) {
-      return; // Silently return if invalid (no messages)
-    }
+    if (!title.trim() || !body.trim() || !isAuthenticated || !token) return;
 
     setSaving(true);
     try {
-      const newPostData: any = {  // Adjust type based on your AnyContent/Post schema
+      console.log("🧭 Final Category ID Sent:", selectedCategoryId);
+      
+      // ✅ Explicitly type newPostData to match Partial<AnyContent> (allows category_id: string | null)
+      const newPostData: Partial<AnyContent> & { 
+        tag_ids?: string[]; 
+        status: string; 
+        category_id?: string | null; // ✅ Explicit null allowance
+      } = {
         title,
-        body, // HTML from Tiptap editor (maps to content_body in DB via API)
-        status: isPublished ? "published" : "draft", // Matches your DB schema
-        // Add other fields if required by backend:
-        // description: body.substring(0, 150) + "...", // Auto-generate if needed
-        // category_id: null, // Or from state if you add category selection
+        content_body: body, // Maps to content_body in schema
+        status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT, // Use enum values
+        category_id: selectedCategoryId ?? undefined, // ✅ Send null directly (schema allows it)
+        tag_ids: selectedTags.map((t) => t.id),
       };
 
-      // ✅ Temporary debug log (remove after testing)
-      console.log("Sending status:", newPostData.status, "Data:", newPostData);
+      console.log("📝 Sending Data:", newPostData);
 
-      // ✅ Pass token to include Authorization header
       await createContent(newPostData, token);
-      
-      refetch(); // Refresh content lists if needed elsewhere
-      
-      // Reset form after success (clear fields)
+      refetch();
+
       setTitle("");
       setBody("");
-    } catch (err: any) {
+      setSelectedTags([]);
+      setSelectedCategoryId(null);
+    } catch (err) {
       console.error("Save error:", err);
-      // Silently handle errors (no alerts or messages)
     } finally {
       setSaving(false);
     }
@@ -85,7 +88,6 @@ export default function PostPage() {
   const handleSaveAsDraft = () => handleSave(false);
   const handleSavePublish = () => handleSave(true);
 
-  // If auth is still loading, show a loader (optional)
   if (authLoading) {
     return (
       <div className="dashboard">
@@ -101,19 +103,18 @@ export default function PostPage() {
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        {/* Pass handlers and loading to header */}
         <CreatePageHeader
           onSave={handleSavePublish}
           onSaveAsDraft={handleSaveAsDraft}
-          onCancel={handleCancel} // ✅ Pass cancel handler
-          saving={isLoading || !isAuthenticated} // Disable if not authenticated
+          onCancel={handleCancel}
+          saving={isLoading || !isAuthenticated}
         />
 
         <div className="post-container">
           <div className="flex items-center mb-4">
             <Image
-              src="/postlogo.png"
-              alt="Menu Icon"
+              src="/Reserchnew.png"
+              alt="Post Icon"
               width={20}
               height={20}
               className="object-contain mr-[4px] relative top-[1px]"
@@ -124,7 +125,7 @@ export default function PostPage() {
                 fontFamily: "'Public Sans', sans-serif",
               }}
             >
-              Post / Create Post
+              Research / Create Research
             </h2>
           </div>
 
@@ -133,6 +134,8 @@ export default function PostPage() {
             body={body}
             onTitleChange={setTitle}
             onBodyChange={setBody}
+            onTagsChange={setSelectedTags} 
+            onCategoryChange={setSelectedCategoryId}
           />
         </div>
       </div>
