@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth"; // Adjust the path if needed
+import { USER_ROLES } from "@/lib/enums"; // NEW: Import for role check
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,9 +19,12 @@ export default function LoginPage() {
     const email = form.email.value;
     const password = form.password.value;
 
-    const success = await login(email, password);
-    if (success) {
-      router.push("/dashboard/explore");
+    // UPDATED: login now returns User | null
+    const user = await login(email, password);
+    if (user) {
+      // NEW: Role-based redirect
+      const redirectPath = user.role === USER_ROLES.ADMIN ? "/admin/users" : "/dashboard/explore";
+      router.push(redirectPath);
     } else {
       setShowPopup(true);
       setTimeout(() => setShowPopup(false), 1500);

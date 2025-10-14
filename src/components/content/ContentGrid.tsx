@@ -8,10 +8,17 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
+  searchQuery?: string; // Raw search for display
+  filters?: Record<string, string>; // Includes q (debounced), status, category
 }
 
-export default function ContentGrid({ type = "all" }: ContentGridProps) {
-  const { data, loading, error, refetch } = useContent({ type });
+export default function ContentGrid({ 
+  type = "all", 
+  searchQuery = "", 
+  filters = {} 
+}: ContentGridProps) {
+  // Pass combined filters to useContent (q is already debounced in parent)
+  const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -118,6 +125,14 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
     }
   };
 
+  // NEW: UX text for results
+  const totalResults = data.length;
+  const hasSearch = !!searchQuery.trim();
+  const hasFilters = !!(filters.status || filters.category);
+  const resultsText = hasSearch || hasFilters
+    ? `Showing ${totalResults} results${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category ID: ${filters.category})` : ""}.`
+    : `Showing all ${totalResults} items.`;
+
   // ✅ Loading and error states
   if (loading)
     return (
@@ -136,13 +151,21 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
   if (!data.length)
     return (
       <div className="flex justify-center py-10 text-gray-400">
-        No {type === "all" ? "content" : type} available.
+        {hasSearch || hasFilters
+          ? `No ${type === "all" ? "content" : type} matches your search or filters.`
+          : `No ${type === "all" ? "content" : type} available.`
+        }
       </div>
     );
 
   // ✅ Render content grid
   return (
     <>
+      {/* NEW: Results summary */}
+      <div className="mb-4 text-center text-gray-400 text-sm">
+        {resultsText}
+      </div>
+
       <div
         className="
           grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
@@ -178,8 +201,6 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
                 onDelete={() => handleDelete(card.id, contentType)}
                 onOpenComments={() => handleOpenComments(card)} 
               />
-
-              
             </div>
           );
         })}
@@ -192,6 +213,7 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
           title={selectedContent.title}
           content_body={selectedContent.content_body}
           comments={comments}
+          tags={selectedContent.tags || []}
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
         />

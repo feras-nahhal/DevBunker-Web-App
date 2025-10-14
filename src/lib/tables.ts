@@ -133,3 +133,13 @@ export const comments = pgTable("comments", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+
+// references_link table
+export const references_link = pgTable("references_link", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  content_id: uuid("content_id").references(() => content.id).notNull(),
+  user_id: uuid("user_id").references(() => users.id).notNull(),
+  text: text("text").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});

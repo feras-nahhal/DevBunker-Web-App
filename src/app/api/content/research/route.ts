@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { content,users, categories, tags, content_tags } from "@/lib/tables";
+import { content,users, categories, tags, content_tags,references_link } from "@/lib/tables";
 import { eq, like, sql } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
+import { CONTENT_STATUS } from "@/lib/enums";
 
 // GET /api/content/research?q=&status=&category=
 export async function GET(req: NextRequest) {
@@ -23,8 +24,9 @@ export async function GET(req: NextRequest) {
         conditions.push(eq(content.status, statusList[0]));
       }
     } else {
-      // Default: only published
-      conditions.push(eq(content.status, "published"));
+     // ✅ Default: include ALL statuses from CONTENT_STATUS enum
+      const allStatuses = Object.values(CONTENT_STATUS);
+      conditions.push(sql`${content.status} IN (${sql.join(allStatuses, sql`, `)})`);
     }
 
     if (categoryId) conditions.push(eq(content.category_id, categoryId));
@@ -117,19 +119,93 @@ export async function POST(req: NextRequest) {
   if (authResult instanceof Response) return authResult;
 
   const user = authResult;
-  const body = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
+  }
 
   try {
-    const [newResearch] = await db.insert(content).values({
-      ...body,
-      content_type: "research",
-      author_id: user.id,
-      status: "draft",
-    }).returning();
+    // ✅ Validate and normalize status
+    let status: string = CONTENT_STATUS.DRAFT;
+    if (body.status) {
+      const allowedStatuses = [CONTENT_STATUS.DRAFT, CONTENT_STATUS.PENDING_APPROVAL];
+      if (!allowedStatuses.includes(body.status)) {
+        return NextResponse.json(
+          { success: false, error: `Invalid status: ${body.status}` },
+          { status: 400 }
+        );
+      }
+      status = body.status;
+    }
 
-    return NextResponse.json({ success: true, research: newResearch });
+    // ✅ Validate references (new: array of non-empty strings)
+    let references: string[] = [];
+    if (body.references) {
+      if (!Array.isArray(body.references)) {
+        return NextResponse.json(
+          { success: false, error: "References must be an array of strings" },
+          { status: 400 }
+        );
+      }
+      references = body.references.filter((ref: string) => ref && typeof ref === "string" && ref.trim().length > 0);
+      if (references.length !== body.references.length) {
+        console.warn("Filtered invalid/empty references");
+      }
+    }
+
+    // ✅ Prepare insert data for content (research-specific)
+    const insertData = {
+      title: body.title,
+      description: body.description || body.title.substring(0, 150) + "...",
+      content_body: body.body || body.content_body,
+      content_type: "research", // FIXED: Research type
+      status,
+      author_id: user.id,
+      category_id: body.category_id || null,
+      excalidraw_data: body.excalidraw_data || null, // Optional; remove if not needed for research
+    };
+
+    // ✅ Insert research content
+    const [newResearch] = await db.insert(content).values(insertData).returning();
+    const contentId = newResearch.id;
+
+    // ✅ Handle tags if provided (array of IDs) – same as post
+    if (Array.isArray(body.tag_ids) && body.tag_ids.length > 0) {
+      const tagRows = body.tag_ids.map((tagId: string) => ({
+        content_id: contentId,
+        tag_id: tagId,
+      }));
+
+      await db.insert(content_tags).values(tagRows).onConflictDoNothing(); // Avoid duplicates
+    }
+
+    // ✅ Handle references if provided (new: array of strings) – similar to tags
+    if (references.length > 0) {
+      const referenceRows = references.map((text: string) => ({
+        content_id: contentId,
+        text: text.trim(), // Store trimmed text
+        user_id: user.id, // Link to creator
+        created_at: new Date(), // Auto-timestamp if not in schema
+      }));
+
+      await db.insert(references_link).values(referenceRows).onConflictDoNothing(); // Avoid duplicates (e.g., by unique text/content_id if schema has constraint)
+    }
+
+    return NextResponse.json({ success: true, research: newResearch }); // FIXED: Return 'research' like post returns 'post'
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Create research error:", errorMessage);
+
+    if (errorMessage.includes("foreign key")) {
+      return NextResponse.json(
+        { success: false, error: "Invalid category_id, tag_id, or author_id." },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
+

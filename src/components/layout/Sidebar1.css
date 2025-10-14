@@ -25,8 +25,9 @@
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 18px; /* space between blocks */
-  width: 100%;
+  gap: 5px; /* space between blocks */
+  width: 216px;
+  
 }
 
 /* Section block */

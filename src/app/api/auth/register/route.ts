@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       .values({
         email,
         password_hash: hashedPassword,
-        role: "consumer",
+        role: "creator",
         status: "active",
       })
       .returning();

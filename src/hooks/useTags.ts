@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./useAuth"; // Import your useAuth hook
 
-interface Tag {
+export interface Tag {
   id: string; // UUID from schema
   name: string;
   status: string; // "approved" from API

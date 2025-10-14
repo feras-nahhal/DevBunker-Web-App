@@ -12,6 +12,7 @@ import {
   Bookmark,
   Settings,
 } from "lucide-react";
+import Image from "next/image";
 import "./Sidebar1.css";
 
 export default function Sidebar() {
@@ -48,7 +49,7 @@ export default function Sidebar() {
         <div className="menu-block">
           <div className="menu-label">Menu</div>
           <Link href="/dashboard/explore" className={getClass("/dashboard/explore")}>
-            <FileText size={18} />
+            <Image src="/explore.svg" alt="Add New Tag" width={24} height={24} />
             <span>Explore</span>
           </Link>
         </div>
@@ -57,15 +58,16 @@ export default function Sidebar() {
         <div className="menu-block">
           <div className="menu-label">Posts</div>
           <Link href="/dashboard/posts" className={getClass("/dashboard/posts")}>
-            <FileText size={18} />
+          <Image src="/post.svg" alt="Add New Tag" width={24} height={24} />
+           
             <span>Post List</span>
           </Link>
           <Link href="/dashboard/posts/drafts" className={getClass("/dashboard/posts/drafts")}>
-            <Pencil size={18} />
+            <Image src="/draft.svg" alt="Add New Tag" width={24} height={24} />
             <span>Draft</span>
           </Link>
           <Link href="/dashboard/posts/create" className={getClass("/dashboard/posts/create")}>
-            <Plus size={18} />
+            <Image src="/plus.svg" alt="Add New Tag" width={24} height={24} />
             <span>Add New</span>
           </Link>
         </div>
@@ -74,15 +76,15 @@ export default function Sidebar() {
         <div className="menu-block">
           <div className="menu-label">Mindmaps</div>
           <Link href="/dashboard/mindmaps" className={getClass("/dashboard/mindmaps")}>
-            <Brain size={18} />
+            <Image src="/mindmap.svg" alt="Add New Tag" width={24} height={24} />
             <span>Mind List</span>
           </Link>
           <Link href="/dashboard/mindmaps/drafts" className={getClass("/dashboard/mindmaps/drafts")}>
-            <Pencil size={18} />
+            <Image src="/draft.svg" alt="Add New Tag" width={24} height={24} />
             <span>Draft</span>
           </Link>
           <Link href="/dashboard/mindmaps/create" className={getClass("/dashboard/mindmaps/create")}>
-            <Plus size={18} />
+            <Image src="/plus.svg" alt="Add New Tag" width={24} height={24} />
             <span>Add New</span>
           </Link>
         </div>
@@ -91,15 +93,15 @@ export default function Sidebar() {
         <div className="menu-block">
           <div className="menu-label">Research</div>
           <Link href="/dashboard/research" className={getClass("/dashboard/research")}>
-            <Microscope size={18} />
+            <Image src="/Research.svg" alt="Add New Tag" width={24} height={24} />
             <span>Mind List</span>
           </Link>
           <Link href="/dashboard/research/drafts" className={getClass("/dashboard/research/drafts")}>
-            <Pencil size={18} />
+            <Image src="/draft.svg" alt="Add New Tag" width={24} height={24} />
             <span>Draft</span>
           </Link>
           <Link href="/dashboard/research/create" className={getClass("/dashboard/research/create")}>
-            <Plus size={18} />
+            <Image src="/plus.svg" alt="Add New Tag" width={24} height={24} />
             <span>Add New</span>
           </Link>
         </div>
@@ -108,11 +110,11 @@ export default function Sidebar() {
         <div className="menu-block">
           <div className="menu-label">Discover</div>
           <Link href="/dashboard/bookmarks" className={getClass("/dashboard/bookmarks", "menu-item")}>
-            <Bookmark size={20} />
+            <Image src="/bookmark.svg" alt="Add New Tag" width={24} height={24} />
             <span>Bookmarks</span>
           </Link>
           <Link href="/dashboard/read-later" className={getClass("/dashboard/read-later", "menu-item")}>
-            <Bookmark size={20} />
+            <Image src="/readlater.svg" alt="Add New Tag" width={24} height={24} />
             <span>Read-later</span>
           </Link>
         </div>
@@ -121,11 +123,11 @@ export default function Sidebar() {
         <div className="menu-block">
           <div className="menu-label">Update</div>
           <Link href="/dashboard/notifications" className={getClass("/dashboard/notifications", "menu-item")}>
-            <Bookmark size={20} />
+            <Image src="/notfication.svg" alt="Add New Tag" width={24} height={24} />
             <span>Notifications</span>
           </Link>
           <Link href="/dashboard/settings" className={getClass("/dashboard/settings", "menu-item")}>
-            <Settings size={20} />
+            <Image src="/setting.svg" alt="Add New Tag" width={24} height={24} />
             <span>Settings</span>
           </Link>
         </div>

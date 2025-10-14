@@ -1,18 +1,42 @@
 "use client";
-
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth"
+import { useEffect } from "react";
 import Image from "next/image";
-import Header from "@/components/layout/Header";
+import HeaderOther from "@/components/layout/HeaderOther";
 import Sidebar from "@/components/layout/Sidebar";
 import "./ExplorePage.css";
-import SettingsPopup from "@/components/content/SettingsPage";
 import SettingsPage from "@/components/content/SettingsPage";
 
 export default function ExplorePage() {
+  // 🔐 Auth & Redirect Logic
+        const router = useRouter();
+        const { token, loading } = useAuth();
+      
+        useEffect(() => {
+          if (!loading && !token) {
+            router.push("/auth/login");
+          }
+        }, [loading, token, router]);
+      
+        // 🛑 Don’t render CategoryGrid until we know user is logged in
+        if (loading || !token) {
+            return (
+              <div className="dashboard">
+                <Sidebar />
+                <div className="main-content">
+                  <p className="text-center text-gray-400 mt-10">Loading...</p>
+                </div>
+              </div>
+            );
+          }
+        if (!token) return null; // ✅ Prevents unauthorized API call before redirect
+  
   return (
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        <Header />
+        <HeaderOther />
 
         <div className="explore-container">
           {/* 🔹 Menu / Explore Title Row */}

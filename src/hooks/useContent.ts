@@ -27,6 +27,13 @@ export function useContent({
     research: "research",
   };
 
+  // FIXED: Map endpoint to response key (handles irregular plurals like "research")
+  const responseKeyMap: Record<Exclude<ContentType, "all">, string> = {
+    post: "post",
+    mindmap: "mindmap",
+    research: "research", // No slice – direct key from API
+  };
+
   /** -----------------------------
    * 🟢 Fetch all content (or filtered)
    * ----------------------------- */
@@ -81,12 +88,13 @@ export function useContent({
     async (id: string) => {
       if (type === "all") throw new Error("Specify a content type for getById.");
       const endpoint = endpointMap[type];
+      const responseKey = responseKeyMap[type];
       try {
         setLoading(true);
         const res = await fetch(`/api/content/${endpoint}/${id}`);
         const json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || "Failed to get content");
-        return json[endpoint.slice(0, -1)];
+        return json[responseKey]; // FIXED: Use map for key
       } catch (err: any) {
         setError(err.message);
         throw err;
@@ -98,40 +106,49 @@ export function useContent({
   );
 
   /** -----------------------------
- * 🟡 Create
- * ----------------------------- */
-const createContent = useCallback(
-  async (
-    newData: Partial<AnyContent> & { tag_ids?: string[]; status?: CONTENT_STATUS; },
-    token?: string
-  ) => {
-    if (type === "all") throw new Error("Specify a content type for creation.");
-    const endpoint = endpointMap[type];
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/content/${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(newData),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success)
-        throw new Error(json.error || "Failed to create content");
-      await fetchContent();
-      return json[endpoint.slice(0, -1)];
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  },
-  [type, fetchContent]
-);
-
+   * 🟡 Create (FIXED: Proper key mapping + wrapped return)
+   * ----------------------------- */
+  const createContent = useCallback(
+    async (
+      newData: Partial<AnyContent> & { tag_ids?: string[]; status?: CONTENT_STATUS; references?: string[] }, // Added references support
+      token?: string
+    ) => {
+      if (type === "all") throw new Error("Specify a content type for creation.");
+      const endpoint = endpointMap[type];
+      const responseKey = responseKeyMap[type];
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/content/${endpoint}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(newData), // Passes full data (including references/tag_ids)
+        });
+        const json = await res.json();
+        console.log("Hook API Response (raw):", json); // DEBUG: Log full response
+        if (!res.ok || !json.success)
+          throw new Error(json.error || "Failed to create content");
+        
+        const createdContent = json[responseKey]; // FIXED: Use map for key (e.g., "research" for research)
+        if (!createdContent) {
+          throw new Error(`No content returned in response for ${type}`);
+        }
+        
+        await fetchContent(); // Refetch list
+        // FIXED: Return wrapped response for frontend consistency (success + data)
+        return { success: true, data: createdContent };
+      } catch (err: any) {
+        setError(err.message);
+        console.error("Hook createContent error:", err);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [type, fetchContent]
+  );
 
   /** -----------------------------
    * 🔵 Update

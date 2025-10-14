@@ -192,15 +192,17 @@ export default function ContentCard({
           }}
         >
           <div className="flex items-center justify-center w-[80px] h-[32px] relative">
-            <div className="w-full h-full rounded-full bg-white/[0.08] border border-white/20 backdrop-blur-[12px] flex items-center justify-center text-[13px] text-white font-semibold relative overflow-hidden shadow-[0_0_8px_rgba(255,255,255,0.2),0_0_15px_rgba(255,255,255,0.1)]">
+            <div className="relative flex items-center justify-center w-[90px] h-[28px] rounded-full 
+    bg-[rgba(239,214,255,0.05)] backdrop-blur-[10px] 
+    shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] isolate overflow-hidden">
               <span
-                className={`absolute inset-0 rounded-full blur-lg opacity-80 ${
+                className={`absolute inset-0 rounded-full z-0 ${
                   {
-                    post: "bg-[radial-gradient(circle,rgba(255,215,0,0.85)_0%,transparent_85%)]",
-                    mindmap: "bg-[radial-gradient(circle,rgba(30,144,255,0.85)_0%,transparent_85%)]",
-                    research:
-                      "bg-[radial-gradient(circle,rgba(50,205,50,0.85)_0%,transparent_85%)]",
-                  }[type]
+                  post: "bg-[linear-gradient(89.65deg,rgba(255,140,0,0.15)_0%,#FFA500_50%,rgba(255,140,0,0.15)_100%)]",
+                  mindmap: "bg-[linear-gradient(89.65deg,rgba(30,144,255,0.15)_0%,#1E90FF_50%,rgba(30,144,255,0.15)_100%)]",
+                  research: "bg-[linear-gradient(89.65deg,rgba(34,197,94,0.15)_0%,#22C55E_50%,rgba(34,197,94,0.15)_100%)]",
+                }
+                [type]
                 }`}
               />
               <span className="relative z-10">{type}</span>
@@ -211,18 +213,27 @@ export default function ContentCard({
 
           <div className="flex flex-wrap gap-2 w-[269px]">
             {tags.length > 0 ? (
-              tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 border border-gray-700/30 rounded-full text-[12px] text-gray-400"
-                >
-                  {tag}
-                </span>
-              ))
+                <>
+                {tags.slice(0, 4).map((tag) => (
+                    <span
+                    key={tag}
+                    className="px-2 py-1 border border-gray-700/30 rounded-full text-[12px] text-gray-400"
+                    >
+                    {tag}
+                    </span>
+                ))}
+
+                {tags.length > 4 && (
+                    <span className="px-2 py-1 border border-gray-700/30 rounded-full text-[12px] text-gray-400">
+                    +{tags.length - 4}
+                    </span>
+                )}
+                </>
             ) : (
-              <span className="text-gray-500 text-sm">No tags</span>
+                <span className="text-gray-500 text-sm">No tags</span>
             )}
-          </div>
+            </div>
+
 
           <div className="flex flex-row items-center justify-between w-[269px] h-[44px]">
             <div className="flex flex-row items-center gap-2">

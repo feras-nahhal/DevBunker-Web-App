@@ -23,6 +23,7 @@ export interface Category {
   name: string;
   description?: string;
   status: TAG_CATEGORY_STATUS;
+  authorEmail?: string;
   created_by?: string;
   created_at?: string;
 }
@@ -31,6 +32,7 @@ export interface Tag {
   id: string;
   name: string;
   status: TAG_CATEGORY_STATUS;
+  authorEmail?: string; // NEW: email of tag creator
   created_by?: string;
   created_at?: string;
 }
@@ -99,7 +101,7 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: NOTIFICATION_TYPES;
+  type: string; // Use string here; map to NOTIFICATION_TYPES in code
   read: boolean;
   created_at?: string;
 }

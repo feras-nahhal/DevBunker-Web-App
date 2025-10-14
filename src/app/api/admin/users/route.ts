@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
+import { USER_ROLES, USER_STATUS } from "@/lib/enums";
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
 
 // GET /api/admin/users → list all users
 export async function GET(req: NextRequest) {
@@ -25,14 +28,40 @@ export async function POST(req: NextRequest) {
   if (authResult instanceof Response) return authResult;
 
   try {
-    const body = await req.json();
+    const { email, password, role } = await req.json();
 
-    // Optional: validate body here, e.g., email, password, role
-    const [newUser] = await db.insert(users).values(body).returning();
+    // Validate role
+    const userRole = Object.values(USER_ROLES).includes(role) ? role : USER_ROLES.CONSUMER;
+
+    // Check if user exists
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+
+    if (existingUser) {
+      return NextResponse.json(
+        { success: false, error: "Email already registered" },
+        { status: 409 }
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email,
+        password_hash: hashedPassword,
+        role: userRole,
+        status: USER_STATUS.ACTIVE,
+      })
+      .returning();
+
     return NextResponse.json({ success: true, user: newUser });
   } catch (err: unknown) {
     console.error("Create user error:", err);
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 400 });
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useComments } from "@/hooks/useComments"; // ✅ import the hook
 
-interface ContentCardProps {
+interface DraftCardProps {
   id: string;
   title: string;
   type: "post" | "mindmap" | "research";
@@ -14,6 +15,7 @@ interface ContentCardProps {
   comments?: number;
   author_id: string;     // 👈 show instead of id in header
   authorEmail?: string;  // 👈 new prop
+  onOpenComments?: () => void;
 }
 
 export default function DraftCard({
@@ -26,11 +28,15 @@ export default function DraftCard({
   comments: initialComments = 0,
   author_id,
   authorEmail,
-}: ContentCardProps) {
+  onOpenComments,
+
+}: DraftCardProps) {
   const [votes, setVotes] = useState(initialVotes);
   const [comments] = useState(initialComments);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const { comments: commentsData, loading: commentsLoading } = useComments(id); // ✅ hook usage
 
   // type → image map
   const typeImages: Record<"post" | "mindmap" | "research", string> = {
@@ -75,19 +81,29 @@ export default function DraftCard({
     
 
         {/* Image */}
-        <Link
-          href={`/content/${id}`}
-          className="mt-2 block rounded-[14px] overflow-hidden"
-          style={{ width: "300px", height: "216.64px" }}
-        >
-          <Image
+
+        <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenComments && onOpenComments();
+                      }}
+                      className="mt-2 block rounded-[14px] overflow-hidden"
+                      style={{ width: "300px", height: "216.64px" }}
+                    >
+                      <Image
             src={displayImage}
             alt={title}
             width={300}
             height={216}
             className="object-cover w-full h-full hover:scale-[1.02] transition-transform duration-300"
-          />
-        </Link>
+          
+                      />
+                      {/* ✅ Display number of comments */}
+                      <span className="text-sm text-gray-400">
+                        {commentsLoading ? "..." : commentsData.length}
+                      </span>
+                    </button>
+        
 
         {/* Inner Bottom Box */}
         <div

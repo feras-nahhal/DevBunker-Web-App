@@ -64,6 +64,7 @@ export function useAuth() {
   }, []);
 
   /** Login user */
+  /** Login user (UPDATED: Returns user on success, null on failure) */
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -73,19 +74,17 @@ export function useAuth() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data: AuthResult = await res.json();
-      if (!data.success || !data.token) {
+      if (!data.success || !data.token || !data.user) {
         setError(data.error || "Login failed");
-        return false;
+        return null; // Return null on failure
       }
-
       saveToken(data.token); // Now SSR-safe
-      setUser (data.user || null);
-      return true;
+      setUser(data.user); // Set state
+      return data.user; // UPDATED: Return user for immediate access in component
     } catch (err) {
       setError("Network error during login");
-      return false;
+      return null; // Return null on error
     } finally {
       setLoading(false);
     }

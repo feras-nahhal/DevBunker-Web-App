@@ -1,0 +1,25 @@
+<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<foreignObject x="-208.765" y="-208.015" width="441.529" height="441.529"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(105.88px);clip-path:url(#bgblur_0_10003_16225_clip_path);height:100%;width:100%"></div></foreignObject><g filter="url(#filter0_ii_10003_16225)" data-figma-bg-blur-radius="211.765">
+<path d="M12 21.75C7.02578 21.75 3 17.7247 3 12.75C3 7.77578 7.02528 3.75 12 3.75C16.9743 3.75 21 7.77528 21 12.75C21 17.7243 16.9747 21.75 12 21.75Z" fill="white" fill-opacity="0.05"/>
+</g>
+<path d="M14.9761 8.97302C15.1993 8.86567 15.4277 8.90812 15.5933 9.03259C15.6403 9.06797 15.6829 9.10953 15.7183 9.15662C15.8425 9.32207 15.8842 9.55062 15.7769 9.7738L13.6753 14.1449C13.6458 14.2061 13.6064 14.2616 13.5591 14.309C13.5116 14.3565 13.4555 14.3956 13.394 14.4252L12.0005 15.0961V15.0951L9.02393 16.5267C8.51328 16.7724 7.97863 16.2345 8.22314 15.726L10.3247 11.3558C10.3837 11.2331 10.4833 11.1336 10.606 11.0746L14.9761 8.97302Z" fill="white"/>
+<defs>
+<filter id="filter0_ii_10003_16225" x="-208.765" y="-208.015" width="441.529" height="441.529" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="2.11765"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="shape" result="effect1_innerShadow_10003_16225"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="-6.35294"/>
+<feGaussianBlur stdDeviation="5.29412"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.18 0"/>
+<feBlend mode="normal" in2="effect1_innerShadow_10003_16225" result="effect2_innerShadow_10003_16225"/>
+</filter>
+<clipPath id="bgblur_0_10003_16225_clip_path" transform="translate(208.765 208.015)"><path d="M12 21.75C7.02578 21.75 3 17.7247 3 12.75C3 7.77578 7.02528 3.75 12 3.75C16.9743 3.75 21 7.77528 21 12.75C21 17.7243 16.9747 21.75 12 21.75Z"/>
+</clipPath></defs>
+</svg>

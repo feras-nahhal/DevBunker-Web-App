@@ -1,5 +1,8 @@
 "use client";
-
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // ✅ For redirect
+import { useAuth } from "@/hooks/useAuth"; // ✅ For auth context
+import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
@@ -7,34 +10,85 @@ import ContentGrid from "@/components/content/ContentGrid";
 import "./MindmapPage.css";
 
 export default function MindmapPage() {
+  const router = useRouter();
+  const { user, loading } = useAuth(); // ✅ check auth state
+
+  // 🔐 Redirect if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/login");
+    }
+  }, [user, loading, router]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<Record<string, string>>({
+    status: "",
+    category: "",
+  });
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  useEffect(() => {
+    setFilters((prev) => ({ ...prev, q: debouncedSearchQuery }));
+  }, [debouncedSearchQuery]);
+
+  const handleSearchChange = (q: string) => {
+    setSearchQuery(q);
+  };
+
+  const handleFiltersChange = (newFilters: Record<string, string>) => {
+    setFilters((prev) => ({
+      ...prev,
+      ...newFilters,
+      q: debouncedSearchQuery,
+    }));
+  };
+
+  // 🚫 Prevent rendering UI until auth check finishes
+  if (loading || (!user && !loading)) return(
+                <div className="dashboard">
+                  <Sidebar />
+                  <div className="main-content">
+                    <p className="text-center text-gray-400 mt-10">Loading...</p>
+                  </div>
+                </div>
+              );;
+
   return (
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        <Header />
+        <Header
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+        />
 
         <div className="mindmap-container">
-          {/* 🔹 Menu / mindmap Title Row */}
+          {/* 🔹 Menu / Mindmap Title Row */}
           <div className="flex items-center mb-4">
             <Image
-              src="/mindmap.png" // ✅ make sure image path is correct
+              src="/mindmap.png"
               alt="Menu Icon"
-              width={20} // Figma-like size (clean & aligned)
+              width={20}
               height={20}
-              className="object-contain mr-[4px] relative top-[1px]" // 👈 tight spacing & perfect vertical alignment
+              className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
               className="font-[400] text-[12px] leading-[22px] text-[#707070]"
-              style={{
-                fontFamily: "'Public Sans', sans-serif",
-              }}
+              style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
-              Mind Map /Mind Map List
+              Mind Map / Mind Map List
             </h2>
           </div>
 
           {/* 🔹 Grid Section */}
-          <ContentGrid type="mindmap" />
+          <ContentGrid
+            type="mindmap"
+            searchQuery={searchQuery}
+            filters={filters}
+          />
         </div>
       </div>
     </div>

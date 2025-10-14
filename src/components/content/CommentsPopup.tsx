@@ -1,6 +1,9 @@
 "use client";
+
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useReferences } from "@/hooks/useReferences";
+
 
 type ApiComment = {
   id: string;
@@ -20,6 +23,7 @@ interface CommentsPopupProps {
   title: string;
   content_body: string;
   comments: ApiComment[];
+  tags?: string[]; // ✅ Added tags prop
   onClose: () => void;
   onAddComment: (text: string, parentId?: string) => Promise<void>;
 }
@@ -29,6 +33,7 @@ export default function CommentsPopup({
   title,
   content_body,
   comments = [],
+  tags = [], // ✅ Destructure tags with default empty array
   onClose,
   onAddComment,
 }: CommentsPopupProps) {
@@ -36,6 +41,9 @@ export default function CommentsPopup({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeReplies, setActiveReplies] = useState<{ [key: string]: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
+  
+  const { references, loading: refsLoading, error: refsError } = useReferences(id);
+
 
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
@@ -272,6 +280,124 @@ export default function CommentsPopup({
 
           {/* New Comment */}
           <div className="w-full mb-4 flex flex-col items-center">
+
+
+            {/* ✅ Tags section (before comment input box, with label and pill container design) */}
+            {tags.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+                <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>Tags</label>
+
+                {/* Unified tag display container (pills in box, no input/dropdown since view-only) */}
+                <div style={{ 
+                  position: "relative", 
+                  width: "855px",
+                  border: "1px solid rgba(80, 80, 80, 0.24)",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "8px",
+                  height: "64px",
+                  minHeight: "44px",
+                  display: "flex",
+                  flexDirection: "column",
+                  marginBottom: "8px",
+                }}>
+                  {/* Pills Row (flex wrap for multi-line if many pills) */}
+                  <div style={{ 
+                    display: "flex", 
+                    flexWrap: "wrap", 
+                    gap: "4px", 
+                    alignItems: "center",
+                    flex: 1,
+                  }}>
+                    {/* Display tags as pills (no remove ×, just design) */}
+                    {tags.map((tag) => (
+                      <div
+                        key={tag}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "4px 8px",
+                          borderRadius: "99px",
+                          background: "rgba(145, 158, 171, 0.12)",
+                          color: "white",
+                          height: "32px",
+                          fontSize: "12px",
+                          maxWidth: "150px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {tag}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+                {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
+            {references.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+                <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
+
+                <div
+                  style={{
+                    position: "relative",
+                    width: "855px",
+                    border: "1px solid rgba(80, 80, 80, 0.24)",
+                    borderRadius: "16px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    padding: "8px",
+                    minHeight: "44px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {references.map((ref) => (
+                    <div
+                      key={ref.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "6px 10px",
+                        borderRadius: "16px", // keep pill shape
+                        background: "transparent", // transparent background
+                        border: "1px solid rgba(80, 80, 80, 0.24)", // ⚪ soft white border
+                        color: "#5BE49B", // 🟢 green text
+                        height: "32px",
+                        fontSize: "12px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      <span
+                        style={{
+                          flex: 1,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {ref.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {refsLoading && <p style={{ color: "gray", fontSize: "12px" }}>Loading references...</p>}
+            {refsError && <p style={{ color: "red", fontSize: "12px" }}>{refsError}</p>}
+            {!refsLoading && references.length === 0 && (
+              <p style={{ color: "gray", fontSize: "12px" }}>No references found.</p>
+            )}
+
+
+
             {/* Label with superscript counter */}
             <div className="w-[855px] flex justify-start items-center mb-2">
               <label className="text-white font-bold text-[20px] leading-[22px] font-public-sans">
@@ -279,6 +405,8 @@ export default function CommentsPopup({
                 <sup className="text-gray-400 text-xs ml-1">{200 - newCommentText.length}</sup>
               </label>
             </div>
+
+            
 
             {/* Textarea */}
             <textarea

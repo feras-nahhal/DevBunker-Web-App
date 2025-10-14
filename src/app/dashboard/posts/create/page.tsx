@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -7,9 +7,8 @@ import Sidebar from "@/components/layout/Sidebar";
 import CreatePageHeader from "@/components/layout/CreatePageHeader";
 import { useContent, ContentType } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
-import { AnyContent} from "@/types/content"; 
+import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
-
 import "./PostPage.css";
 
 // ✅ Define Tag type (or import from types/content.ts)
@@ -31,7 +30,7 @@ export default function PostPage() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  const { loading: authLoading, token, isAuthenticated } = useAuth();
+  const { loading: authLoading, token, isAuthenticated, user } = useAuth(); // ✅ Added user for redirect check
   const router = useRouter();
 
   const { createContent, loading: contentLoading, refetch } = useContent({
@@ -40,6 +39,13 @@ export default function PostPage() {
   });
 
   const isLoading = authLoading || contentLoading || saving;
+
+  // 🔐 Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login");
+    }
+  }, [authLoading, user, router]);
 
   // ✅ Cancel → clear & navigate
   const handleCancel = () => {
@@ -55,17 +61,17 @@ export default function PostPage() {
     setSaving(true);
     try {
       console.log("🧭 Final Category ID Sent:", selectedCategoryId);
-      
-      // ✅ Explicitly type newPostData to match Partial<AnyContent> (allows category_id: string | null)
-      const newPostData: Partial<AnyContent> & { 
-        tag_ids?: string[]; 
-        status: string; 
-        category_id?: string | null; // ✅ Explicit null allowance
+
+      // ✅ Explicitly type newPostData to match Partial<AnyContent>
+      const newPostData: Partial<AnyContent> & {
+        tag_ids?: string[];
+        status: string;
+        category_id?: string | null;
       } = {
         title,
-        content_body: body, // Maps to content_body in schema
-        status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT, // Use enum values
-        category_id: selectedCategoryId ?? undefined, // ✅ Send null directly (schema allows it)
+        content_body: body,
+        status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT,
+        category_id: selectedCategoryId ?? undefined,
         tag_ids: selectedTags.map((t) => t.id),
       };
 
@@ -88,16 +94,15 @@ export default function PostPage() {
   const handleSaveAsDraft = () => handleSave(false);
   const handleSavePublish = () => handleSave(true);
 
-  if (authLoading) {
-    return (
-      <div className="dashboard">
-        <Sidebar />
-        <div className="main-content">
-          <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
+  // 🚫 Prevent rendering UI until auth finishes or user is redirected
+  if (authLoading || (!user && !authLoading)) return  (
+        <div className="dashboard">
+          <Sidebar />
+          <div className="main-content">
+            <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );;
 
   return (
     <div className="dashboard">
@@ -111,9 +116,10 @@ export default function PostPage() {
         />
 
         <div className="post-container">
+          {/* 🔹 Header row */}
           <div className="flex items-center mb-4">
             <Image
-              src="/postlogo.png"
+              src="/pen.svg"
               alt="Post Icon"
               width={20}
               height={20}
@@ -121,20 +127,19 @@ export default function PostPage() {
             />
             <h2
               className="font-[400] text-[12px] leading-[22px] text-[#707070]"
-              style={{
-                fontFamily: "'Public Sans', sans-serif",
-              }}
+              style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
               Post / Create Post
             </h2>
           </div>
 
+          {/* 🔹 Editor */}
           <CreatePostEditor
             title={title}
             body={body}
             onTitleChange={setTitle}
             onBodyChange={setBody}
-            onTagsChange={setSelectedTags} 
+            onTagsChange={setSelectedTags}
             onCategoryChange={setSelectedCategoryId}
           />
         </div>

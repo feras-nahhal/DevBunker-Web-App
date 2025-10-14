@@ -1,57 +1,77 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { Bookmark, ReadLater } from "@/types/content";
 
 interface UseSavedContentOptions {
   autoFetch?: boolean;
 }
 
-export function useBookmarksAndReadLater({ autoFetch = true }: UseSavedContentOptions = {}) {
+/**
+ * Custom hook to manage Bookmarks & Read Later content.
+ * - Prevents unnecessary API calls when not on relevant pages.
+ * - Only fetches once per session (unless manually refetched).
+ */
+export function useBookmarksAndReadLater({
+  autoFetch = true,
+}: UseSavedContentOptions = {}) {
+  const pathname = usePathname();
+
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [readLater, setReadLater] = useState<ReadLater[]>([]);
-  const [loading, setLoading] = useState<boolean>(autoFetch);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token") || undefined
       : undefined;
 
+  // Only fetch when user is on /bookmarks or /read-later pages
+  const shouldFetch =
+    pathname.includes("bookmarks") || pathname.includes("read-later");
+
   /** -----------------------------
-   * 🟢 Fetch Bookmarks & Read Later
+   * 🟢 Fetch Bookmarks
    * ----------------------------- */
   const fetchBookmarks = useCallback(async () => {
+    if (!token) return;
     try {
       setLoading(true);
-      setError(null);
       const res = await fetch("/api/bookmarks", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.error || "Failed to fetch bookmarks");
+      if (!res.ok || !json.success)
+        throw new Error(json.error || "Failed to fetch bookmarks");
       setBookmarks(json.bookmarks || []);
     } catch (err: any) {
-      setError(err.message);
       console.error("useBookmarks fetch error:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   }, [token]);
 
+  /** -----------------------------
+   * 🟢 Fetch Read Later
+   * ----------------------------- */
   const fetchReadLater = useCallback(async () => {
+    if (!token) return;
     try {
       setLoading(true);
-      setError(null);
       const res = await fetch("/api/read-later", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.error || "Failed to fetch read-later items");
+      if (!res.ok || !json.success)
+        throw new Error(json.error || "Failed to fetch read-later");
       setReadLater(json.items || []);
     } catch (err: any) {
-      setError(err.message);
       console.error("useReadLater fetch error:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -73,7 +93,8 @@ export function useBookmarksAndReadLater({ autoFetch = true }: UseSavedContentOp
           body: JSON.stringify({ content_id: contentId }),
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || "Failed to add bookmark");
+        if (!res.ok || !json.success)
+          throw new Error(json.error || "Failed to add bookmark");
         await fetchBookmarks();
         return json.bookmark;
       } catch (err: any) {
@@ -97,7 +118,8 @@ export function useBookmarksAndReadLater({ autoFetch = true }: UseSavedContentOp
           body: JSON.stringify({ content_id: contentId }),
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || "Failed to add read-later item");
+        if (!res.ok || !json.success)
+          throw new Error(json.error || "Failed to add read-later item");
         await fetchReadLater();
         return json.item;
       } catch (err: any) {
@@ -120,7 +142,8 @@ export function useBookmarksAndReadLater({ autoFetch = true }: UseSavedContentOp
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || "Failed to delete bookmark");
+        if (!res.ok || !json.success)
+          throw new Error(json.error || "Failed to delete bookmark");
         await fetchBookmarks();
         return true;
       } catch (err: any) {
@@ -133,14 +156,16 @@ export function useBookmarksAndReadLater({ autoFetch = true }: UseSavedContentOp
 
   const deleteReadLater = useCallback(
     async (id: string) => {
-      if (!token) throw new Error("You must be logged in to remove a read-later item.");
+      if (!token)
+        throw new Error("You must be logged in to remove a read-later item.");
       try {
         const res = await fetch(`/api/read-later/${id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || "Failed to delete read-later item");
+        if (!res.ok || !json.success)
+          throw new Error(json.error || "Failed to delete read-later item");
         await fetchReadLater();
         return true;
       } catch (err: any) {
@@ -152,15 +177,19 @@ export function useBookmarksAndReadLater({ autoFetch = true }: UseSavedContentOp
   );
 
   /** -----------------------------
-   * ♻️ Auto Fetch
+   * ♻️ Auto Fetch — Only Once
    * ----------------------------- */
   useEffect(() => {
-    if (autoFetch) {
+    if (autoFetch && shouldFetch && !initialized) {
+      setInitialized(true);
       fetchBookmarks();
       fetchReadLater();
     }
-  }, [fetchBookmarks, fetchReadLater, autoFetch]);
+  }, [autoFetch, shouldFetch, initialized, fetchBookmarks, fetchReadLater]);
 
+  /** -----------------------------
+   * 🔁 Return API
+   * ----------------------------- */
   return {
     bookmarks,
     readLater,
