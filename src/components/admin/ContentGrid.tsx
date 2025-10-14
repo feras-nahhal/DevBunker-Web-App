@@ -402,7 +402,6 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
           title={selectedContent.title}
           content_body={"content_body" in selectedContent ? selectedContent.content_body || "" : ""}
           comments={comments}
-          tags={(selectedContent as any).tags || []}
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
         />

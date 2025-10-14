@@ -214,7 +214,7 @@ export default function ResearchGrid({
                                       : ""
                                   }
                                   comments={comments}
-                                  tags={(selectedContent as any).tags || []}
+                                 
                                   onClose={() => setIsPopupOpen(false)}
                                   onAddComment={handleAddComment}
                 />

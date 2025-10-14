@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useReferences } from "@/hooks/useReferences";
+import { useContentTags } from "@/hooks/useContentTags";
+
 
 type ApiComment = {
   id: string;
@@ -22,7 +24,7 @@ interface CommentsPopupProps {
   title: string;
   content_body: string;
   comments: ApiComment[];
-  tags?: string[]; // ✅ Added tags prop
+  
   onClose: () => void;
   onAddComment: (text: string, parentId?: string) => Promise<void>;
 }
@@ -32,7 +34,7 @@ export default function CommentsPopup({
   title,
   content_body,
   comments = [],
-  tags = [], // ✅ Destructure tags with default empty array
+  
   onClose,
   onAddComment,
 }: CommentsPopupProps) {
@@ -42,6 +44,13 @@ export default function CommentsPopup({
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const { references, loading: refsLoading, error: refsError } = useReferences(id);
+  const { tags, loading: tagsLoading, error: tagsError, fetchTags } = useContentTags();
+
+    useEffect(() => {
+      if (id) fetchTags(id);
+    }, [id]);
+
+
 
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
@@ -310,7 +319,7 @@ export default function CommentsPopup({
                     {/* Display tags as pills (no remove ×, just design) */}
                     {tags.map((tag) => (
                       <div
-                        key={tag}
+                        key={tag.id}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -326,7 +335,7 @@ export default function CommentsPopup({
                         }}
                       >
                         <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {tag}
+                         {tag.name}
                         </span>
                       </div>
                     ))}

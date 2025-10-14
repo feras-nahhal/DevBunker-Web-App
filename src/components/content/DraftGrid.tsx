@@ -221,7 +221,6 @@ export default function DraftGrid({
                       : ""
                   }
                   comments={comments}
-                  tags={(selectedContent as any).tags || []}
                   onClose={() => setIsPopupOpen(false)}
                   onAddComment={handleAddComment}
         />

@@ -52,6 +52,7 @@ export interface BaseContent {
   content_type: CONTENT_TYPES;
   created_at?: string;
   updated_at?: string;
+
 }
 
 // ---------------------------
