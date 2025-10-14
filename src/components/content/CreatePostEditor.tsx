@@ -327,35 +327,35 @@ export default function CreatePostEditor({
         </div>
       )}
 
-      // {/* ===== CATEGORY POPUP ===== */}
-{showCategoryPopup && (
-  <div className="category-popup-container" onClick={() => setShowCategoryPopup(false)}>
-    <div className="category-popup" onClick={(e) => e.stopPropagation()}>
-      <h3 className="popup-title">Category</h3>
-      {categoriesLoading ? (
-        <div className="popup-loading">Loading categories...</div>
-      ) : categoriesError ? (
-        <div className="popup-error">Error loading categories</div>
-      ) : (
-        <select
-          className="toolbar-select"
-          value={selectedCategory?.id || "0"}
-          onChange={(e) => {
-            handleCategoryChange(e.target.value);
-            setShowCategoryPopup(false); // ✅ Auto-close after any change (select or deselect)
-          }}
-        >
-          <option value="0">Select a Category</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      )}
-    </div>
-  </div>
-)}
+    {/* ===== CATEGORY POPUP ===== */}
+        {showCategoryPopup && (
+          <div className="category-popup-container" onClick={() => setShowCategoryPopup(false)}>
+            <div className="category-popup" onClick={(e) => e.stopPropagation()}>
+              <h3 className="popup-title">Category</h3>
+              {categoriesLoading ? (
+                <div className="popup-loading">Loading categories...</div>
+              ) : categoriesError ? (
+                <div className="popup-error">Error loading categories</div>
+              ) : (
+                <select
+                  className="toolbar-select"
+                  value={selectedCategory?.id || "0"}
+                  onChange={(e) => {
+                    handleCategoryChange(e.target.value);
+                    setShowCategoryPopup(false); // ✅ Auto-close after any change (select or deselect)
+                  }}
+                >
+                  <option value="0">Select a Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+        )}
 
       {/* End Category Popup */}
             <style jsx>{`

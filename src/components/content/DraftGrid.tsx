@@ -4,6 +4,7 @@ import CommentsPopup from "./CommentsPopup";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import DraftCard from "./DraftCard";
+import { AnyContent, Comment } from "@/types/content";
 
 interface DraftGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -21,41 +22,37 @@ export default function DraftGrid({
   const { user } = useAuth();
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+
 
   const token =
     typeof window !== "undefined" // FIXED: Typo was "" -> "undefined"
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-  // ✅ Fetch comments for a content item
+  /** 🗨️ Comments */
   const fetchComments = async (contentId: string) => {
     try {
       const res = await fetch(`/api/comments?content_id=${contentId}`);
-      if (!res.ok) throw new Error("Failed to fetch comments");
-      const data = await res.json();
-      if (data.success) setComments(data.comments || []);
-      else throw new Error(data.error || "Unknown error");
+      const json = await res.json();
+      if (json.success) setComments(json.comments || []);
+      else setComments([]);
     } catch (err) {
       console.error("Error fetching comments:", err);
       setComments([]);
     }
   };
 
-  // ✅ Open comments popup
-  const handleOpenComments = async (content: any) => {
+  const handleOpenComments = async (content: AnyContent) => {
     setSelectedContent(content);
     await fetchComments(content.id);
     setIsPopupOpen(true);
   };
 
-  // ✅ Add a comment or reply
   const handleAddComment = async (text: string, parentId?: string) => {
-    if (!token) {
-      alert("You must be logged in to comment.");
-      return;
-    }
+    if (!token) return alert("You must be logged in to comment.");
+    if (!selectedContent) return;
 
     try {
       const res = await fetch(`/api/comments`, {
@@ -71,9 +68,8 @@ export default function DraftGrid({
         }),
       });
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-      await fetchComments(selectedContent.id); // Refresh comments
+      const json = await res.json();
+      if (json.success) await fetchComments(selectedContent.id);
     } catch (err) {
       console.error("Failed to post comment:", err);
       alert("Failed to post comment.");
@@ -217,13 +213,17 @@ export default function DraftGrid({
       {/* 🟢 Comments Popup */}
       {isPopupOpen && selectedContent && (
         <CommentsPopup
-          id={selectedContent.id}
-          title={selectedContent.title}
-          content_body={selectedContent.content_body}
-          comments={comments}
-          tags={selectedContent.tags || []}
-          onClose={() => setIsPopupOpen(false)}
-          onAddComment={handleAddComment}
+                  id={selectedContent.id}
+                  title={selectedContent.title}
+                  content_body={
+                    "content_body" in selectedContent
+                      ? selectedContent.content_body || ""
+                      : ""
+                  }
+                  comments={comments}
+                  tags={(selectedContent as any).tags || []}
+                  onClose={() => setIsPopupOpen(false)}
+                  onAddComment={handleAddComment}
         />
       )}
     </>

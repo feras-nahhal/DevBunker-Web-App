@@ -2,19 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "./useAuth"; // Import your useAuth hook
+import type { Tag } from "@/types/content";
 
-export interface Tag {
-  id: string; // UUID from schema
-  name: string;
-  status: string; // "approved" from API
-  created_by?: string; // Optional UUID
-  created_at?: Date; // Optional timestamp
-}
 
 interface RequestResult {
   success: boolean;
   error?: string;
-  request?: any; // The inserted request object from API (if success)
+  request?: Tag; // instead of any // The inserted request object from API (if success)
 }
 
 export function useTags() {
@@ -41,10 +35,10 @@ export function useTags() {
       }
       const data = await response.json();
       if (data.success) {
-        const parsed = (data.tags || []).map((tag: any) => ({
-          ...tag,
-          created_at: tag.created_at ? new Date(tag.created_at) : undefined,
-        }));
+        const parsed: Tag[] = (data.tags as Tag[]).map((tag) => ({
+        ...tag,
+        created_at: tag.created_at ? new Date(tag.created_at).toISOString() : undefined,
+      }));
         setTags(parsed);
       } else {
         throw new Error(data.error || "Failed to fetch tags");

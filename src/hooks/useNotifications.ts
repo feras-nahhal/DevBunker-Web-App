@@ -13,6 +13,17 @@ interface Notification {
   created_at: string;
 }
 
+interface NotificationAPI {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string; // plain string from DB
+  read: boolean;
+  created_at: string;
+}
+
+
 interface UseNotificationsOptions {
   autoFetch?: boolean;
 }
@@ -47,10 +58,11 @@ export function useNotifications({ autoFetch = true }: UseNotificationsOptions =
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Failed to fetch notifications");
 
-      const mapped: Notification[] = (json.notifications || []).map((n: any) => ({
+      const mapped: Notification[] = (json.notifications as NotificationAPI[]).map((n) => ({
         ...n,
-        type: n.type as NOTIFICATION_TYPES,
+        type: n.type as NOTIFICATION_TYPES, // safely cast to enum
       }));
+
 
       setNotifications(mapped);
     } catch (err: unknown) {

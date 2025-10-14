@@ -47,9 +47,10 @@ export function useBookmarksAndReadLater({
       if (!res.ok || !json.success)
         throw new Error(json.error || "Failed to fetch bookmarks");
       setBookmarks(json.bookmarks || []);
-    } catch (err: any) {
-      console.error("useBookmarks fetch error:", err);
-      setError(err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
+      console.error("useBookmarks fetch error:", errMsg);
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -69,9 +70,10 @@ export function useBookmarksAndReadLater({
       if (!res.ok || !json.success)
         throw new Error(json.error || "Failed to fetch read-later");
       setReadLater(json.items || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("useReadLater fetch error:", err);
-      setError(err.message);
+      const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -97,8 +99,8 @@ export function useBookmarksAndReadLater({
           throw new Error(json.error || "Failed to add bookmark");
         await fetchBookmarks();
         return json.bookmark;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
         throw err;
       }
     },
@@ -122,8 +124,8 @@ export function useBookmarksAndReadLater({
           throw new Error(json.error || "Failed to add read-later item");
         await fetchReadLater();
         return json.item;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
         throw err;
       }
     },
@@ -146,8 +148,9 @@ export function useBookmarksAndReadLater({
           throw new Error(json.error || "Failed to delete bookmark");
         await fetchBookmarks();
         return true;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
+        setError(errMsg);
         throw err;
       }
     },
@@ -168,8 +171,9 @@ export function useBookmarksAndReadLater({
           throw new Error(json.error || "Failed to delete read-later item");
         await fetchReadLater();
         return true;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
+        setError(errMsg);
         throw err;
       }
     },

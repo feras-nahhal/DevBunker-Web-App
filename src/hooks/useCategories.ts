@@ -12,10 +12,19 @@ interface Category {
   created_at?: Date; // Optional timestamp
 }
 
+interface CategoryRequest {
+  id: string;
+  name: string;
+  description?: string | null;
+  status: string;
+  created_by?: string;
+  created_at?: string;
+}
+
 interface RequestResult {
   success: boolean;
   error?: string;
-  request?: any; // The inserted request object from API (if success)
+  request?: CategoryRequest;
 }
 
 export function useCategories() {
@@ -42,10 +51,13 @@ export function useCategories() {
       }
       const data = await response.json();
       if (data.success) {
-        const parsed = (data.categories || []).map((cat: any) => ({
-          ...cat,
-          created_at: cat.created_at ? new Date(cat.created_at) : undefined,
-        }));
+        const parsed = (data.categories || []).map((cat: unknown) => {
+          const category = cat as Category;
+          return {
+            ...category,
+            created_at: category.created_at ? new Date(category.created_at) : undefined,
+          };
+        });
         setCategories(parsed);
       } else {
         throw new Error(data.error || "Failed to fetch categories");

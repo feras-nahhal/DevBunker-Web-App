@@ -1,4 +1,5 @@
 "use client";
+import type { Notification } from "@/types/content";
 
 import { useState, useEffect, useMemo } from "react";
 import NotificationsCard from "./NotificationsCard";
@@ -19,7 +20,7 @@ export default function NotificationsGrid() {
 
   // Popup state (for card click)
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState<any>(null); // Holds notification for popup
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
   /** 🧠 Client-side filtering (by read status only – top labels) */
   const filteredData = useMemo(() => {
@@ -53,10 +54,11 @@ export default function NotificationsGrid() {
   }, [selectedReadStatus]);
 
   /** Popup handlers (card click opens modal) */
-  const handleOpenPopup = (notification: any) => {
-    setSelectedNotification(notification);
-    setIsPopupOpen(true);
-  };
+  // ✅ FIXED
+const handleOpenPopup = (notification: Notification) => {
+  setSelectedNotification(notification);
+  setIsPopupOpen(true);
+};
 
   const handleMarkAsReadInPopup = async () => {
     if (!selectedNotification?.id) return;
@@ -64,9 +66,9 @@ export default function NotificationsGrid() {
       await markAsRead(selectedNotification.id);
       setIsPopupOpen(false); // Close popup after mark
       refetch(); // Refresh grid
-    } catch (err: any) {
-      console.error("Mark as read failed:", err.message);
-      // Optional: Show error in popup
+      } catch (err: unknown) {
+      if (err instanceof Error) console.error("Mark as read failed:", err.message);
+      else console.error("Mark as read failed:", err);
     }
   };
 
@@ -90,9 +92,11 @@ export default function NotificationsGrid() {
     try {
       await markAllAsRead();
       refetch(); // Refresh grid
-    } catch (err: any) {
-      console.error("Mark all failed:", err.message);
+    } catch (err: unknown) {
+    if (err instanceof Error) console.error("Mark all failed:", err.message);
+    else console.error("Mark all failed:", err);
     }
+
   };
 
   /** Pagination Controls */
@@ -189,9 +193,9 @@ export default function NotificationsGrid() {
         {/* Cards */}
         <div className="flex flex-col w-full min-h-[200px] justify-center items-center">
           {filteredData.length === 0 ? (
-            <div className="text-gray-400 py-10 text-center text-sm">
-              No notifications found for "{selectedReadStatus || 'All'}" status.
-            </div>
+            <p className="text-gray-400 py-10 text-center text-sm">
+              No notifications found for &quot;{selectedReadStatus || "All"}&quot; status.
+            </p>
           ) : (
             paginatedData.map((notification) => (
               <NotificationsCard

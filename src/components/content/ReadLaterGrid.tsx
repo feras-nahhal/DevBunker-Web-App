@@ -6,6 +6,7 @@ import CommentsPopup from "./CommentsPopup"; // NEW: For comments popup
 import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth"; // NEW: For user/token if needed
+import { AnyContent, Comment } from "@/types/content";
 
 interface ReadLaterGridProps {
   searchQuery?: string; // NEW: Raw search query from parent (for client-side filtering)
@@ -22,8 +23,8 @@ export default function ReadLaterGrid({
 
   // NEW: State for comments popup
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
 
   // FIXED: Token check (was !== "" -> !== "undefined")
   const token =
@@ -51,37 +52,28 @@ export default function ReadLaterGrid({
     readLaterContent = readLaterContent.filter((item) => item.category_id === filters.category);
   }
 
-  // NEW: Fetch comments for a content item (same as BookmarksGrid)
+  /** 🗨️ Comments */
   const fetchComments = async (contentId: string) => {
-    console.log("Fetching comments for ID:", contentId); // DEBUG: Verify call (remove after testing)
     try {
       const res = await fetch(`/api/comments?content_id=${contentId}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch comments`);
-      const data = await res.json();
-      console.log("Comments fetched:", data); // DEBUG: Check response (remove after testing)
-      if (data.success) setComments(data.comments || []);
-      else throw new Error(data.error || "Unknown error");
+      const json = await res.json();
+      if (json.success) setComments(json.comments || []);
+      else setComments([]);
     } catch (err) {
-      console.error("Error fetching comments:", err); // DEBUG: Catch failures
+      console.error("Error fetching comments:", err);
       setComments([]);
     }
   };
 
-  // NEW: Open comments popup (same as BookmarksGrid)
-  const handleOpenComments = async (content: any) => {
-    console.log("Opening comments for content:", content.id, content.title); // DEBUG: Verify trigger (remove after testing)
+  const handleOpenComments = async (content: AnyContent) => {
     setSelectedContent(content);
     await fetchComments(content.id);
     setIsPopupOpen(true);
-    console.log("Popup state set:", { isPopupOpen: true, selectedContent: content.id }); // DEBUG (remove after testing)
   };
 
-  // NEW: Add a comment or reply (same as BookmarksGrid)
   const handleAddComment = async (text: string, parentId?: string) => {
-    if (!token) {
-      alert("You must be logged in to comment.");
-      return;
-    }
+    if (!token) return alert("You must be logged in to comment.");
+    if (!selectedContent) return;
 
     try {
       const res = await fetch(`/api/comments`, {
@@ -97,9 +89,8 @@ export default function ReadLaterGrid({
         }),
       });
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-      await fetchComments(selectedContent.id); // Refresh comments
+      const json = await res.json();
+      if (json.success) await fetchComments(selectedContent.id);
     } catch (err) {
       console.error("Failed to post comment:", err);
       alert("Failed to post comment.");
@@ -204,13 +195,17 @@ export default function ReadLaterGrid({
       {/* NEW: Comments Popup (same as BookmarksGrid) */}
       {isPopupOpen && selectedContent && (
         <CommentsPopup
-          id={selectedContent.id}
-          title={selectedContent.title}
-          content_body={selectedContent.content_body}
-          comments={comments}
-          tags={selectedContent.tags || []}
-          onClose={() => setIsPopupOpen(false)}
-          onAddComment={handleAddComment}
+                          id={selectedContent.id}
+                          title={selectedContent.title}
+                          content_body={
+                            "content_body" in selectedContent
+                              ? selectedContent.content_body || ""
+                              : ""
+                          }
+                          comments={comments}
+                          tags={(selectedContent as any).tags || []}
+                          onClose={() => setIsPopupOpen(false)}
+                          onAddComment={handleAddComment}
         />
       )}
     </>

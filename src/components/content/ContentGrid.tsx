@@ -5,6 +5,8 @@ import ContentCard from "./ContentCard";
 import CommentsPopup from "./CommentsPopup";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
+import { AnyContent, Comment } from "@/types/content";
+
 
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -12,25 +14,25 @@ interface ContentGridProps {
   filters?: Record<string, string>; // Includes q (debounced), status, category
 }
 
-export default function ContentGrid({ 
-  type = "all", 
-  searchQuery = "", 
-  filters = {} 
+export default function ContentGrid({
+  type = "all",
+  searchQuery = "",
+  filters = {},
 }: ContentGridProps) {
-  // Pass combined filters to useContent (q is already debounced in parent)
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
 
+  // 👇 Replace `any` with proper types
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
 
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-  // ✅ Fetch comments for a content item
+  /** 🧠 Fetch comments for a content item */
   const fetchComments = async (contentId: string) => {
     try {
       const res = await fetch(`/api/comments?content_id=${contentId}`);
@@ -38,20 +40,20 @@ export default function ContentGrid({
       const data = await res.json();
       if (data.success) setComments(data.comments || []);
       else throw new Error(data.error || "Unknown error");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error fetching comments:", err);
       setComments([]);
     }
   };
 
-  // ✅ Open comments popup
-  const handleOpenComments = async (content: any) => {
+  /** 🧠 Open comments popup */
+  const handleOpenComments = async (content: AnyContent) => {
     setSelectedContent(content);
     await fetchComments(content.id);
     setIsPopupOpen(true);
   };
 
-  // ✅ Add a comment or reply
+  /** 🧠 Add a comment or reply */
   const handleAddComment = async (text: string, parentId?: string) => {
     if (!token) {
       alert("You must be logged in to comment.");
@@ -66,7 +68,7 @@ export default function ContentGrid({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          content_id: selectedContent.id,
+          content_id: selectedContent?.id,
           text,
           parent_id: parentId || null,
         }),
@@ -74,14 +76,16 @@ export default function ContentGrid({
 
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
-      await fetchComments(selectedContent.id); // Refresh comments
-    } catch (err) {
+      await fetchComments(selectedContent!.id);
+    } catch (err: unknown) {
       console.error("Failed to post comment:", err);
-      alert("Failed to post comment.");
+      const message =
+        err instanceof Error ? err.message : "Failed to post comment.";
+      alert(message);
     }
   };
 
-  // ✅ Determine API path for deleting content
+  /** 🧠 Determine API path for deleting content */
   const getApiPath = (contentType: "post" | "mindmap" | "research") => {
     switch (contentType) {
       case "post":
@@ -95,7 +99,7 @@ export default function ContentGrid({
     }
   };
 
-  // ✅ Delete content handler
+  /** 🧠 Delete content handler */
   const handleDelete = async (
     id: string,
     contentType: "post" | "mindmap" | "research"
@@ -119,21 +123,28 @@ export default function ContentGrid({
 
       if (!res.ok) throw new Error(`Failed to delete ${contentType}`);
       await refetch();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error deleting item:", err);
-      alert("Failed to delete item.");
+      const message =
+        err instanceof Error ? err.message : "Failed to delete item.";
+      alert(message);
     }
   };
 
-  // NEW: UX text for results
+  /** 🧠 Results summary text */
   const totalResults = data.length;
   const hasSearch = !!searchQuery.trim();
   const hasFilters = !!(filters.status || filters.category);
-  const resultsText = hasSearch || hasFilters
-    ? `Showing ${totalResults} results${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category ID: ${filters.category})` : ""}.`
-    : `Showing all ${totalResults} items.`;
+  const resultsText =
+    hasSearch || hasFilters
+      ? `Showing ${totalResults} results${
+          hasSearch ? ` for "${searchQuery}"` : ""
+        }${filters.status ? ` (Status: ${filters.status})` : ""}${
+          filters.category ? ` (Category ID: ${filters.category})` : ""
+        }.`
+      : `Showing all ${totalResults} items.`;
 
-  // ✅ Loading and error states
+  /** 🧠 Loading and error states */
   if (loading)
     return (
       <div className="flex justify-center py-10 text-gray-400 text-lg">
@@ -152,13 +163,14 @@ export default function ContentGrid({
     return (
       <div className="flex justify-center py-10 text-gray-400">
         {hasSearch || hasFilters
-          ? `No ${type === "all" ? "content" : type} matches your search or filters.`
-          : `No ${type === "all" ? "content" : type} available.`
-        }
+          ? `No ${
+              type === "all" ? "content" : type
+            } matches your search or filters.`
+          : `No ${type === "all" ? "content" : type} available.`}
       </div>
     );
 
-  // ✅ Render content grid
+  /** 🧠 Render content grid */
   return (
     <>
       {/* NEW: Results summary */}
@@ -199,7 +211,7 @@ export default function ContentGrid({
                 {...card}
                 type={contentType}
                 onDelete={() => handleDelete(card.id, contentType)}
-                onOpenComments={() => handleOpenComments(card)} 
+                onOpenComments={() => handleOpenComments(card)}
               />
             </div>
           );
@@ -209,11 +221,15 @@ export default function ContentGrid({
       {/* 🟢 Comments Popup */}
       {isPopupOpen && selectedContent && (
         <CommentsPopup
-          id={selectedContent.id}
+           id={selectedContent.id}
           title={selectedContent.title}
-          content_body={selectedContent.content_body}
+          content_body={
+            "content_body" in selectedContent
+              ? selectedContent.content_body || ""
+              : ""
+          }
           comments={comments}
-          tags={selectedContent.tags || []}
+          tags={(selectedContent as any).tags || []}
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
         />

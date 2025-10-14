@@ -66,11 +66,12 @@ export interface Research extends BaseContent {
   content_type: CONTENT_TYPES.RESEARCH;
   content_body: string;
   references?: string[];
+  
 }
 
 export interface Mindmap extends BaseContent {
   content_type: CONTENT_TYPES.MINDMAP;
-  excalidraw_data?: any; // replace with proper Excalidraw schema later
+  excalidraw_data?: Record<string, unknown>;
 }
 
 // union for all types
@@ -104,6 +105,31 @@ export interface Notification {
   type: string; // Use string here; map to NOTIFICATION_TYPES in code
   read: boolean;
   created_at?: string;
+}
+
+// ---------------------------
+// 💬 COMMENTS
+// ---------------------------
+export interface Comment {
+  id: string;
+  content_id: string;
+  user_id: string;
+  text: string;
+  parent_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// ---------------------------
+// 🔗 REFERENCES (Research links)
+// ---------------------------
+export interface ReferenceLink {
+  id: string;
+  content_id: string;
+  user_id: string;
+  text: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export { CONTENT_STATUS };

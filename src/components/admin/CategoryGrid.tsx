@@ -101,21 +101,30 @@ export default function CategoryGrid() {
   };
 
   // Handle keydown for adding (Enter, comma)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, addFn: any) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    addFn: (value: string) => void
+  ) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      addFn(e.currentTarget.value);
+      const value = e.currentTarget.value.trim();
+      if (value) addFn(value);
       e.currentTarget.value = ""; // Clear input
     }
   };
 
   // Handle blur for adding (Tab or click away)
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>, addFn: any) => {
-    if (e.currentTarget.value.trim()) {
-      addFn(e.currentTarget.value);
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement>,
+    addFn: (value: string) => void
+  ) => {
+    const value = e.currentTarget.value.trim();
+    if (value) {
+      addFn(value);
       e.currentTarget.value = "";
     }
   };
+
 
   /** Approve/Reject Handlers (uses hook – silent, reload after) */
   const handleApprove = async (id: string) => {
@@ -123,7 +132,7 @@ export default function CategoryGrid() {
       await approveCategory(id); // FIXED: approveCategory from hook
       setSelectedIds((prev) => prev.filter((s) => s !== id)); // Remove from selection
       window.location.reload(); // FIXED: Silent reload for fresh data (updates status/UI)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Approve error:", err); // Silent log (no alert)
     }
   };
@@ -133,7 +142,7 @@ export default function CategoryGrid() {
       await rejectCategory(id); // FIXED: rejectCategory from hook
       setSelectedIds((prev) => prev.filter((s) => s !== id)); // Remove from selection
       window.location.reload(); // FIXED: Silent reload for fresh data (updates status/UI)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Reject error:", err); // Silent log (no alert)
     }
   };
@@ -147,7 +156,7 @@ export default function CategoryGrid() {
       }
       setSelectedIds([]); // Clear selection
       window.location.reload(); // FIXED: Silent reload after bulk (updates UI status/list)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Bulk approve error:", err); // Silent log (no alert)
     }
   };
@@ -161,7 +170,7 @@ export default function CategoryGrid() {
       }
       setSelectedIds([]); // Clear selection
       window.location.reload(); // FIXED: Silent reload after bulk (updates UI status/list)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Bulk reject error:", err); // Silent log (no alert)
     }
   };

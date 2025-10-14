@@ -64,9 +64,12 @@ export default function ContentCard({
         try {
           await addBookmark(id);
           setMenuOpen(false);
-        } catch (err: any) {
-          alert(err?.message || "Failed to add bookmark.");
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : "Failed to add bookmark.";
+          alert(message);
         }
+
       },
     },
     {
@@ -76,9 +79,12 @@ export default function ContentCard({
         try {
           await addReadLater(id);
           setMenuOpen(false);
-        } catch (err: any) {
-          alert(err?.message || "Failed to add to read-later.");
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : "Failed to add to read-later.";
+          alert(message);
         }
+
       },
     },
     {

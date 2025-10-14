@@ -15,14 +15,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContent } from "@/hooks/useContent";
 import { useCategories } from "@/hooks/useCategories";
 import { useTags } from "@/hooks/useTags";
-
+import { NodeProps } from "reactflow";
 import { Position } from "reactflow";
 import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
   useEdgesState,
   Node,
-  Edge,
   NodeTypes,
   EdgeTypes,
   addEdge,
@@ -51,7 +50,7 @@ type Tag = {
 // -----------------------------
 // Node Components
 // -----------------------------
-export const CircleNode = ({ data, selected, dragging }: any) => {
+export const CircleNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const handleStyle: CSSProperties = { top: "50%" };
   return (
     <div
@@ -75,7 +74,7 @@ export const CircleNode = ({ data, selected, dragging }: any) => {
   );
 };
 
-export const RectNode = ({ data, selected, dragging }: any) => {
+export const RectNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const handleStyle: CSSProperties = { top: "50%" };
   return (
     <div
@@ -99,7 +98,7 @@ export const RectNode = ({ data, selected, dragging }: any) => {
   );
 };
 
-export const TextNode = ({ data, selected, dragging }: any) => {
+export const TextNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const handleStyle: CSSProperties = { top: "50%", background: "#000" };
   return (
     <div
@@ -122,7 +121,7 @@ export const TextNode = ({ data, selected, dragging }: any) => {
   );
 };
 
-export const DiamondNode = ({ data, selected, dragging }: any) => {
+export const DiamondNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const diamondStyle: CSSProperties = {
     width: "60px",
     height: "60px",
@@ -189,7 +188,7 @@ function MindmapContent() {
 // -----------------------------
 // Tags
 // -----------------------------
-const { tags: allTags = [], loading: loadingTags } = useTags(); // ✅ get all tags from hook
+const { tags: allTags = [] } = useTags(); // ✅ get all tags from hook
 
 const [tagQuery, setTagQuery] = useState(""); // input value
 const [selectedTags, setSelectedTags] = useState<Tag[]>([]); // selected tags
@@ -268,7 +267,7 @@ const tag_ids = selectedTags.map(tag => tag.id);
     setNodes((nds) => nds.concat(newNode));
     setNewLabel("New Node");
     fitView({ padding: 0.2 });
-  }, [nodes.length, setNodes, newLabel]);
+  }, [nodes.length, selectedNodeId, getNode, setNodes, setEdges, newLabel, selectedEdgeType, fitView]);
 
   const onConnect = useCallback((connection: Connection) => {
     const edgeType = selectedEdgeType === "default" ? undefined : selectedEdgeType;
@@ -331,8 +330,8 @@ const tag_ids = selectedTags.map(tag => tag.id);
       setSelectedCategoryId("");
       setSelectedTags([]); // clear tags after save
       setIsModalOpen(false);
-    } catch (err: any) {
-      alert("❌ Save failed: " + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
     } finally {
       setSaving(false);
     }
@@ -372,8 +371,8 @@ const tag_ids = selectedTags.map(tag => tag.id);
       setSelectedCategoryId("");
       setSelectedTags([]); // clear tags after draft
       setIsModalOpen(false);
-    } catch (err: any) {
-      alert("❌ Draft failed: " + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
     } finally {
       setSaving(false);
     }

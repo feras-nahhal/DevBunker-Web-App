@@ -73,8 +73,9 @@ export function useContent({
         if (!res.ok || !json.success) throw new Error(json.error || `Failed to load ${type}`);
         setData(json[endpoint] || []);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError("An unknown error occurred.");
       console.error("useContent fetch error:", err);
     } finally {
       setLoading(false);
@@ -95,8 +96,9 @@ export function useContent({
         const json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || "Failed to get content");
         return json[responseKey]; // FIXED: Use map for key
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("An unknown error occurred.");
         throw err;
       } finally {
         setLoading(false);
@@ -139,8 +141,9 @@ export function useContent({
         await fetchContent(); // Refetch list
         // FIXED: Return wrapped response for frontend consistency (success + data)
         return { success: true, data: createdContent };
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("An unknown error occurred.");
         console.error("Hook createContent error:", err);
         throw err;
       } finally {
@@ -171,8 +174,9 @@ export function useContent({
         if (!res.ok || !json.success) throw new Error(json.error || "Failed to update content");
         await fetchContent();
         return json.updated;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("An unknown error occurred.");
         throw err;
       } finally {
         setLoading(false);
@@ -198,8 +202,9 @@ export function useContent({
         if (!res.ok || !json.success) throw new Error(json.error || "Failed to delete content");
         await fetchContent();
         return true;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("An unknown error occurred.");
         throw err;
       } finally {
         setLoading(false);
@@ -225,8 +230,9 @@ export function useContent({
           throw new Error(json.error || "Failed to request approval");
         await fetchContent();
         return true;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("An unknown error occurred.");
         throw err;
       } finally {
         setLoading(false);

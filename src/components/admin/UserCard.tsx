@@ -82,10 +82,17 @@ export default function UserCard({
           if (!json.success) throw new Error(json.error || "Failed to approve");
           console.log("User approved:", id); // Debug
           window.location.reload(); // FIXED: Refresh grid (or use refetch from parent if passed)
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Approve error:", err);
-          alert(err.message || "Failed to approve user");
+
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : "Failed to approve user";
+
+          alert(errorMessage);
         }
+
         setMenuOpen(false);
       },
     },
@@ -110,9 +117,11 @@ export default function UserCard({
           if (!json.success) throw new Error(json.error || "Failed to ban");
           console.log("User banned:", id); // Debug
           window.location.reload(); // FIXED: Refresh grid
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Ban error:", err);
-          alert(err.message || "Failed to ban user");
+          const message =
+            err instanceof Error ? err.message : "Failed to ban user";
+          alert(message);
         }
         setMenuOpen(false);
       },

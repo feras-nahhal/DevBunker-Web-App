@@ -54,12 +54,14 @@ const fetchRequests = useCallback(async () => {
     if (!json.success) throw new Error(json.error || "Failed to fetch category requests");
 
     // Map API response to CategoryRequest (ensure status matches enum – lowercase)
-    const mappedRequests: CategoryRequest[] = (json.requests || []).map((item: any) => ({
-      ...item,
-      category_name: item.category_name, // Map category_name from API
-      status: (item.status.toLowerCase() as TAG_CATEGORY_STATUS), // Ensure lowercase enum match
-      authorEmail: item.authorEmail || undefined, // Map email from join
-    }));
+    const mappedRequests: CategoryRequest[] = (json.requests || []).map(
+      (item: Partial<CategoryRequest> & Record<string, unknown>) => ({
+        ...item,
+        category_name: String(item.category_name ?? ""),
+        status: String(item.status ?? "pending").toLowerCase() as TAG_CATEGORY_STATUS,
+        authorEmail: item.authorEmail ? String(item.authorEmail) : undefined,
+      })
+    );
 
     console.log("Hook: Mapped requests (first item):", mappedRequests[0]); // DEBUG: Check category_name after mapping
     console.log("Hook: Total mapped requests:", mappedRequests.length); // DEBUG: Should be 10

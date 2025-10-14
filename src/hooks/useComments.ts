@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { AnyContent, Comment } from "@/types/content";
 
 export function useComments(contentId: string) {
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,8 +18,8 @@ export function useComments(contentId: string) {
       } else {
         throw new Error(data.error);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -38,8 +39,8 @@ export function useComments(contentId: string) {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       await fetchComments();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
     }
   };
 

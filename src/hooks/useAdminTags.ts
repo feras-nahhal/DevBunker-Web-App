@@ -50,16 +50,20 @@ export function useAdminTags({ autoFetch = true }: UseAdminTagsOptions = {}) {
       if (!json.success) throw new Error(json.error || "Failed to fetch tag requests");
 
       // FIXED: Map API response to TagRequest type (ensure status matches enum – lowercase)
-      const mappedRequests: TagRequest[] = (json.requests || []).map((item: any) => ({
-        ...item,
-        status: (item.status.toLowerCase() as TAG_CATEGORY_STATUS), // Ensure lowercase enum match
-        authorEmail: item.authorEmail || undefined, // Map email if provided
-      }));
+      const mappedRequests: TagRequest[] = (json.requests || []).map(
+        (item: Record<string, unknown>) => ({
+          ...item,
+          status: String(item.status).toLowerCase() as TAG_CATEGORY_STATUS, // Ensure lowercase enum match
+          authorEmail:
+            typeof item.authorEmail === "string" ? item.authorEmail : undefined,
+        })
+      );
+
 
       setRequests(mappedRequests);
       console.log("Tag requests fetched:", mappedRequests.length); // Debug (remove in prod)
-    } catch (err: any) {
-      const errMsg = err.message || "Unknown fetch error";
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
       setError(errMsg);
       console.error("useAdminTags fetch error:", err);
       setRequests([]); // Clear on error
@@ -93,8 +97,8 @@ export function useAdminTags({ autoFetch = true }: UseAdminTagsOptions = {}) {
         console.log("Tag request approved:", requestId); // Debug
         window.location.reload(); // FIXED: Reload for fresh data (per request – updates UI status)
         return json; // Return { success, message, tag/request }
-      } catch (err: any) {
-        const errMsg = err.message || "Unknown approve error";
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
         setError(errMsg);
         console.error("approveTag error:", err);
         throw err;
@@ -130,8 +134,8 @@ export function useAdminTags({ autoFetch = true }: UseAdminTagsOptions = {}) {
         console.log("Tag request rejected:", requestId); // Debug
         window.location.reload(); // FIXED: Reload for fresh data (per request – updates UI status)
         return json; // Return { success, message, request }
-      } catch (err: any) {
-        const errMsg = err.message || "Unknown reject error";
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
         setError(errMsg);
         console.error("rejectTag error:", err);
         throw err;
@@ -167,8 +171,8 @@ export function useAdminTags({ autoFetch = true }: UseAdminTagsOptions = {}) {
         console.log("Tag request deleted:", tagId); // Debug
         window.location.reload(); // FIXED: Reload for fresh data (per request)
         return json; // Return { success, message, deleted }
-      } catch (err: any) {
-        const errMsg = err.message || "Unknown delete error";
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
         setError(errMsg);
         console.error("deleteTag error:", err);
         throw err;
@@ -209,8 +213,8 @@ export function useAdminTags({ autoFetch = true }: UseAdminTagsOptions = {}) {
         console.log("Tag created:", tagName); // Debug
         window.location.reload(); // FIXED: Reload after create
         return json.tag; // Return created tag object
-      } catch (err: any) {
-        const errMsg = err.message || "Unknown create error";
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : "Unknown fetch error";
         setError(errMsg);
         console.error("createTag error:", err);
         throw err;

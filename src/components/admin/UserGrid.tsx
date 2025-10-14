@@ -5,7 +5,7 @@ import UserCard from "./UserCard";
 import { useUsers } from "@/hooks/useUsers"; // NEW: Custom hook for admin users API
 import { useAuth } from "@/hooks/useAuth";
 import { USER_ROLES, USER_STATUS } from "@/lib/enums";
-import CommentsPopup from "./CommentsPopup"; // Optional: For user comments (remove if not needed)
+
 
 export default function UserGrid() {
   const { users, loading, error, refetch, deleteUser } = useUsers(); // NEW: Hook fetches from /api/admin/users
@@ -21,10 +21,6 @@ export default function UserGrid() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  // Optional: Comments state (adapt or remove for users)
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
 
   /** 🧠 Client-side filtering (updated for multi-select arrays) */
   const filteredData = useMemo(() => {
@@ -109,72 +105,41 @@ export default function UserGrid() {
   };
 
   // Handle keydown for adding (Enter, comma)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, addFn: any) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addFn(e.currentTarget.value);
-      e.currentTarget.value = ""; // Clear input
-    }
-  };
+    const handleKeyDown = (
+      e: React.KeyboardEvent<HTMLInputElement>,
+      addFn: (value: string) => void
+    ) => {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+        const value = e.currentTarget.value.trim();
+        if (value) addFn(value);
+        e.currentTarget.value = ""; // Clear input
+      }
+    };
 
-  // Handle blur for adding (Tab or click away)
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>, addFn: any) => {
-    if (e.currentTarget.value.trim()) {
-      addFn(e.currentTarget.value);
-      e.currentTarget.value = "";
-    }
-  };
+    // Handle blur for adding (Tab or click away)
+      const handleBlur = (
+        e: React.FocusEvent<HTMLInputElement>,
+        addFn: (value: string) => void
+      ) => {
+        const value = e.currentTarget.value.trim();
+        if (value) {
+          addFn(value);
+          e.currentTarget.value = "";
+        }
+      };
 
-  /** Optional: Comments handlers (adapt for user_id or remove) */
-  const fetchComments = async (userId: string) => {
-    try {
-      const res = await fetch(`/api/comments?user_id=${userId}`); // Assume user-specific API
-      const json = await res.json();
-      if (json.success) setComments(json.comments || []);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
-      setComments([]);
-    }
-  };
-
-  const handleOpenComments = async (user: any) => {
-    setSelectedContent(user);
-    await fetchComments(user.id);
-    setIsPopupOpen(true);
-  };
-
-  const handleAddComment = async (text: string, parentId?: string) => {
-    // FIXED: Correct SSR-safe token check (was !== "" – invalid)
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) return alert("You must be logged in to comment.");
-    try {
-      const res = await fetch(`/api/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_id: selectedContent.id, // Changed to user_id
-          text,
-          parent_id: parentId || null,
-        }),
-      });
-      const json = await res.json();
-      if (json.success) await fetchComments(selectedContent.id);
-    } catch (err) {
-      console.error("Failed to post comment:", err);
-    }
-  };
 
   /** Delete handlers (uses hook's deleteUser) */
   const handleDelete = async (id: string) => {
     try {
       await deleteUser(id);
       setSelectedIds((prev) => prev.filter((s) => s !== id)); // Remove from selection
-    } catch (err: any) {
-      alert(err.message || "Failed to delete user.");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete user.";
+      alert(errorMessage);
     }
+
   };
 
   const handleDeleteSelected = async () => {
@@ -185,9 +150,12 @@ export default function UserGrid() {
       }
       setSelectedIds([]);
       alert(`${selectedIds.length} users deleted successfully.`);
-    } catch (err: any) {
-      alert(err.message || "Error deleting selected users.");
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error deleting selected users.";
+      alert(errorMessage);
     }
+
   };
 
   const handleSelect = (id: string, checked: boolean) =>
@@ -474,7 +442,6 @@ export default function UserGrid() {
                 isSelected={selectedIds.includes(user.id)}
                 onSelect={handleSelect}
                 onDelete={() => handleDelete(user.id)}
-                onOpenComments={() => handleOpenComments(user)} // Optional
               />
             ))
           )}
@@ -586,18 +553,7 @@ export default function UserGrid() {
         </div>
       </div>
 
-      {/* 💬 Optional Comments Popup (adapted for users – remove if not needed) */}
-      {isPopupOpen && selectedContent && (
-        <CommentsPopup
-          id={selectedContent.id}
-          title={selectedContent.email} // Use email as title
-          content_body={`User Profile: ${selectedContent.email} (ID: ${selectedContent.id})`} // Fallback body
-          comments={comments}
-          tags={[]} // No tags for users
-          onClose={() => setIsPopupOpen(false)}
-          onAddComment={handleAddComment}
-        />
-      )}
+ 
     </>
   );
 }
