@@ -280,7 +280,7 @@ export default function CommentsPopup({
           {/* Content Body */}
           {content_body && (
             <div
-              style={{ maxWidth: "853px", width: "100%", maxHeight: "300px" }}
+              style={{ maxWidth: "853px", width: "100%", maxHeight: "1500px" }}
               dangerouslySetInnerHTML={{ __html: content_body }}
             />
           )}
