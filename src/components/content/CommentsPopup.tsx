@@ -148,11 +148,11 @@ export default function CommentsPopup({
     const isActive = activeReplies[comment.id] !== undefined;
     const [replyText, setReplyText] = useState(activeReplies[comment.id] || "");
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
+  
     useEffect(() => {
       setReplyText(activeReplies[comment.id] || "");
     }, [activeReplies[comment.id], comment.id]);
-
+  
     useEffect(() => {
       if (isActive && textareaRef.current) {
         textareaRef.current.focus();
@@ -160,7 +160,7 @@ export default function CommentsPopup({
         textareaRef.current.selectionEnd = textareaRef.current.value.length;
       }
     }, [isActive]);
-
+  
     return (
       <div className={`flex gap-1 p-2 bg-transparent border-b border-[#918AAB26]`}>
         <Image
@@ -170,27 +170,37 @@ export default function CommentsPopup({
           height={40}
           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
         />
+  
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start flex-wrap gap-2">
             <div>
               <div className="flex flex-col gap-0">
-                <span className="text-white font-semibold text-sm">{getAuthorDisplay(comment)}</span>
-                <span className="text-gray-400 text-xs">• {formatDate(comment.created_at ?? comment.date)}</span>
+                <span className="text-white font-semibold text-sm">
+                  {getAuthorDisplay(comment)}
+                </span>
+                <span className="text-gray-400 text-xs">
+                  • {formatDate(comment.created_at ?? comment.date)}
+                </span>
               </div>
             </div>
-            <button
-              onClick={() => toggleReplyInput(comment.id)}
-              className="relative w-[80px] h-[24px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-              disabled={isSubmitting}
-            >
-              <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.5)_0%,transparent_70%)] blur-md" />
-              <span className="relative z-10">Reply</span>
-            </button>
+  
+            {/* 🟢 Show Reply button only for top-level comments */}
+            {level === 0 && (
+              <button
+                onClick={() => toggleReplyInput(comment.id)}
+                className="relative w-[80px] h-[24px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
+                disabled={isSubmitting}
+              >
+                <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10">Reply</span>
+              </button>
+            )}
           </div>
-
+  
           <p className="text-white text-sm mt-1 mb-2">{comment.text}</p>
-
-          {isActive && (
+  
+          {/* 🟢 Reply input only for top-level */}
+          {level === 0 && isActive && (
             <div className="flex flex-col w-full gap-2 mt-2 p-3 bg-transparent rounded-lg">
               <textarea
                 ref={textareaRef}
@@ -224,7 +234,8 @@ export default function CommentsPopup({
               </div>
             </div>
           )}
-
+  
+          {/* 🔁 Nested replies (keep showing them, just no reply button inside) */}
           {(comment.replies ?? []).length > 0 && (
             <div className={`mt-3 ${level > 0 ? "ml-3" : "ml-6"}`}>
               {(comment.replies ?? []).map((r) => (
@@ -236,6 +247,7 @@ export default function CommentsPopup({
       </div>
     );
   };
+  
 
   return (
     <>

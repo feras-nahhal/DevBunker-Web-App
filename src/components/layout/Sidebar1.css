@@ -1,44 +1,82 @@
+/* ===============================
+   SIDEBAR BASE STYLES
+=============================== */
 .sidebar {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 16px;
-  gap: 12px;
-
+  gap: 5px;
   position: fixed;
   top: 10px;                  /* 10px gap from top */
   left: 5px;                 /* 10px gap from left */
   width: 240px;
   height: calc(100vh - 20px); /* leaves 10px top + 10px bottom gap */
-
-  background: rgba(255, 255, 255, 0.05);
+   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(80, 80, 80, 0.24);
-  border-radius: 20px;
-  box-shadow: inset 0px 0px 7px rgba(255, 255, 255, 0.16);
+  /* Card/nav */
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(75px);
-
+  /* Note: backdrop-filter has minimal browser support */
+  border-radius: 16px;
   overflow: hidden;
 }
 
+/* ===============================
+   COLLAPSE BUTTON ABOVE MANAGEMENT
+=============================== */
+.collapse-btn {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 1px;
+  opacity: 0.4;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
 
-/* Menu container */
+.collapse-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Arrow icon */
+.collapse-btn .arrow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-bottom: 2px solid white;
+  border-left: 2px solid white;
+  transform: translate(-50%, -50%) rotate(45deg);
+  transition: transform 0.35s ease;
+}
+
+.collapse-btn.collapsed .arrow {
+  transform: translate(-50%, -50%) rotate(225deg);
+}
+
+/* ===============================
+   MENU STRUCTURE
+=============================== */
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 5px; /* space between blocks */
-  width: 216px;
-  
+  gap: 5px;
+  width: 100%;
 }
 
-/* Section block */
 .menu-block {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 4px;
+  gap: 5px;
 }
 
-/* Section title */
 .menu-label {
   padding: 0 8px;
   font-family: 'Public Sans', sans-serif;
@@ -47,68 +85,41 @@
   color: #777;
 }
 
-/* Sub-items (Post list, Draft, Add New, etc.) */
-.menu-subitem,
-.menu-item {
+.menu-item,
+.menu-subitem {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px; /* ✅ smaller */
-  border-radius: 10px;
-  padding-left: 20px;
-
+  padding: 6px 10px;
+  padding-left: 10px;
+  border-radius: 8px;
   color: #888;
   font-family: 'Public Sans', sans-serif;
-  font-size: 13px; /* ✅ smaller font */
+  font-size: 13px;
   line-height: 18px;
   text-decoration: none;
-  width: 90%;
-  transition: all 0.2s ease-in-out;
+  width: 85%;
+  transition: all 0.25s ease;
 }
 
-.menu-subitem:hover,
-.menu-item:hover {
+.menu-item:hover,
+.menu-subitem:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
+  transform: scale(1.05);
 }
 
-/* Active Menu Item */
 .menu-item.active,
 .menu-subitem.active {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-
-  width: 200px;
-  height: 48px;
-  padding: 12px 11px;
-  border-radius: 7px;
-
   background: rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0px 0px 6px rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.16);
   color: #00A76F;
-
-  font-family: 'Public Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 22px;
-
-  isolation: isolate;
-  transition: all 0.25s ease-in-out;
-  transform: scale(1.05); /* slightly bigger when active */
-  z-index: 3;
+  transform: scale(1.05);
 }
 
-/* Icon */
-.menu-item.active svg,
-.menu-subitem.active svg {
-  width: 24px;
-  height: 24px;
-}
-
-
+/* ===============================
+   GLOW EFFECTS
+=============================== */
 /* Glow oval (only left side, perfectly centered vertically) */
 .menu-item.active::before,
 .menu-subitem.active::before {
@@ -134,7 +145,7 @@
 /* left glow */
 .menu-item.active::before,
 .menu-subitem.active::before {
-  left: -6px;
+  left: -11.5px;
 }
 
 
@@ -145,8 +156,8 @@
   height: 42px;
   right: -40px;
   background: #00A76F;
-  opacity: 0.69;
-  filter: blur(72px);
+  opacity: 1;
+  filter: blur(65px);
   border-radius: 50%;
   transition: top 0.3s ease;
   z-index: 0;
@@ -165,3 +176,107 @@
   transition: top 0.3s ease;
   z-index: 2;
 }
+
+/* ===============================
+   COLLAPSED STATE
+=============================== */
+.sidebar.collapsed {
+  width: 68px;
+  padding: 8px;
+  align-items: center;
+}
+
+.sidebar.collapsed .menu-label,
+.sidebar.collapsed span {
+  display: none;
+}
+
+/* COLLAPSED MENU ITEMS */
+.sidebar.collapsed .menu-item,
+.sidebar.collapsed .menu-subitem {
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  padding: 6px;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+/* Hover / Active animation (collapsed only) */
+.sidebar.collapsed .menu-item:hover,
+.sidebar.collapsed .menu-subitem:hover {
+  transform: scale(1.15);
+}
+
+.sidebar.collapsed .menu-item.active,
+.sidebar.collapsed .menu-subitem.active {
+  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.16);
+  color: #00A76F;
+}
+
+/* Keep active state visual until collapse toggled */
+.sidebar.collapsed .menu-item:not(.active),
+.sidebar.collapsed .menu-subitem:not(.active) {
+  transform: none;
+}
+
+/* GLOW ALIGNMENT (COLLAPSED) */
+/* Glow oval (only left side, perfectly centered vertically) */
+.sidebar.collapsed.menu-item.active::before,
+.sidebar.collapsed.menu-subitem.active::before {
+  content: "";
+  position: absolute;
+  width: 39px;
+  height: 16px;
+
+  /* center it vertically inside the 48px button */
+  top: 50%;
+  left: -12px;
+  transform: translateY(-50%) rotate(90deg);
+
+  background: #00A76F;
+  opacity: 0.4;
+  filter: blur(7px);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+
+
+/* left glow */
+.sidebar.collapsed.menu-item.active::before,
+.sidebar.collapsed.menu-subitem.active::before {
+  left: -11.5px;
+}
+
+
+/* Traveling glow */
+.sidebar.collapsed.sidebar-glow {
+  position: absolute;
+  width: 60px;
+  height: 45px;
+  right:-15px;
+  background: #00A76F;
+  opacity: 0.69;
+  filter: blur(72px);
+  border-radius: 50%;
+  transition: top 0.3s ease;
+  z-index: 0;
+}
+
+.sidebar.collapsed.sidebar-glow-left {
+  position: absolute;
+  width: 39px;
+  height: 60px;
+  left: -40px;          /* position on the left */
+  top: 0;                /* will be updated dynamically */
+  background: #00A76F;
+  opacity: 0.68;
+  filter: blur(42px);
+  border-radius: 50%;
+  transition: top 0.3s ease;
+  z-index: 2;
+}
+
