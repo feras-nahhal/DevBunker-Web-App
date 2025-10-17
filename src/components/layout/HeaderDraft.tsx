@@ -480,7 +480,7 @@ const handleClearFilters = () => {
 
                   <div
                     onClick={() => {
-                      handleCategoryChange1({ target: { value: "" } } as any);
+                      handleCategoryChange1({ target: { value: "" } } as React.ChangeEvent<HTMLSelectElement>);
                       setDropdownOpen(false);
                     }}
                     className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
@@ -492,7 +492,7 @@ const handleClearFilters = () => {
                     <div
                       key={cat.id}
                       onClick={() => {
-                        handleCategoryChange1({ target: { value: cat.id } } as any);
+                        handleCategoryChange1({ target: { value: cat.id } } as React.ChangeEvent<HTMLSelectElement>);
                         setDropdownOpen(false);
                       }}
                       className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"

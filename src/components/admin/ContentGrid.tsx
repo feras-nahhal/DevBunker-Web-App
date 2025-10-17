@@ -91,10 +91,21 @@ if (selectedCategories.length)
     setCurrentPage(1);
   }, [search, selectedStatuses, selectedCategories]);
 
-  const removeFromArray = (arr: string[], setFn: any, val: string) => setFn(arr.filter((i) => i !== val));
-const addToArray = (arr: string[], setFn: any, val: string, list: string[]) => {
+ const removeFromArray = (
+  arr: string[],
+  setFn: React.Dispatch<React.SetStateAction<string[]>>,
+  val: string
+) => setFn(arr.filter((i) => i !== val));
+
+const addToArray = (
+  arr: string[],
+  setFn: React.Dispatch<React.SetStateAction<string[]>>,
+  val: string,
+  list: string[]
+) => {
   if (!arr.includes(val) && list.includes(val)) setFn([...arr, val]);
 };
+
 const clearAllFilters = () => {
   setSelectedStatuses([]);
   setSelectedCategories([]);

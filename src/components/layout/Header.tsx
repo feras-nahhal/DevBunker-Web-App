@@ -481,7 +481,7 @@ export default function Header({
                   {/* All Statuses Option */}
                   <div
                     onClick={() => {
-                      handleStatusChange({ target: { value: "" } } as any);
+                      handleStatusChange({ target: { value: "" } } as React.ChangeEvent<HTMLSelectElement>);
                       setStatusDropdownOpen(false);
                     }}
                     className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
@@ -494,7 +494,7 @@ export default function Header({
                     <div
                       key={status}
                       onClick={() => {
-                        handleStatusChange({ target: { value: status } } as any);
+                        handleStatusChange({ target: { value: status } } as React.ChangeEvent<HTMLSelectElement>);
                         setStatusDropdownOpen(false);
                       }}
                       className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
@@ -540,7 +540,7 @@ export default function Header({
 
                   <div
                     onClick={() => {
-                      handleCategoryChange1({ target: { value: "" } } as any);
+                      handleCategoryChange1({ target: { value: "" } } as React.ChangeEvent<HTMLSelectElement>);
                       setDropdownOpen(false);
                     }}
                     className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
@@ -552,7 +552,7 @@ export default function Header({
                     <div
                       key={cat.id}
                       onClick={() => {
-                        handleCategoryChange1({ target: { value: cat.id } } as any);
+                        handleCategoryChange1({ target: { value: cat.id } } as React.ChangeEvent<HTMLSelectElement>);
                         setDropdownOpen(false);
                       }}
                       className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
