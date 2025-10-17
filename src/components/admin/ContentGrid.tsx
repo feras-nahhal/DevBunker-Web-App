@@ -7,7 +7,7 @@ import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import { CONTENT_STATUS, CONTENT_TYPES } from "@/lib/enums";
 import { AnyContent, Comment } from "@/types/content";
-
+import Image from "next/image";
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
 }
@@ -15,11 +15,23 @@ interface ContentGridProps {
 export default function ContentGrid({ type = "all" }: ContentGridProps) {
   const { data = [], loading, error, refetch } = useContent({ type });
   const { user } = useAuth();
+  
 
   // Filters
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  // Status multi-select
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [statusSearch, setStatusSearch] = useState("");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+
+  // Category multi-select
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categorySearch, setCategorySearch] = useState("");
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+
+  // Example categories list (you can replace with actual)
+  const categoriesList = Array.from(new Set(data.map((d) => d.categoryName || d.category_id || "")));
+
 
   // Selection + Pagination
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -50,21 +62,19 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
       );
     }
 
-    if (statusFilter)
-      filtered = filtered.filter((i) => i.status === statusFilter);
+    // Multi-select status
+if (selectedStatuses.length)
+  filtered = filtered.filter((i) => selectedStatuses.includes(i.status));
 
-    if (categoryFilter.trim()) {
-      const q = categoryFilter.toLowerCase();
-      filtered = filtered.filter((i) =>
-        (i.categoryName || i.category_id || "")
-          .toString()
-          .toLowerCase()
-          .includes(q)
-      );
-    }
+// Multi-select category
+if (selectedCategories.length)
+  filtered = filtered.filter((i) =>
+    selectedCategories.includes(i.categoryName || i.category_id || "")
+  );
+
 
     return filtered;
-  }, [data, search, statusFilter, categoryFilter]);
+  }, [data, search, selectedStatuses, selectedCategories]);
 
   /** Pagination */
   const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
@@ -79,7 +89,19 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, categoryFilter]);
+  }, [search, selectedStatuses, selectedCategories]);
+
+  const removeFromArray = (arr: string[], setFn: any, val: string) => setFn(arr.filter((i) => i !== val));
+const addToArray = (arr: string[], setFn: any, val: string, list: string[]) => {
+  if (!arr.includes(val) && list.includes(val)) setFn([...arr, val]);
+};
+const clearAllFilters = () => {
+  setSelectedStatuses([]);
+  setSelectedCategories([]);
+  setStatusSearch("");
+  setCategorySearch("");
+};
+
 
   /** 🗨️ Comments */
   const fetchComments = async (contentId: string) => {
@@ -248,41 +270,183 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
           ))}
         </div>
 
-        {/* 🔍 Search & Filters */}
+       {/* 🔍 Search & Filters */}
         <div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
+          {/* Search Input */}
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="🔍 Search..."
+            placeholder=" Search..."
             className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400 mb-3"
           />
-          <div className="flex items-center gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-sm text-white bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md focus:ring-1 focus:ring-white/[0.25]"
-            >
-              <option value="">All</option>
-              {Object.values(CONTENT_STATUS).map((s) => (
-                <option key={s} value={s} className="bg-[#1a1a1a] text-white">
-                  {s.replace("_", " ").toUpperCase()}
-                </option>
-              ))}
-            </select>
 
-            <input
-              type="text"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              placeholder="Category"
-              className="px-3 py-2 w-[200px] text-sm text-white bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
-            />
+          <div className="flex items-center gap-3">
+            {/* Status Multi-Select */}
+            <div className="w-[220px] relative">
+              <label className="block text-white text-[12px] mb-1">Statuses</label>
+              <div className="relative bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {selectedStatuses.map((status) => (
+                    <div key={status} className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all">
+                      {status}
+                      <button onClick={() => removeFromArray(selectedStatuses, setSelectedStatuses, status)} className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]">×</button>
+                    </div>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={statusSearch}
+                  onChange={(e) => { setStatusSearch(e.target.value); setStatusDropdownOpen(true); }}
+                  onFocus={() => setStatusDropdownOpen(true)}
+                  placeholder="Type to search..."
+                  className="w-full bg-transparent text-white text-sm border-none outline-none placeholder:text-gray-400"
+                />
+                {statusDropdownOpen && (
+                  <div className="absolute top-full left-0 w-full mt-1 border border-white/20 rounded-lg max-h-40 overflow-y-auto bg-black/50 z-50">
+                    {Object.values(CONTENT_STATUS)
+                      .filter((s) => s.toLowerCase().includes(statusSearch.toLowerCase()))
+                      .map((s) => (
+                        <div
+                          key={s}
+                          onClick={() => { addToArray(selectedStatuses, setSelectedStatuses, s, Object.values(CONTENT_STATUS)); setStatusSearch(""); setStatusDropdownOpen(false); }}
+                          className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md"
+                        >
+                          {s.replace("_", " ").toUpperCase()}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Category Multi-Select */}
+            <div className="w-[220px] relative">
+              <label className="block text-white text-[12px] mb-1">Categories</label>
+              <div className="relative bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {selectedCategories.map((cat) => (
+                    <div key={cat} className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all">
+                      {cat}
+                      <button onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)} className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]">×</button>
+                    </div>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={categorySearch}
+                  onChange={(e) => { setCategorySearch(e.target.value); setCategoryDropdownOpen(true); }}
+                  onFocus={() => setCategoryDropdownOpen(true)}
+                  placeholder="Type to search..."
+                  className="w-full bg-transparent text-white text-sm border-none outline-none placeholder:text-gray-400"
+                />
+                {categoryDropdownOpen && (
+                  <div className="absolute top-full left-0 w-full mt-1 border border-white/20 rounded-lg max-h-40 overflow-y-auto bg-black/50 z-50">
+                    {categoriesList
+                      .filter((cat) => cat.toLowerCase().includes(categorySearch.toLowerCase()))
+                      .map((cat) => (
+                        <div
+                          key={cat}
+                          onClick={() => { addToArray(selectedCategories, setSelectedCategories, cat, categoriesList); setCategorySearch(""); setCategoryDropdownOpen(false); }}
+                          className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md"
+                        >
+                          {cat}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {(selectedStatuses.length > 0 || selectedCategories.length > 0) && (
+                        <button
+                      onClick={clearAllFilters}
+                      className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium transition-all self-start mt-[22px]"
+                    >
+                      <Image
+                                          src="/redtrash.svg"
+                                          alt="Logout Icon"
+                                          width={20}
+                                          height={20}
+                                          style={{ marginRight: "6px" }}
+                                        />
+                      <span>Clear</span>
+                    </button>
+            
+                      )}
+
+            
+          </div>
+        </div>
+
+
+        {/* Header Row (checkbox + labels) */}
+        <div
+          className="relative flex flex-row items-center justify-between border-b border-[rgba(145,158,171,0.2)]"
+          style={{
+            width: "100%",
+            height: "76px",
+            padding: "16px",
+          }}
+        >
+          {/* Select All Checkbox */}
+        <div className="relative shrink-0 ml-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={selectedIds.length === filteredData.length && filteredData.length > 0}
+            onChange={selectAll}
+            className="absolute opacity-0 w-5 h-5 cursor-pointer peer"
+            id="select-all-header"
+          />
+          <label htmlFor="select-all-header">
+            <div
+              className="w-5 h-5 rounded-lg border border-[rgba(145,158,171,0.2)] bg-transparent transition-all shadow-sm relative hover:border-gray-300"
+            >
+              {selectedIds.length === filteredData.length && filteredData.length > 0 && (
+                <div className="absolute inset-1 bg-white rounded-sm" />
+              )}
+            </div>
+          </label>
+        </div>
+
+
+        {/* Labels */}
+          <div className="flex flex-row items-center flex-1 gap-12 min-w-0">
+            {/* Avatar Placeholder */}
+            <div className="w-10 h-10 bg-transparent" />
+
+            {/* Email / User ID Labels */}
+            <div className="flex w-[370px] flex-col items-start gap-2 shrink-0">
+              <div className="text-left w-full">
+                <span className="text-white text-[12px] font-semibold">
+                  Research Name
+                </span>
+                <span className="text-[10px] text-[rgba(204,204,204,0.5)]">
+                  Content
+                </span>
+              </div>
+            </div>
+
+            {/* Date / Role / Status / Full Email Labels */}
+            <div className="flex flex-row gap-[100px] flex-1 min-w-0 items-center">
+              <span className="text-white text-[12px] font-semibold min-w-[100px] text-center">
+                Date Created
+              </span>
+              <span className="text-white text-[12px] font-semibold min-w-[100px] text-center">
+                User
+              </span>
+              <span className="text-white text-[12px] font-semibold min-w-[120px] text-center">
+                Status
+              </span>
+              <span className="text-white text-[12px] font-semibold min-w-[200px] text-center">
+                Full Email
+              </span>
+            </div>
           </div>
         </div>
 
         {/* 🧾 Content Cards */}
-        <div className="flex flex-col w-full min-h-[200px] justify-center items-center">
+        <div className="flex flex-col w-full items-center justify-start">
           {filteredData.length === 0 ? (
             <div className="text-gray-400 py-10 text-center text-sm">
               No {type} content found.
@@ -312,86 +476,119 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
               <>
                 <button
                   onClick={handleDeleteSelected}
-                  className="px-3 py-1 bg-red-500/80 hover:bg-red-600 text-white text-[12px] rounded-md transition-all"
+                  className="relative w-[150px] h-[30px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
                 >
-                  🗑 Delete Selected
+                  <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,99,99,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10">Delete Selected</span>
+                  
                 </button>
                 <button
                   onClick={() => setSelectedIds([])}
-                  className="px-3 py-1 bg-gray-500/50 hover:bg-gray-600 text-white text-[12px] rounded-md transition-all"
+                  className="relative w-[150px] h-[30px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
                 >
-                  ❌ Unselect All
+                  <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,99,99,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10"> Unselect All</span>
+                 
                 </button>
               </>
             )}
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Rows per page */}
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-gray-300">Rows per page:</span>
               <input
                 type="number"
                 min={1}
+                max={filteredData.length}
                 value={itemsPerPage}
                 onChange={(e) => {
-                  const val = Math.max(1, Number(e.target.value) || 1);
+                  const val = Math.max(1, Math.min(Number(e.target.value) || 1, filteredData.length));
                   setItemsPerPage(val);
                   setCurrentPage(1);
                 }}
-                className="bg-white/[0.1] text-white text-[12px] px-2 py-1 w-14 rounded-md outline-none hover:bg-white/[0.2] transition-all text-center"
+                className="bg-transparent text-white text-[12px] px-2 py-1 w-14 rounded-full outline-none border border-white/[0.2] hover:bg-white/[0.1] transition-all text-center focus:ring-1 focus:ring-green-400"
+
               />
             </div>
 
-            <span className="text-white text-[12px]">
-              Page {Math.min(currentPage, totalPages)} of {totalPages}
+            {/* Page info */}
+            <span className="text-white text-[12px] text-center min-w-[100px]">
+              Page {totalPages > 0 ? currentPage : 0} of {totalPages} 
             </span>
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => goToPage(1)}
-                disabled={currentPage === 1}
-                className={`w-8 h-8 rounded-md text-white ${
-                  currentPage === 1
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-white/[0.1] hover:bg-white/[0.2]"
-                }`}
-              >
-                &lt;&lt;
-              </button>
-              <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`w-8 h-8 rounded-md text-white ${
-                  currentPage === 1
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-white/[0.1] hover:bg-white/[0.2]"
-                }`}
+                className={`w-8 h-8 flex items-center justify-center rounded-[6px] transition-all
+                  ${currentPage === 1 || totalPages === 0
+                    ? "opacity-40 cursor-not-allowed"
+                    : "hover:bg-white/[0.08] hover:backdrop-blur-sm cursor-pointer"
+                  }`}
               >
-                &lt;
+                <Image
+                                  src="/left1.svg"
+                                  alt="First page"
+                                  width={6}
+                                  height={6}
+                                  className="opacity-90"
+                                />
               </button>
               <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`w-8 h-8 rounded-md text-white ${
-                  currentPage === totalPages
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-white/[0.1] hover:bg-white/[0.2]"
-                }`}
+                onClick={() => goToPage(1)}
+                disabled={currentPage === 1}
+                className={`w-8 h-8 flex items-center justify-center rounded-[6px] transition-all
+                  ${currentPage === 1 || totalPages === 0
+                    ? "opacity-40 cursor-not-allowed"
+                    : "hover:bg-white/[0.08] hover:backdrop-blur-sm cursor-pointer"
+                  }`}
               >
-                &gt;
+                <Image
+                                  src="/left2.svg"
+                                  alt="Previous page"
+                                  width={10}
+                                  height={10}
+                                  className="opacity-90"
+                                />
               </button>
               <button
                 onClick={() => goToPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className={`w-8 h-8 rounded-md text-white ${
-                  currentPage === totalPages
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-white/[0.1] hover:bg-white/[0.2]"
-                }`}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`w-8 h-8 flex items-center justify-center rounded-[6px] transition-all
+                  ${currentPage === totalPages || totalPages === 0
+                    ? "opacity-40 cursor-not-allowed"
+                    : "hover:bg-white/[0.08] hover:backdrop-blur-sm cursor-pointer"
+                  }`}
               >
-                &gt;&gt;
+                 <Image
+                                  src="/right2.svg"
+                                  alt="Next page"
+                                  width={10}
+                                  height={10}
+                                  className="opacity-90"
+                                />
+              </button>
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`w-8 h-8 flex items-center justify-center rounded-[6px] transition-all
+                  ${currentPage === totalPages || totalPages === 0
+                    ? "opacity-40 cursor-not-allowed"
+                    : "hover:bg-white/[0.08] hover:backdrop-blur-sm cursor-pointer"
+                  }`}
+              >
+                <Image
+                                  src="/right1.svg"
+                                  alt="Last page"
+                                  width={6}
+                                  height={6}
+                                  className="opacity-90"
+                                />
               </button>
             </div>
+            
           </div>
         </div>
       </div>

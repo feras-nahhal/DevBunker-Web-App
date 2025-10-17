@@ -28,6 +28,7 @@ export default function HeaderDraft({
   const [isMenuOpen, setIsMenuOpen] = useState(false); 
   const [filterStatus, setFilterStatus] = useState(filters.status || ""); // NEW: Local for modal
   const [filterCategory, setFilterCategory] = useState(filters.category || ""); // NEW: Local for modal
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null); 
   const router = useRouter();
   const { logout } = useAuth();
@@ -227,7 +228,7 @@ const handleClearFilters = () => {
             onClick={handleOpenFilters} // NEW: Opens filters modal
             title="Open Filters (or Ctrl+K)"
           >
-            <img src="/addfile.png" alt="Open Filters" />
+            <img src="/filter.svg" alt="Open Filters" />
           </button>
           <input
             type="text"
@@ -236,7 +237,7 @@ const handleClearFilters = () => {
             onChange={(e) => onSearchChange(e.target.value)} // NEW: Call prop handler
           />
           <div className="ctrl-icon">
-            <img src="/ctrlphoto.png" alt="ctrl" />
+            <img src="/ctrul.svg" alt="ctrl" />
             {/* Optional: Hint for Ctrl+K */}
             
           </div>
@@ -260,8 +261,8 @@ const handleClearFilters = () => {
                 padding: "1px",
                 gap: "1px",
                 position: "absolute",
-                width: "194px",
-                height: "74px",
+                width: "198px",
+                height: "78px",
                 top: "110%",
                 right: 0,
                 background: "rgba(255, 255, 255, 0.05)",
@@ -446,50 +447,60 @@ const handleClearFilters = () => {
 
             
 
-                       {/* Category Select */}
-            <div style={{ marginBottom: "20px" }}>
-              <label style={{ display: "block", marginBottom: "4px", fontSize: "14px" }}>
-                Category:
-              </label>
-              {categoriesLoading ? (
-                <div style={{ 
-                  textAlign: "center", 
-                  padding: "12px", 
-                  color: "rgba(255, 255, 255, 0.6)",
-                  fontSize: "14px"
-                }}>
-                  Loading categories...
-                </div>
-              ) : availableCategories.length === 0 ? (
-                <div style={{ 
-                  textAlign: "center", 
-                  padding: "12px", 
-                  color: "rgba(255, 255, 255, 0.6)",
-                  fontSize: "14px"
-                }}>
-                  No categories available.
-                </div>
-              ) : (
-                <select
-                  value={filterCategory}
-                  onChange={handleCategoryChange1}
+           {/* Category Select */}
+              <div className="relative w-full mt-2 mx-auto">
+              {/* Dropdown header */}
+              <div
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] transition hover:bg-white/20"
+              >
+                {filterCategory
+                  ? availableCategories.find((cat) => cat.id === filterCategory)?.name
+                  : "All Categories"}
+                <span className="ml-2 text-xs opacity-70">▼</span>
+              </div>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && (
+                <div
+                  className="absolute top-full left-0 w-full mt-1 bg-white/10 border border-white/20 rounded-lg backdrop-blur-lg shadow-[0_0_10px_rgba(255,255,255,0.1)] z-50 max-h-48 overflow-y-scroll"
                   style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    background: "rgba(255, 255, 255, 0.1)",
-                    border: "1px solid rgba(80, 80, 80, 0.24)",
-                    borderRadius: "8px",
-                    color: "white",
-                    fontSize: "14px",
+                    scrollbarWidth: "none", // Firefox
+                    msOverflowStyle: "none", // IE/Edge
                   }}
                 >
-                  <option value="">All Categories</option>
+                  {/* Hide scrollbar for Chrome, Safari, Edge */}
+                  <style>
+                    {`
+                      div::-webkit-scrollbar {
+                        display: none;
+                      }
+                    `}
+                  </style>
+
+                  <div
+                    onClick={() => {
+                      handleCategoryChange1({ target: { value: "" } } as any);
+                      setDropdownOpen(false);
+                    }}
+                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                  >
+                    All Categories
+                  </div>
+
                   {availableCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+                    <div
+                      key={cat.id}
+                      onClick={() => {
+                        handleCategoryChange1({ target: { value: cat.id } } as any);
+                        setDropdownOpen(false);
+                      }}
+                      className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                    >
                       {cat.name}
-                    </option>
+                    </div>
                   ))}
-                </select>
+                </div>
               )}
             </div>
 
@@ -502,41 +513,21 @@ const handleClearFilters = () => {
                 marginTop: "8px",
               }}
             >
-              <button
+             <button
                 onClick={handleApplyFilters}
-                style={{
-                  flex: 1,
-                  padding: "10px 16px",
-                  background: "rgba(50, 205, 50, 0.2)", // Subtle green tint
-                  border: "1px solid rgba(50, 205, 50, 0.4)",
-                  borderRadius: "8px",
-                  color: "white",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(50, 205, 50, 0.3)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(50, 205, 50, 0.2)")}
+                className="relative w-[170px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
               >
-                Apply Filters
+                 <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10">Apply Filters</span>
+                
               </button>
               <button
                 onClick={handleClearFilters}
-                style={{
-                  flex: 1,
-                  padding: "10px 16px",
-                  background: "rgba(128, 128, 128, 0.2)", // Gray tint
-                  border: "1px solid rgba(128, 128, 128, 0.4)",
-                  borderRadius: "8px",
-                  color: "white",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(128, 128, 128, 0.3)")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(128, 128, 128, 0.2)")}
+                 className="relative w-[170px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
               >
-                Clear All
+                 <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,99,99,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10">Clear All</span>
+               
               </button>
             </div>
           </div>

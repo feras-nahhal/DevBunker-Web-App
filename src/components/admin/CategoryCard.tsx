@@ -106,25 +106,26 @@ export default function CategoryCard({
   };
 
   return (
-    <div className="flex items-center justify-center w-full">
-      <div
-        className="relative flex flex-row items-center justify-between bg-white/[0.05]"
-        style={{
-          width: "100%",
-          height: "76px",
-          padding: "16px",
-          gap: "16px",
-          borderBottom: "1px dashed rgba(145,158,171,0.2)",
-          boxSizing: "border-box",
-          overflow: "visible", // FIXED: Ensure menu isn't clipped
-        }}
-      >
-        {/* ✅ Checkbox (left) */}
+     <div className="w-full rounded-md cursor-pointer transition-colors duration-200 hover:bg-white/[0.08]">
+  <div className="flex items-center justify-center w-full">
+    <div
+      className="relative flex flex-row items-center justify-between bg-white/[0.05]"
+      style={{
+        width: "100%",
+        height: "76px",
+        padding: "16px",
+        gap: "16px",
+        borderBottom: "1px dashed rgba(145,158,171,0.2)",
+        boxSizing: "border-box",
+        overflow: "visible",
+      }}
+    >
+       {/* ✅ Rounded Checkbox with white border */}
         <div
           className="relative shrink-0 ml-2 cursor-pointer"
           onClick={(e) => {
-            e.stopPropagation(); // FIXED: Prevent menu interference
-            handleCheckboxChange(!isSelected); // FIXED: Toggle on direct click
+            e.stopPropagation();
+            handleCheckboxChange(!isSelected);
           }}
         >
           <input
@@ -135,18 +136,10 @@ export default function CategoryCard({
             id={`select-${id}`}
           />
           <div
-            className={`w-5 h-5 rounded-none border border-[rgba(80,80,80,0.24)] bg-white/[0.05] peer-checked:bg-green-500 peer-checked:border-green-500 transition-all shadow-sm relative hover:border-green-400`} // FIXED: Hover feedback
+            className={`w-5 h-5 rounded-lg border border-[rgba(145,158,171,0.2)] bg-transparent transition-all shadow-sm relative hover:border-gray-300`} 
           >
             {isSelected && (
-              <svg
-                className="absolute inset-0 w-5 h-5 text-white pointer-events-none scale-90"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
-              </svg>
+              <div className="absolute inset-1 bg-white rounded-sm" />
             )}
           </div>
         </div>
@@ -166,10 +159,10 @@ export default function CategoryCard({
 
           {/* Category Name / Category Id Block (title/desc – w-[300px]) */}
           <div className="flex w-[300px] flex-col items-start gap-2 shrink-0">
-            <span className="text-white text-[12px] font-['Public Sans'] leading-[18px] block truncate">
+            <span className="text-white text-[14px] font-['Public Sans'] leading-[18px] block truncate">
               {category_name || "No category name"} {/* FIXED: category_name as title */}
             </span>
-            <span className="text-[10px] text-[rgba(204,204,204,0.5)] leading-[14px] font-['Public Sans'] block truncate">
+            <span className="text-[12px] text-[rgba(204,204,204,0.5)] leading-[14px] font-['Public Sans'] block truncate">
               Category Id: {id} {/* FIXED: Full category ID as description */}
             </span>
           </div>
@@ -272,6 +265,7 @@ export default function CategoryCard({
           </div>,
           document.body // FIXED: Portal to body (avoids clipping)
         )}
+    </div>
     </div>
   );
 }

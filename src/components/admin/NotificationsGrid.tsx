@@ -190,119 +190,54 @@ const handleOpenPopup = (notification: Notification) => {
 
      
 
-        {/* Cards */}
-        <div className="flex flex-col w-full min-h-[200px] justify-center items-center">
-          {filteredData.length === 0 ? (
-            <p className="text-gray-400 py-10 text-center text-sm">
-              No notifications found for &quot;{selectedReadStatus || "All"}&quot; status.
-            </p>
-          ) : (
-            paginatedData.map((notification) => (
-              <NotificationsCard
-                key={notification.id}
-                type={notification.type}
-                id={notification.id}
-                title={notification.title}
-                message={notification.message}
-                read={notification.read}
-                created_at={notification.created_at}
-                user_id={notification.user_id}
-                onOpenPopup={() => handleOpenPopup(notification)} // Passes full object
-              />
-            ))
-          )}
-        </div>
+{/* Cards Container (max 6 visible + frosted scrollbar) */}
+<div className="notifications-scroll flex flex-col w-full items-center overflow-y-auto custom-scrollbar">
+  {filteredData.length === 0 ? (
+    <p className="text-gray-400 py-10 text-center text-sm">
+      No notifications found for &quot;{selectedReadStatus || "All"}&quot; status.
+    </p>
+  ) : (
+    filteredData.map((notification) => (
+      <NotificationsCard
+        key={notification.id}
+        type={notification.type}
+        id={notification.id}
+        title={notification.title}
+        message={notification.message}
+        read={notification.read}
+        created_at={notification.created_at}
+        user_id={notification.user_id}
+        onOpenPopup={() => handleOpenPopup(notification)}
+      />
+    ))
+  )}
+</div>
 
-        {/* Footer (simplified – no bulk delete, just mark all + pagination) */}
-        <div className="flex items-center justify-between w-full border-t border-[rgba(145,158,171,0.2)] py-3 px-5 bg-white/[0.05]">
-          <div className="flex items-center gap-3">
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="px-3 py-1 bg-green-500/80 hover:bg-green-600 text-white text-[12px] rounded-md transition-all"
-              >
-                ✅ Mark All as Read
-              </button>
-            )}
-          </div>
+<style jsx>{`
+  .notifications-scroll {
+    max-height: calc(6 * 76px);
+    padding-right: 6px;
+    scroll-behavior: smooth;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    transition: background 0.3s ease;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+`}</style>
 
-          {/* Pagination (right) */}
-          <div className="flex items-center gap-3">
-            {/* Rows per page */}
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] text-gray-300">Rows per page:</span>
-              <input
-                type="number"
-                min={1}
-                max={filteredData.length}
-                value={itemsPerPage}
-                onChange={(e) => {
-                  const val = Math.max(1, Math.min(Number(e.target.value) || 1, filteredData.length));
-                  setItemsPerPage(val);
-                  setCurrentPage(1);
-                }}
-                className="bg-white/[0.1] text-white text-[12px] px-2 py-1 w-14 rounded-md outline-none hover:bg-white/[0.2] transition-all text-center focus:ring-1 focus:ring-green-400"
-              />
-            </div>
 
-            {/* Page info */}
-            <span className="text-white text-[12px] text-center min-w-[100px]">
-              Page {totalPages > 0 ? currentPage : 0} of {totalPages} ({filteredData.length} total)
-            </span>
-
-            {/* Navigation Buttons (<< < > >>) */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={goToFirstPage}
-                disabled={currentPage === 1 || totalPages === 0}
-                className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-white transition-all ${
-                  currentPage === 1 || totalPages === 0
-                    ? "bg-gray-600 cursor-not-allowed opacity-50"
-                    : "bg-white/[0.1] hover:bg-white/[0.2] cursor-pointer"
-                }`}
-                aria-label="First page"
-              >
-                &lt;&lt;
-              </button>
-              <button
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1 || totalPages === 0}
-                className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-white transition-all ${
-                  currentPage === 1 || totalPages === 0
-                    ? "bg-gray-600 cursor-not-allowed opacity-50"
-                    : "bg-white/[0.1] hover:bg-white/[0.2] cursor-pointer"
-                }`}
-                aria-label="Previous page"
-              >
-                &lt;
-              </button>
-              <button
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages || totalPages === 0}
-                className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-white transition-all ${
-                  currentPage === totalPages || totalPages === 0
-                    ? "bg-gray-600 cursor-not-allowed opacity-50"
-                    : "bg-white/[0.1] hover:bg-white/[0.2] cursor-pointer"
-                }`}
-                aria-label="Next page"
-              >
-                &gt;
-              </button>
-              <button
-                onClick={goToLastPage}
-                disabled={currentPage === totalPages || totalPages === 0}
-                className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-white transition-all ${
-                  currentPage === totalPages || totalPages === 0
-                    ? "bg-gray-600 cursor-not-allowed opacity-50"
-                    : "bg-white/[0.1] hover:bg-white/[0.2] cursor-pointer"
-                }`}
-                aria-label="Last page"
-              >
-                &gt;&gt;
-              </button>
-            </div>
-          </div>
-        </div>
+      
       </div>
 
             {/* NEW: Popup Modal (styled like CreateCategoryPopup example) */}

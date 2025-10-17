@@ -58,7 +58,7 @@ export default function NotificationsCard({
 
   return (
     <div
-      className="flex items-center justify-center w-full cursor-pointer transition-all hover:scale-[1.02] hover:opacity-90"
+      className="flex items-center justify-center w-full cursor-pointer transition-all hover:bg-white/[0.08] hover:opacity-90"
       onClick={handleCardClick}
     >
       <div

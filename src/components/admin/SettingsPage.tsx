@@ -118,7 +118,7 @@ export default function SettingsPage() {
   return (
     <div
       className="custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto"
-      style={{ width: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
+      style={{ width: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px",marginLeft:"190px" }}
     >
       {/* Title */}
       <div className="flex justify-center items-center mb-4 w-full">

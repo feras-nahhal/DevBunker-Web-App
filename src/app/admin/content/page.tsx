@@ -1,8 +1,8 @@
 "use client";
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-
 import Image from "next/image";
 import Header from "@/components/admin/Header";
 import Sidebar from "@/components/admin/Sidebar";
@@ -14,51 +14,55 @@ export default function ExplorePage() {
   const router = useRouter();
   const { token, loading } = useAuth();
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Load sidebar state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved === "true") setSidebarCollapsed(true);
+  }, []);
+
+  // Redirect if not logged in
   useEffect(() => {
     if (!loading && !token) {
       router.push("/auth/login");
     }
   }, [loading, token, router]);
 
-  // 🛑 Don’t render CategoryGrid until we know user is logged in
+  // 🛑 While loading or no token — show loader
   if (loading || !token) {
-      return (
-        <div className="dashboard">
-          <Sidebar />
-          <div className="main-content">
-            <p className="text-center text-gray-400 mt-10">Loading...</p>
-          </div>
+    return (
+      <div className="dashboard">
+        <Sidebar onToggle={setSidebarCollapsed} />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+          <p className="text-center text-gray-400 mt-10">Loading...</p>
         </div>
-      );
-    }
-  if (!token) return null; // ✅ Prevents unauthorized API call before redirect
+      </div>
+    );
+  }
+
+  // ✅ Main content (once logged in)
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
-        <Header />
+      <Sidebar onToggle={setSidebarCollapsed} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+        <Header collapsed={sidebarCollapsed}/>
 
         <div className="explore-container">
-          {/* 🔹 Menu / Explore Title Row */}
+          {/* 🔹 Breadcrumb / Title */}
           <div className="flex items-center mb-4">
             <Image
-              src="/Reserchnew.png" // ✅ make sure image path is correct
+              src="/Reserchnew.png"
               alt="Menu Icon"
-              width={20} // Figma-like size (clean & aligned)
+              width={20}
               height={20}
-              className="object-contain mr-[4px] relative top-[1px]" // 👈 tight spacing & perfect vertical alignment
             />
-            <h2
-              className="font-[400] text-[12px] leading-[22px] text-[#707070]"
-              style={{
-                fontFamily: "'Public Sans', sans-serif",
-              }}
-            >
+            <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
               Reserch/ Contant
             </h2>
           </div>
 
-          {/* 🔹 Grid Section */}
+          {/* 🔹 Category Grid */}
           <ContentGrid type="research" />
         </div>
       </div>

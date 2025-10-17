@@ -57,7 +57,7 @@
 .search-bar {
   display: flex;
   align-items: center;
-  padding: 4px 6px;
+  padding: 4px 4px;
   gap: 8px;
   width: 100%;
   max-width: 514px;

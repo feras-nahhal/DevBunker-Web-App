@@ -9,7 +9,6 @@
   padding: 10px 20px;
   gap: 4px;
   height: 70px;
-  width: calc(100% - 270px); /* reduce width to not overlap sidebar */
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(80, 80, 80, 0.24);
   box-shadow: inset 0px 0px 7px rgba(255, 255, 255, 0.16);
@@ -20,6 +19,13 @@
   top: 12px;
   left: 260px; /* start after sidebar */
   z-index: 10;
+  width: calc(100% - 260px - 12px); /* sidebar width + top gap (12px) */
+  padding-right: 10px; /* balance with left padding */
+
+}
+/* ✅ Header moves correctly when sidebar collapses */
+.header.collapsed {
+  margin-left: 10px; /* collapsed sidebar width */
 }
 
 /* Left: Dev + Banker */
