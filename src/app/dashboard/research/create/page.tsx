@@ -35,6 +35,7 @@ export default function CreateResearchPage() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const { createContent, loading: contentLoading, refetch } = useContent({
     type: "research" as ContentType,
@@ -106,8 +107,8 @@ export default function CreateResearchPage() {
   // -----------------------------
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         {authLoading || !user ? (
           <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
         ) : (
@@ -117,12 +118,13 @@ export default function CreateResearchPage() {
               onSaveAsDraft={handleSaveAsDraft}
               onCancel={handleCancel}
               saving={isLoading || !isAuthenticated}
+              collapsed={sidebarCollapsed}
             />
 
             <div className="post-container">
               <div className="flex items-center mb-4">
                 <Image src="/plus.svg" alt="Research Icon" width={20} height={20} className="object-contain mr-[4px] relative top-[1px]" />
-                <h2 className="font-[400] text-[12px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
+                <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
                   Research / Create Research
                 </h2>
               </div>

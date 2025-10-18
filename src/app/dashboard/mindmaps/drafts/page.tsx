@@ -12,6 +12,7 @@ import "./MindmapDraftPage.css";
 export default function MindmapDraftPage() {
   const router = useRouter();
   const { user, loading } = useAuth(); // ✅ Check auth state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // 🔐 Redirect if not authenticated
   useEffect(() => {
@@ -52,22 +53,23 @@ export default function MindmapDraftPage() {
   // 🚫 Prevent rendering UI until auth finishes
   if (loading || (!user && !loading)) return (
                 <div className="dashboard">
-                  <Sidebar />
-                  <div className="main-content">
-                    <p className="text-center text-gray-400 mt-10">Loading...</p>
-                  </div>
-                </div>
+                  <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+                        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+                          <p className="text-center text-gray-400 mt-10">Loading...</p>
+                        </div>
+                      </div>
               );;
 
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <HeaderDraft
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          collapsed={sidebarCollapsed}
         />
 
         <div className="mindmap-container">
@@ -81,7 +83,7 @@ export default function MindmapDraftPage() {
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
-              className="font-[400] text-[12px] leading-[22px] text-[#707070]"
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
               style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
               Mind Map / Draft

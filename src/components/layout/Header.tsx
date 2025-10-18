@@ -17,12 +17,13 @@ interface HeaderProps {
   onFiltersChange: (newFilters: Record<string, string>) => void; // Updates filters
 }
 
-export default function Header({ 
-  searchQuery, 
-  onSearchChange, 
-  filters, 
-  onFiltersChange 
-}: HeaderProps) {
+export default function Header({
+  searchQuery,
+  onSearchChange,
+  filters,
+  onFiltersChange,
+  collapsed = false, // ✅ NEW PROP
+}: HeaderProps & { collapsed?: boolean }) {
   const [isModalOpen, setIsModalOpen] = useState(false); // Existing: Tag/Category request modal
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // NEW: Filter modal
   const [isMenuOpen, setIsMenuOpen] = useState(false); 
@@ -216,7 +217,8 @@ export default function Header({
 
   return (
     <>
-      <header className="header">
+      <header className={`header ${collapsed ? "collapsed" : ""}`}>
+
         {/* Left: Logo / Dev + Banker (existing) */}
         <div className="header-left">
           <div className="dev">Dev</div>

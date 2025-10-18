@@ -5,6 +5,7 @@ import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
 import { useComments } from "@/hooks/useComments"; // ✅ import the hook
 import Image from "next/image";
 import { CONTENT_STATUS } from "@/lib/enums"; // NEW
+import { useAuth } from "@/hooks/useAuth"; // ✅ import your auth hook
 
 interface ResearchCardProps {
   id: string;
@@ -36,6 +37,9 @@ export default function ResearchCard({
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const { comments: commentsData, loading: commentsLoading } = useComments(id); // ✅ hook usage
+  const { user } = useAuth(); // ✅ get logged-in user
+  const authorIdShort = author_id.split("-")[0]; // "b655deff"
+
 
   const typeImages: Record<"post" | "mindmap" | "research", string> = {
     post: "/postcard.png",
@@ -89,14 +93,16 @@ export default function ResearchCard({
 
       },
     },
-    {
+   
+  ];
+  // ✅ Add Delete button only if user is the author
+  if (user?.id === author_id && onDelete) {
+    menuItems.push({
       name: "Delete",
       icon: "/deletelogo.png",
-      action: () => {
-        if (onDelete) onDelete();
-      },
-    },
-  ];
+      action: () => onDelete(),
+    });
+  }
 
   return (
     <div className="flex items-center justify-center px-6">
@@ -128,7 +134,7 @@ export default function ResearchCard({
                 
               </span>
               <span className="text-[12px] text-[rgba(204,204,204,0.5)] leading-[18px] font-['Public Sans']">
-                #{author_id}
+                 #{author_id.split("-")[0]}
               </span>
             </div>
           </div>
@@ -190,58 +196,53 @@ export default function ResearchCard({
           />
         </div>
 
-        {/* Bottom Box */}
-        <div
-          className="flex flex-col items-start bg-white/[0.05] rounded-[16px] backdrop-blur-md border border-white/10 shadow-[inset_0px_0px_4px_rgba(239,214,255,0.25)] mt-4"
-          style={{
-            width: "300px",
-            height: "261px",
-            padding: "17px 20px",
-            gap: "19px",
-          }}
-        >
-        {/* Type + Status Row */}
-        <div className="flex items-center justify-between w-full px-1">
+         {/* Bottom section */}
+                       <div
+                         className="flex flex-col items-start bg-white/[0.05] rounded-[16px] backdrop-blur-md border border-white/10 shadow-[inset_0px_0px_4px_rgba(239,214,255,0.25)] mt-4"
+                         style={{ width: "297px", height: "265px", padding: "17px 20px" }}
+                       >
+                         {/* Type + Status Row */}
+        <div className="flex items-center justify-between w-full px-1  mb-3">
         {/* Type Pill */}
-        <div className="relative flex items-center justify-center w-[90px] h-[28px] rounded-full 
+    <div className="relative flex items-center justify-center w-[90px] h-[28px] rounded-full 
             bg-[rgba(239,214,255,0.05)] backdrop-blur-[10px] 
             shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] isolate overflow-hidden">
 
-            {/* Full-width inner glow */}
-            <div
-            className={`absolute inset-0 rounded-full z-0 ${
+              {/* Full-width inner glow */}
+              <div
+              className={`absolute inset-0 rounded-full z-0 ${
+                  {
+                    post: "bg-[linear-gradient(89.65deg,rgba(255,140,0,0.15)_0%,#FFA500_50%,rgba(255,140,0,0.15)_100%)]",
+                    mindmap: "bg-[linear-gradient(89.65deg,rgba(30,144,255,0.15)_0%,#1E90FF_50%,rgba(30,144,255,0.15)_100%)]",
+                    research: "bg-[linear-gradient(89.65deg,rgba(34,197,94,0.15)_0%,#22C55E_50%,rgba(34,197,94,0.15)_100%)]",
+                  }[type]
+              }`}
+              />
+
+              {/* Text */}
+              <span className="relative z-10 text-[12px] font-poppins text-white opacity-80 capitalize">
+              {type}
+              </span>
+          </div>
+
+          {/* Status Pill */}
+          <div className="relative flex items-center justify-center w-[140px] h-[28px] rounded-full 
+              bg-[rgba(239,214,255,0.05)] backdrop-blur-[10px] 
+              shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] isolate overflow-hidden">
+
+              {/* Full-width inner glow */}
+              <div
+              className={`absolute inset-0 rounded-full z-0 ${
                 {
-                  post: "bg-[linear-gradient(89.65deg,rgba(255,140,0,0.15)_0%,#FFA500_50%,rgba(255,140,0,0.15)_100%)]",
-                  mindmap: "bg-[linear-gradient(89.65deg,rgba(30,144,255,0.15)_0%,#1E90FF_50%,rgba(30,144,255,0.15)_100%)]",
-                  research: "bg-[linear-gradient(89.65deg,rgba(34,197,94,0.15)_0%,#22C55E_50%,rgba(34,197,94,0.15)_100%)]",
-                }[type]
-            }`}
-            />
-
-            {/* Text */}
-            <span className="relative z-10 text-[12px] font-poppins text-white opacity-80 capitalize">
-            {type}
-            </span>
-        </div>
-
-        {/* Status Pill */}
-        <div className="relative flex items-center justify-center w-[140px] h-[28px] rounded-full 
-            bg-[rgba(239,214,255,0.05)] backdrop-blur-[10px] 
-            shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] isolate overflow-hidden">
-
-            {/* Full-width inner glow */}
-            <div
-            className={`absolute inset-0 rounded-full z-0 ${
-               {
-                draft: "bg-[linear-gradient(89.65deg,rgba(128,128,128,0.18)_0%,#8E8E8E_50%,rgba(128,128,128,0.18)_100%)]",
-                published: "bg-[linear-gradient(89.65deg,rgba(34,197,94,0.18)_0%,#22C55E_50%,rgba(34,197,94,0.18)_100%)]",
-                pending_approval: "bg-[linear-gradient(89.65deg,rgba(255,165,0,0.18)_0%,#FFA500_50%,rgba(255,165,0,0.18)_100%)]",
-                approved: "bg-[linear-gradient(89.65deg,rgba(30,144,255,0.18)_0%,#1E90FF_50%,rgba(30,144,255,0.18)_100%)]",
-                rejected: "bg-[linear-gradient(89.65deg,rgba(255,69,58,0.18)_0%,#FF3B30_50%,rgba(255,69,58,0.18)_100%)]",
-              }
-              [status]
-            }`}
-            />
+                  draft: "bg-[linear-gradient(89.65deg,rgba(128,128,128,0.18)_0%,#8E8E8E_50%,rgba(128,128,128,0.18)_100%)]",
+                  published: "bg-[linear-gradient(89.65deg,rgba(34,197,94,0.18)_0%,#22C55E_50%,rgba(34,197,94,0.18)_100%)]",
+                  pending_approval: "bg-[linear-gradient(89.65deg,rgba(255,165,0,0.18)_0%,#FFA500_50%,rgba(255,165,0,0.18)_100%)]",
+                  approved: "bg-[linear-gradient(89.65deg,rgba(30,144,255,0.18)_0%,#1E90FF_50%,rgba(30,144,255,0.18)_100%)]",
+                  rejected: "bg-[linear-gradient(89.65deg,rgba(255,69,58,0.18)_0%,#FF3B30_50%,rgba(255,69,58,0.18)_100%)]",
+                }
+                [status]
+              }`}
+              />
 
             {/* Text */}
             <span className="relative z-10 text-[12px] font-poppins text-white opacity-80 capitalize">
@@ -249,72 +250,84 @@ export default function ResearchCard({
             </span>
         </div>
         </div>
-
-          <h5 className="text-lg font-bold text-white leading-6 w-[269px]">{title}</h5>
-
-          <div className="flex flex-wrap gap-2 w-[269px]">
-            {tags.length > 0 ? (
-                <>
-                {tags.slice(0, 4).map((tag) => (
-                    <span
-                    key={tag}
-                    className="px-2 py-1 border border-gray-700/30 rounded-full text-[12px] text-gray-400"
-                    >
-                    {tag}
-                    </span>
-                ))}
-
-                {tags.length > 4 && (
-                    <span className="px-2 py-1 border border-gray-700/30 rounded-full text-[12px] text-gray-400">
-                    +{tags.length - 4}
-                    </span>
-                )}
-                </>
-            ) : (
-                <span className="text-gray-500 text-sm">No tags</span>
-            )}
-            </div>
-
-
-          <div className="flex flex-row items-center justify-between w-[269px] h-[44px]">
-            <div className="flex flex-row items-center gap-2">
-              <button
-                onClick={() => setVotes(votes + 1)}
-                className="w-[24px] h-[24px] text-gray-400 hover:scale-105 transition"
-              >
-                <Image src="/uparrow.png" alt="Upvote" width={20} height={20} />
-              </button>
-              <span className="text-sm text-gray-400">{votes}</span>
-              <button
-                onClick={() => setVotes(votes - 1)}
-                className="w-[24px] h-[24px] text-gray-400 hover:scale-105 transition"
-              >
-                <Image src="/downarrow.png" alt="Downvote" width={20} height={20} />
-              </button>
-            </div>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenComments && onOpenComments();
-              }}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Image
-                src="/commentlogo.png"
-                alt="Comment"
-                width={20}
-                height={20}
-                className="hover:scale-105 transition"
-              />
-              {/* ✅ Display number of comments */}
-              <span className="text-sm text-gray-400">
-                {commentsLoading ? "..." : commentsData.length}
-              </span>
-            </button>
-          </div>
-        </div>
+                       
+                         {/* Title & Tags */}
+                         <div>
+                           <h5 className="text-lg font-bold text-white leading-6 w-full line-clamp-2 overflow-hidden">
+                             {title}
+                           </h5>
+                       
+                           <div className="flex flex-wrap gap-2 w-full mt-2">
+                             {tags.length > 0 ? (
+                               <>
+                                 {tags.slice(0, 4).map((tag) => (
+                                   <span
+                                     key={tag}
+                                     className="px-2 py-1 border border-gray-700/30 rounded-full text-[12px] text-gray-400"
+                                   >
+                                     {tag}
+                                   </span>
+                                 ))}
+                                 {tags.length > 4 && (
+                                   <span className="px-2 py-1 border border-gray-700/30 rounded-full text-[12px] text-gray-400">
+                                     +{tags.length - 4}
+                                   </span>
+                                 )}
+                               </>
+                             ) : (
+                               <span className="text-gray-500 text-sm">No tags</span>
+                             )}
+                           </div>
+                         </div>
+                       
+                         {/* Spacer pushes votes/comments to bottom */}
+                         <div className="flex-1" />
+                       
+                         {/* Votes & Comments */}
+                         <div className="flex flex-row items-center justify-between w-full h-[44px] mt-2">
+                           <div className="flex flex-row items-center gap-2">
+                             <button
+                               onClick={() => setVotes(votes + 1)}
+                               className="w-[24px] h-[24px] text-gray-400 hover:scale-105 transition"
+                             >
+                               <Image src="/uparrow.png" alt="Upvote" width={20} height={20} />
+                             </button>
+                             <span className="text-sm text-gray-400">{votes}</span>
+                             <button
+                               onClick={() => setVotes(votes - 1)}
+                               className="w-[24px] h-[24px] text-gray-400 hover:scale-105 transition"
+                             >
+                               <Image src="/downarrow.png" alt="Downvote" width={20} height={20} />
+                             </button>
+                           </div>
+                       
+                           <button
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               onOpenComments && onOpenComments();
+                             }}
+                             className="flex items-center gap-2 cursor-pointer"
+                           >
+                             <Image
+                               src="/commentlogo.png"
+                               alt="Comment"
+                               width={20}
+                               height={20}
+                               className="hover:scale-105 transition"
+                             />
+                             <span className="text-sm text-gray-400">
+                               {commentsLoading ? "..." : commentsData.length}
+                             </span>
+                           </button>
+                         </div>
+                       </div>
       </div>
     </div>
   );
 }
+
+
+
+
+
+

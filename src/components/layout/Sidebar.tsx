@@ -6,7 +6,7 @@ import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import "./Sidebar1.css";
 
-export default function Sidebar() {
+export default function Sidebar({ onToggle }: { onToggle?: (collapsed: boolean) => void }) {
   const pathname = usePathname();
   const glowRightRef = useRef<HTMLDivElement>(null);
   const glowLeftRef = useRef<HTMLDivElement>(null);
@@ -20,10 +20,11 @@ export default function Sidebar() {
     if (saved === "true") setCollapsed(true);
   }, []);
 
-  // Save collapse state
+  // Save collapse state on change + notify parent
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
-  }, [collapsed]);
+    onToggle?.(collapsed);
+  }, [collapsed, onToggle]);
 
   // Helper: determine active class
   const getClass = (path: string, baseClass: string = "menu-subitem") =>
@@ -54,19 +55,22 @@ export default function Sidebar() {
 
   // Collapse toggle
   const toggleCollapse = () => {
-    setCollapsed(!collapsed);
+    const newState = !collapsed;
+    setCollapsed(newState);
+    localStorage.setItem("sidebar-collapsed", String(newState));
+    onToggle?.(newState);
   };
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      {/* Collapse Button */}
-      <button
-        onClick={toggleCollapse}
-        className={`collapse-btn ${collapsed ? "collapsed" : ""}`}
-        aria-label="Toggle sidebar"
-      >
-        <span className="arrow" />
-      </button>
+      {/* === COLLAPSE BUTTON === */}
+        <button
+          onClick={toggleCollapse}
+          className={`collapse-btn ${collapsed ? "collapsed" : ""}`}
+          aria-label="Toggle sidebar"
+        >
+          <span className="arrow" />
+        </button>
 
       <nav className="menu">
         {/* === MENU === */}

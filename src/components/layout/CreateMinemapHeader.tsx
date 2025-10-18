@@ -1,9 +1,9 @@
 "use client";
 
-export default function CreateMinemapHeader() {
+export default function CreateMinemapHeader({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <>
-      <header className="header">
+      <header className={`header ${collapsed ? "collapsed" : ""}`}>
         {/* Left: Dev + Banker */}
         <div className="header-left">
           <div className="dev">Dev</div>
@@ -39,6 +39,12 @@ export default function CreateMinemapHeader() {
           left: 260px;
           z-index: 10;
         }
+
+  .header.collapsed {
+  left: 80px; /* sidebar collapsed width */
+  width: calc(100% - 80px - 12px); /* recalc width to fill remaining space */
+  transition: all 0.3s ease;
+}
 
         .header-left {
           display: flex;

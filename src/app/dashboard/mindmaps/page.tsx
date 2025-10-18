@@ -13,6 +13,8 @@ export default function MindmapPage() {
   const router = useRouter();
   const { user, loading } = useAuth(); // ✅ check auth state
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   // 🔐 Redirect if not authenticated
   useEffect(() => {
     if (!loading && !user) {
@@ -47,23 +49,24 @@ export default function MindmapPage() {
   // 🚫 Prevent rendering UI until auth check finishes
   if (loading || (!user && !loading)) return(
                 <div className="dashboard">
-                  <Sidebar />
-                  <div className="main-content">
-                    <p className="text-center text-gray-400 mt-10">Loading...</p>
-                  </div>
-                </div>
+                        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+                        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+                          <p className="text-center text-gray-400 mt-10">Loading...</p>
+                        </div>
+                      </div>
               );;
 
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <Header
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-        />
+                  collapsed={sidebarCollapsed}
+                  searchQuery={searchQuery}
+                  onSearchChange={handleSearchChange}
+                  filters={filters}
+                  onFiltersChange={handleFiltersChange}
+                />
 
         <div className="mindmap-container">
           {/* 🔹 Menu / Mindmap Title Row */}
@@ -76,7 +79,7 @@ export default function MindmapPage() {
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
-              className="font-[400] text-[12px] leading-[22px] text-[#707070]"
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
               style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
               Mind Map / Mind Map List

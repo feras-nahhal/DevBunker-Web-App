@@ -14,6 +14,8 @@ export default function BookmarksPage() {
   const router = useRouter();
   const { token, loading } = useAuth();
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   // ✅ Define all hooks before conditional return
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -48,24 +50,25 @@ export default function BookmarksPage() {
   if (loading || !token) {
     return (
       <div className="dashboard">
-        <Sidebar />
-        <div className="main-content">
-          <p className="text-center text-gray-400 mt-10">Loading...</p>
-        </div>
-      </div>
+              <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+              <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+                <p className="text-center text-gray-400 mt-10">Loading...</p>
+              </div>
+            </div>
     );
   }
 
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
-        <Header
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-        />
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+            <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+              <Header
+                collapsed={sidebarCollapsed}
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchChange}
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+              />
 
         <div className="explore-container">
           {/* 🔹 Menu / Bookmarks Title Row */}
@@ -78,7 +81,7 @@ export default function BookmarksPage() {
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
-              className="font-[400] text-[12px] leading-[22px] text-[#707070]"
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
               style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
               Menu / Bookmarks

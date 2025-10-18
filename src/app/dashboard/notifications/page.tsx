@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
 import "./ExplorePage.css";
@@ -12,6 +12,7 @@ export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
       const router = useRouter();
       const { token, loading } = useAuth();
+      const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     
       useEffect(() => {
         if (!loading && !token) {
@@ -23,19 +24,19 @@ export default function ExplorePage() {
       if (loading || !token) {
           return (
             <div className="dashboard">
-              <Sidebar />
-              <div className="main-content">
-                <p className="text-center text-gray-400 mt-10">Loading...</p>
-              </div>
-            </div>
+                                  <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+                                  <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+                                    <p className="text-center text-gray-400 mt-10">Loading...</p>
+                                  </div>
+                                </div>
           );
         }
       if (!token) return null; // ✅ Prevents unauthorized API call before redirect
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
-        <HeaderOther />
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+          <HeaderOther collapsed={sidebarCollapsed} />
 
         <div className="explore-container">
           {/* 🔹 Menu / Explore Title Row */}

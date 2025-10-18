@@ -32,6 +32,7 @@ export default function PostPage() {
 
   const { loading: authLoading, token, isAuthenticated, user } = useAuth(); // ✅ Added user for redirect check
   const router = useRouter();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const { createContent, loading: contentLoading, refetch } = useContent({
     type: "post" as ContentType,
@@ -97,22 +98,23 @@ export default function PostPage() {
   // 🚫 Prevent rendering UI until auth finishes or user is redirected
   if (authLoading || (!user && !authLoading)) return  (
         <div className="dashboard">
-          <Sidebar />
-          <div className="main-content">
-            <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
-          </div>
+          <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+           <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+              <p className="text-center text-gray-400 mt-10">Loading...</p>
+            </div>
         </div>
       );;
 
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <CreatePageHeader
           onSave={handleSavePublish}
           onSaveAsDraft={handleSaveAsDraft}
           onCancel={handleCancel}
           saving={isLoading || !isAuthenticated}
+          collapsed={sidebarCollapsed}
         />
 
         <div className="post-container">
@@ -126,7 +128,7 @@ export default function PostPage() {
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
-              className="font-[400] text-[12px] leading-[22px] text-[#707070]"
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
               style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
               Post / Create Post

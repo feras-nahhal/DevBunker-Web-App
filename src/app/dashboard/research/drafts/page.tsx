@@ -12,6 +12,7 @@ import "./researchDraftPage.css";
 export default function ResearchDraftPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth(); // ✅ optional auth
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // -----------------------------
   // States
@@ -53,11 +54,11 @@ export default function ResearchDraftPage() {
   // -----------------------------
   if (authLoading || (!user && !authLoading)) return (
                 <div className="dashboard">
-                  <Sidebar />
-                  <div className="main-content">
-                    <p className="text-center text-gray-400 mt-10">Loading...</p>
-                  </div>
-                </div>
+                            <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+                              <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+                                <p className="text-center text-gray-400 mt-10">Loading...</p>
+                              </div>
+                          </div>
               );;
 
   // -----------------------------
@@ -65,14 +66,15 @@ export default function ResearchDraftPage() {
   // -----------------------------
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
-        <HeaderDraft
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-        />
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+                  <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+                    <HeaderDraft
+                      searchQuery={searchQuery}
+                      onSearchChange={handleSearchChange}
+                      filters={filters}
+                      onFiltersChange={handleFiltersChange}
+                      collapsed={sidebarCollapsed}
+                    />
 
         <div className="research-container">
           {/* 🔹 Menu / research Title Row */}
@@ -85,7 +87,7 @@ export default function ResearchDraftPage() {
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
-              className="font-[400] text-[12px] leading-[22px] text-[#707070]"
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
               style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
               Research / Draft

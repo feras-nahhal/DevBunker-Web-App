@@ -9,7 +9,7 @@ import { useCategories } from "@/hooks/useCategories";
 import Image from "next/image";
 import "./Header1.css";
 
-export default function HeaderOther() {
+export default function HeaderOther({ collapsed = false }: { collapsed?: boolean }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -111,7 +111,7 @@ export default function HeaderOther() {
 
   return (
     <>
-      <header className="header">
+      <header className={`header ${collapsed ? "collapsed" : ""}`}>
         {/* Left: Logo */}
         <div className="header-left">
           <div className="dev">Dev</div>

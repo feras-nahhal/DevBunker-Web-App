@@ -14,6 +14,13 @@
   min-height: 100vh;
 }
 
+.main-content.collapsed {
+  margin-left: 68px; /* collapsed sidebar width */
+  width: calc(100% - 68px);
+  transition: all 0.3s ease;
+}
+
+
 /* Explore page content */
 .mindmap-container {
   position: relative;

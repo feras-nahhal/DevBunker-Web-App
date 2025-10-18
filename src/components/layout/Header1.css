@@ -8,7 +8,7 @@
   align-items: center;
   padding: 10px 20px;
   gap: 4px;
-  width: calc(100% - 270px); /* reduce width to not overlap sidebar */
+  height: 70px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(80, 80, 80, 0.24);
   box-shadow: inset 0px 0px 7px rgba(255, 255, 255, 0.16);
@@ -19,15 +19,25 @@
   top: 12px;
   left: 260px; /* start after sidebar */
   z-index: 10;
-  height: 70px;
+  width: calc(100% - 260px - 12px); /* sidebar width + top gap (12px) */
+  padding-right: 10px; /* balance with left padding */
+
 }
+/* ✅ Header moves correctly when sidebar collapses */
+/* ✅ Header moves correctly when sidebar collapses */
+.header.collapsed {
+  left: 80px; /* sidebar collapsed width */
+  width: calc(100% - 80px - 12px); /* recalc width to fill remaining space */
+  transition: all 0.3s ease;
+}
+
 
 /* Left: Dev + Banker */
 .header-left {
   display: flex;
   flex-direction: row;
   align-items: baseline;
-  gap: 0; /* remove gap between Dev and Banker */
+  gap: 6; /* remove gap between Dev and Banker */
 }
 
 /* Dev text */
@@ -57,7 +67,7 @@
 .search-bar {
   display: flex;
   align-items: center;
-  padding: 4px 4px;
+  padding: 4px 6px;
   gap: 8px;
   width: 100%;
   max-width: 514px;

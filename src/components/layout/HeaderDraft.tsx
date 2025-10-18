@@ -21,8 +21,9 @@ export default function HeaderDraft({
   searchQuery, 
   onSearchChange, 
   filters, 
-  onFiltersChange 
-}: HeaderDraftProps) {
+  onFiltersChange,
+  collapsed = false
+}: HeaderDraftProps & { collapsed?: boolean }) {
   const [isModalOpen, setIsModalOpen] = useState(false); // Existing: Tag/Category request modal
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // NEW: Filter modal
   const [isMenuOpen, setIsMenuOpen] = useState(false); 
@@ -214,7 +215,7 @@ const handleClearFilters = () => {
 
   return (
     <>
-      <header className="header">
+      <header className={`header ${collapsed ? "collapsed" : ""}`}>
         {/* Left: Logo / Dev + Banker (existing) */}
         <div className="header-left">
           <div className="dev">Dev</div>

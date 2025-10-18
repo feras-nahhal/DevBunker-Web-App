@@ -10,11 +10,10 @@ import ContentGrid from "@/components/content/ContentGrid";
 import "./ExplorePage.css";
 
 export default function ExplorePage() {
-  // 🔐 Auth
   const router = useRouter();
   const { token, loading } = useAuth();
 
-  // ✅ All hooks must always run
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({
     status: "",
@@ -27,10 +26,7 @@ export default function ExplorePage() {
     setFilters((prev) => ({ ...prev, q: debouncedSearchQuery }));
   }, [debouncedSearchQuery]);
 
-  const handleSearchChange = (q: string) => {
-    setSearchQuery(q);
-  };
-
+  const handleSearchChange = (q: string) => setSearchQuery(q);
   const handleFiltersChange = (newFilters: Record<string, string>) => {
     setFilters((prev) => ({
       ...prev,
@@ -39,19 +35,18 @@ export default function ExplorePage() {
     }));
   };
 
-  // ✅ Use effect for redirect AFTER hooks
   useEffect(() => {
     if (!loading && !token) {
       router.push("/auth/login");
+      return;
     }
   }, [loading, token, router]);
 
-  // ✅ Conditional rendering (not conditional hook calls)
   if (loading || !token) {
     return (
       <div className="dashboard">
-        <Sidebar />
-        <div className="main-content">
+        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <p className="text-center text-gray-400 mt-10">Loading...</p>
         </div>
       </div>
@@ -60,9 +55,10 @@ export default function ExplorePage() {
 
   return (
     <div className="dashboard">
-      <Sidebar />
-      <div className="main-content">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <Header
+          collapsed={sidebarCollapsed}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           filters={filters}
@@ -79,7 +75,7 @@ export default function ExplorePage() {
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
-              className="font-[400] text-[12px] leading-[22px] text-[#707070]"
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
               style={{ fontFamily: "'Public Sans', sans-serif" }}
             >
               Menu / Explore

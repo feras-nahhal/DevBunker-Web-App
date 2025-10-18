@@ -1,21 +1,23 @@
 "use client";
 
 interface CreatePageHeaderProps {
-  onSave?: () => void; // For Publish (status: "published")
-  onSaveAsDraft?: () => void; // For Draft (status: "draft")
-  onCancel?: () => void; // ✅ For Cancel (navigate away)
+  onSave?: () => void; 
+  onSaveAsDraft?: () => void; 
+  onCancel?: () => void; 
   saving?: boolean;
+  collapsed?: boolean; // ✅ Add collapsed here
 }
 
 export default function CreatePageHeader({ 
   onSave, 
   onSaveAsDraft, 
   onCancel, 
-  saving = false 
+  saving = false, 
+  collapsed = false, 
 }: CreatePageHeaderProps) {
   return (
     <>
-      <header className="header">
+      <header className={`header ${collapsed ? "collapsed" : ""}`}>
         {/* Left: Dev + Banker */}
         <div className="header-left">
           <div className="dev">Dev</div>
@@ -24,28 +26,13 @@ export default function CreatePageHeader({
 
         {/* Right: Three Buttons */}
         <div className="header-right">
-          {/* ✅ Cancel button with navigation */}
-          <button 
-            className="button cancel-btn" 
-            onClick={onCancel} // ✅ Attach onCancel handler
-            disabled={saving}
-          >
+          <button className="button cancel-btn" onClick={onCancel} disabled={saving}>
             Cancel
           </button>
-          <button
-            className="button draft-btn"
-            onClick={onSaveAsDraft}
-            disabled={saving}
-          >
+          <button className="button draft-btn" onClick={onSaveAsDraft} disabled={saving}>
             {saving ? "Saving..." : "Save as Draft"}
           </button>
-
-          {/* Publish button with glow (formerly "Save") */}
-          <button
-            className="button save-btn"
-            onClick={onSave}
-            disabled={saving}
-          >
+          <button className="button save-btn" onClick={onSave} disabled={saving}>
             <span className="glow-bg" />
             <span className="text">{saving ? "Publishing..." : "Publish"}</span>
           </button>
@@ -73,118 +60,41 @@ export default function CreatePageHeader({
           top: 12px;
           left: 260px;
           z-index: 10;
+          transition: left 0.3s ease, width 0.3s ease; /* smooth animation */
         }
 
-        .header-left {
-          display: flex;
-          flex-direction: row;
-          align-items: baseline;
-          gap: 0;
-        }
+        /* ✅ Header moves when sidebar collapses */
+        .header.collapsed {
+  left: 80px; /* sidebar collapsed width */
+  width: calc(100% - 80px - 12px); /* recalc width to fill remaining space */
+  transition: all 0.3s ease;
+}
 
-        .dev {
-          font-family: 'Aclonica', sans-serif;
-          font-weight: 400;
-          font-size: 24px;
-          line-height: 14px;
-          color: #5BE49B;
-          opacity: 0.8;
-          letter-spacing: -1px;
-        }
+        .header-left { display: flex; gap: 8px; }
+        .dev { font-family: 'Aclonica', sans-serif; font-size: 24px; color: #5BE49B; opacity: 0.8; }
+        .banker { font-family: 'Aclonica', sans-serif; font-size: 24px; color: #FFFFFF; opacity: 0.8; }
 
-        .banker {
-          font-family: 'Aclonica', sans-serif;
-          font-weight: 400;
-          font-size: 24px;
-          line-height: 14px;
-          color: #FFFFFF;
-          opacity: 0.8;
-          letter-spacing: -1px;
-        }
-
-        .header-right {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          gap: 10px;
-        }
+        .header-right { display: flex; gap: 10px; }
 
         .button {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          position: relative;
-          overflow: hidden;
-          padding: 0 16px;
-          height: 36px;
-          border-radius: 500px;
+          display: flex; justify-content: center; align-items: center;
+          position: relative; overflow: hidden;
+          padding: 0 16px; height: 36px; border-radius: 500px;
           border: 1px solid rgba(145, 158, 171, 0.32);
-          font-family: 'Public Sans', sans-serif;
-          font-weight: 700;
-          font-size: 14px;
-          color: #FFFFFF;
-          background: rgba(255, 255, 255, 0.05);
-          box-shadow: 
-          backdrop-filter: blur(10px);
-          cursor: pointer;
+          font-family: 'Public Sans', sans-serif; font-weight: 700; font-size: 14px;
+          color: #FFFFFF; background: rgba(255,255,255,0.05);
+          backdrop-filter: blur(10px); cursor: pointer;
           transition: transform 0.2s ease;
         }
+        .button:hover:not(:disabled) { transform: scale(1.02); }
+        .button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .button:hover:not(:disabled) {
-          transform: scale(1.02);
-        }
+        .save-btn { color: #5BE49B; min-width: 78px; display: flex; justify-content: center; align-items: center; box-shadow: inset 0px 0px 4px rgba(239, 214, 255, 0.25); }
+        .save-btn .glow-bg { position: absolute; inset: 0; border-radius: 500px; background: radial-gradient(circle, rgba(119, 237, 139, 0.5) 0%, transparent 70%); filter: blur(8px); z-index: 0; }
+        .save-btn .text { position: relative; z-index: 10; }
 
-        .button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        /* Publish (glow) button */
-        .save-btn {
-          box-shadow: inset 0px 0px 4px rgba(239, 214, 255, 0.25);
-          border-color: rgba(145, 158, 171, 0.32);
-          color: #5BE49B;
-          min-width: 78px; /* Consistent width with other buttons */
-          padding: 0 16px;
-          white-space: nowrap;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .save-btn .glow-bg {
-          position: absolute;
-          inset: 0;
-          border-radius: 500px;
-          background: radial-gradient(
-            circle,
-            rgba(119, 237, 139, 0.5) 0%,
-            transparent 70%
-          );
-          filter: blur(8px);
-          z-index: 0;
-        }
-
-        .save-btn .text {
-          position: relative;
-          z-index: 10;
-        }
-
-        /* Cancel and Draft buttons (no glow) */
-        .draft-btn {
-          border-color: rgba(145, 158, 171, 0.32);
-          min-width: 113px;
-          padding: 0 12px;
-          height: 36px;
-          white-space: nowrap;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        .cancel-btn {
-          border-color: rgba(145, 158, 171, 0.32);
-          width: 78px;
-        }
+        .draft-btn { min-width: 113px; padding: 0 12px; height: 36px; display: flex; justify-content: center; align-items: center; }
+        .cancel-btn { width: 78px; }
       `}</style>
     </>
   );

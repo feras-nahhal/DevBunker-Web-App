@@ -5,17 +5,19 @@ interface CreatePageHeaderProps {
   onSaveAsDraft?: () => void; // For Draft (status: "draft")
   onCancel?: () => void; // ✅ For Cancel (navigate away)
   saving?: boolean;
+  collapsed?: boolean;
 }
 
 export default function CreateReserchHeader({ 
   onSave, 
   onSaveAsDraft, 
   onCancel, 
-  saving = false 
+  saving = false,
+  collapsed = false, 
 }: CreatePageHeaderProps) {
   return (
     <>
-      <header className="header">
+      <header className={`header ${collapsed ? "collapsed" : ""}`}>
         {/* Left: Dev + Banker */}
         <div className="header-left">
           <div className="dev">Dev</div>
@@ -74,6 +76,14 @@ export default function CreateReserchHeader({
           left: 260px;
           z-index: 10;
         }
+
+         /* ✅ Header moves when sidebar collapses */
+         .header.collapsed {
+            left: 80px; /* sidebar collapsed width */
+            width: calc(100% - 80px - 12px); /* recalc width to fill remaining space */
+            transition: all 0.3s ease;
+          }
+
 
         .header-left {
           display: flex;
