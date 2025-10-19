@@ -18,6 +18,7 @@ interface ResearchCardProps {
   authorEmail?: string;
   onDelete?: () => void;
   onOpenComments?: () => void;
+  onOpenContent?: () => void;
 }
 
 export default function ResearchCard({
@@ -31,6 +32,7 @@ export default function ResearchCard({
   authorEmail,
   onDelete,
   onOpenComments,
+  onOpenContent
 }: ResearchCardProps) {
   const [votes, setVotes] = useState(initialVotes);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,48 +63,54 @@ export default function ResearchCard({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const menuItems = [
-    { name: "Start Research", icon: "/reserchlogo.png", action: () => {} },
-    { name: "Share", icon: "/sharelogo.png", action: () => {} },
-    {
-      name: "Add Bookmark",
-      icon: "/bookmarklogo.png",
-      action: async () => {
-        try {
-          await addBookmark(id);
-          setMenuOpen(false);
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : "Failed to add bookmark.";
-          alert(message);
-        }
-
-      },
+  const menuItems: { name: string; icon: string; action: () => void }[] = [
+  ...(type === "post"
+    ? [
+        { 
+          name: "Start Research", 
+          icon: "/reserchlogo.png", 
+          action: () => {
+            console.log("Starting research…");
+          } 
+        },
+      ]
+    : []),
+  { name: "Share", icon: "/sharelogo.png", action: () => {} },
+  {
+    name: "Add Bookmark",
+    icon: "/bookmarklogo.png",
+    action: async () => {
+      try {
+        await addBookmark(id);
+        setMenuOpen(false);
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to add bookmark.");
+      }
     },
-    {
-      name: "Read it Later",
-      icon: "/readlaterlogo.png",
-      action: async () => {
-        try {
-          await addReadLater(id);
-          setMenuOpen(false);
-        } catch (err: unknown) {
-          const message =
-            err instanceof Error ? err.message : "Failed to add to read-later.";
-          alert(message);
-        }
-
-      },
+  },
+  {
+    name: "Read it Later",
+    icon: "/readlaterlogo.png",
+    action: async () => {
+      try {
+        await addReadLater(id);
+        setMenuOpen(false);
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "Failed to add to read-later.");
+      }
     },
-   
-  ];
-  // ✅ Add Delete button only if user is the author
-  if (user?.id === author_id && onDelete) {
-    menuItems.push({
-      name: "Delete",
-      icon: "/deletelogo.png",
-      action: () => onDelete(),
-    });
-  }
+  },
+];
+
+// Only show Delete if the current user is the author
+if (user?.id === author_id && onDelete) {
+  menuItems.push({
+    name: "Delete",
+    icon: "/deletelogo.png",
+    action: () => onDelete(),
+  });
+}
+
 
   return (
     <div className="flex items-center justify-center px-6">
@@ -182,19 +190,23 @@ export default function ResearchCard({
           </div>
         </div>
 
-        {/* Image */}
-        <div
-          className="mt-2 block rounded-[14px] overflow-hidden"
-          style={{ width: "290px", height: "216.64px" }}
-        >
-          <Image
-            src={displayImage}
-            alt={title}
-            width={300}
-            height={216}
-            className="object-cover w-full h-full"
-          />
-        </div>
+        {/* Image (opens popup) */}
+                  <div
+                    className="mt-2 block rounded-[14px] overflow-hidden cursor-pointer"
+                    style={{ width: "290px", height: "216px" }}
+                     onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenContent && onOpenContent(); // 👈 open ContentPopup via parent
+                    }}
+                  >
+                    <Image
+                      src={displayImage}
+                      alt={title}
+                      width={300}
+                      height={216}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
 
          {/* Bottom section */}
                        <div

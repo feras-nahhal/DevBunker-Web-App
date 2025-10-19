@@ -52,6 +52,7 @@ export interface BaseContent {
   content_type: CONTENT_TYPES;
   created_at?: string;
   updated_at?: string;
+  excalidraw_data?:Record<string, unknown>;
 
 }
 
@@ -72,7 +73,7 @@ export interface Research extends BaseContent {
 
 export interface Mindmap extends BaseContent {
   content_type: CONTENT_TYPES.MINDMAP;
-  excalidraw_data?: Record<string, unknown>;
+  excalidraw_data1?: Record<string, unknown>;
 }
 
 // union for all types

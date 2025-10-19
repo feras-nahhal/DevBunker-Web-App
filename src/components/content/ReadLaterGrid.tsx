@@ -7,6 +7,7 @@ import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth"; // NEW: For user/token if needed
 import { AnyContent, Comment } from "@/types/content";
+import ContentPopup from "./ContentPopup"; // ✅ ensure path is correct
 
 interface ReadLaterGridProps {
   searchQuery?: string; // NEW: Raw search query from parent (for client-side filtering)
@@ -25,6 +26,10 @@ export default function ReadLaterGrid({
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
+    const handleOpenContentPopup = (content: AnyContent) => {
+    setSelectedContentPopup(content);
+    };
 
   // FIXED: Token check (was !== "" -> !== "undefined")
   const token =
@@ -186,6 +191,7 @@ export default function ReadLaterGrid({
                 }}
                 // NEW: Pass onOpenComments for comment functionality
                 onOpenComments={() => handleOpenComments(card)}
+                onOpenContent={() => handleOpenContentPopup(card)} // ✅ pass this
               />
             </div>
           );
@@ -208,6 +214,41 @@ export default function ReadLaterGrid({
                           onAddComment={handleAddComment}
         />
       )}
+
+      {/* 🟣 Content Popup */}
+                  {selectedContentPopup && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+                      <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
+                        <button
+                          onClick={() => setSelectedContentPopup(null)}
+                          className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
+                        >
+                          ✕
+                        </button>
+            
+                        <ContentPopup
+                          id={selectedContentPopup.id}
+                          title={selectedContentPopup.title}
+                          content_body={
+                            "content_body" in selectedContentPopup
+                              ? selectedContentPopup.content_body || ""
+                              : ""
+                          }
+                          onClose={() => setSelectedContentPopup(null)}
+                          created_at={selectedContentPopup.created_at}
+                          updated_at={selectedContentPopup.updated_at}
+                          status={selectedContentPopup.status}
+                          excalidraw_data={selectedContentPopup.excalidraw_data}
+                          categoryName={
+                              typeof selectedContentPopup.categoryName === "string"
+                                ? [selectedContentPopup.categoryName]
+                                : selectedContentPopup.categoryName
+                            }
+                          
+                        />
+                      </div>
+                    </div>
+                  )}
     </>
   );
 }

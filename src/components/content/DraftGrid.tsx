@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import CommentsPopup from "./CommentsPopup";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import DraftCard from "./DraftCard";
 import { AnyContent, Comment } from "@/types/content";
+import ContentPopup from "./ContentPopup"; // ✅ ensure path is correct
 
 interface DraftGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -21,9 +21,11 @@ export default function DraftGrid({
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
 
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+ 
+  const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
+    const handleOpenContentPopup = (content: AnyContent) => {
+    setSelectedContentPopup(content);
+    };
 
 
   const token =
@@ -31,50 +33,7 @@ export default function DraftGrid({
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-  /** 🗨️ Comments */
-  const fetchComments = async (contentId: string) => {
-    try {
-      const res = await fetch(`/api/comments?content_id=${contentId}`);
-      const json = await res.json();
-      if (json.success) setComments(json.comments || []);
-      else setComments([]);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
-      setComments([]);
-    }
-  };
-
-  const handleOpenComments = async (content: AnyContent) => {
-    setSelectedContent(content);
-    await fetchComments(content.id);
-    setIsPopupOpen(true);
-  };
-
-  const handleAddComment = async (text: string, parentId?: string) => {
-    if (!token) return alert("You must be logged in to comment.");
-    if (!selectedContent) return;
-
-    try {
-      const res = await fetch(`/api/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content_id: selectedContent.id,
-          text,
-          parent_id: parentId || null,
-        }),
-      });
-
-      const json = await res.json();
-      if (json.success) await fetchComments(selectedContent.id);
-    } catch (err) {
-      console.error("Failed to post comment:", err);
-      alert("Failed to post comment.");
-    }
-  };
+  
 
   // ✅ Determine API path for deleting content
   const getApiPath = (contentType: "post" | "mindmap" | "research") => {
@@ -203,28 +162,47 @@ export default function DraftGrid({
                     ? [card.categoryName]
                     : card.categoryName
                 }
-                onOpenComments={() => handleOpenComments(card)} 
+                onOpenContent={() => handleOpenContentPopup(card)} // ✅ pass this 
               />
             </div>
           );
         })}
       </div>
 
-      {/* 🟢 Comments Popup */}
-      {isPopupOpen && selectedContent && (
-        <CommentsPopup
-                  id={selectedContent.id}
-                  title={selectedContent.title}
-                  content_body={
-                    "content_body" in selectedContent
-                      ? selectedContent.content_body || ""
-                      : ""
-                  }
-                  comments={comments}
-                  onClose={() => setIsPopupOpen(false)}
-                  onAddComment={handleAddComment}
-        />
-      )}
+      {/* 🟣 Content Popup */}
+                        {selectedContentPopup && (
+                          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+                            <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
+                              <button
+                                onClick={() => setSelectedContentPopup(null)}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
+                              >
+                                ✕
+                              </button>
+                  
+                              <ContentPopup
+                                id={selectedContentPopup.id}
+                                title={selectedContentPopup.title}
+                                content_body={
+                                  "content_body" in selectedContentPopup
+                                    ? selectedContentPopup.content_body || ""
+                                    : ""
+                                }
+                                onClose={() => setSelectedContentPopup(null)}
+                                created_at={selectedContentPopup.created_at}
+                                updated_at={selectedContentPopup.updated_at}
+                                status={selectedContentPopup.status}
+                                excalidraw_data={selectedContentPopup.excalidraw_data}
+                                categoryName={
+                                    typeof selectedContentPopup.categoryName === "string"
+                                      ? [selectedContentPopup.categoryName]
+                                      : selectedContentPopup.categoryName
+                                  }
+                                
+                              />
+                            </div>
+                          </div>
+                        )}
     </>
   );
 }

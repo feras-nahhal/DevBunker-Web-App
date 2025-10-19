@@ -17,7 +17,8 @@ interface ReadlaterCardProps {
   authorEmail?: string;
   onDelete?: () => void;
   onRemoveFromReadlater?: () => void; // ✅ new prop
-  onOpenComments?: () => void; // NEW: For opening comments popup
+  onOpenComments?: () => void; // NEW: For opening comments popup\
+  onOpenContent?: () => void;
 }
 
 export default function ReadlaterCard({
@@ -32,6 +33,7 @@ export default function ReadlaterCard({
   onDelete,
   onRemoveFromReadlater,
   onOpenComments,
+  onOpenContent
 }: ReadlaterCardProps) {
   const [votes, setVotes] = useState(initialVotes);
   // REMOVED: const [comments] = useState(initialComments); (unused)
@@ -63,26 +65,31 @@ export default function ReadlaterCard({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const menuItems = [
-    { name: "Start Research", icon: "/reserchlogo.png", action: () => {} },
-    { name: "Share", icon: "/sharelogo.png", action: () => {} },
-    {
-      name: "Remove Readlater",
-      icon: "/readlaterlogo.png",
-      action: async () => {
-        if (onRemoveFromReadlater) await onRemoveFromReadlater();
-      },
+  const menuItems: { name: string; icon: string; action: () => void }[] = [
+  ...(type === "post"
+    ? [
+        { name: "Start Research", icon: "/reserchlogo.png", action: () => {} },
+      ]
+    : []),
+  { name: "Share", icon: "/sharelogo.png", action: () => {} },
+  {
+    name: "Remove Readlater",
+    icon: "/readlaterlogo.png",
+    action: async () => {
+      if (onRemoveFromReadlater) await onRemoveFromReadlater();
     },
-    
-  ];
-  // ✅ Add Delete button only if user is the author
-  if (user?.id === author_id && onDelete) {
-    menuItems.push({
-      name: "Delete",
-      icon: "/deletelogo.png",
-      action: () => onDelete(),
-    });
-  }
+  },
+];
+
+// Add Delete button only if user is the author
+if (user?.id === author_id && onDelete) {
+  menuItems.push({
+    name: "Delete",
+    icon: "/deletelogo.png",
+    action: () => onDelete(),
+  });
+}
+
 
   return (
     <div className="flex items-center justify-center px-6">
@@ -161,20 +168,23 @@ export default function ReadlaterCard({
           </div>
         </div>
 
-        {/* Image */}
-        <Link
-          href={`/content/${id}`}
-          className="mt-2 block rounded-[14px] overflow-hidden"
-          style={{ width: "290px", height: "216.64px" }}
-        >
-          <Image
-            src={displayImage}
-            alt={title}
-            width={300}
-            height={216}
-            className="object-cover w-full h-full hover:scale-[1.02] transition-transform duration-300"
-          />
-        </Link>
+         {/* Image (opens popup) */}
+                          <div
+                            className="mt-2 block rounded-[14px] overflow-hidden cursor-pointer"
+                            style={{ width: "290px", height: "216px" }}
+                             onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenContent && onOpenContent(); // 👈 open ContentPopup via parent
+                            }}
+                          >
+                            <Image
+                              src={displayImage}
+                              alt={title}
+                              width={300}
+                              height={216}
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
 
          {/* Bottom section */}
                <div

@@ -16,7 +16,8 @@ interface BookmarkCardProps {
   authorEmail?: string;
   onDelete?: () => void;             // delete content handler
   onRemoveFromBookmark?: () => void; // remove bookmark handler
-  onOpenComments?: () => void;      // NEW: For opening comments popup
+  onOpenComments?: () => void;
+  onOpenContent?: () => void;      // NEW: For opening comments popup
 }
 
 export default function BookmarkCard({
@@ -31,6 +32,7 @@ export default function BookmarkCard({
   onDelete,
   onRemoveFromBookmark,
   onOpenComments,
+  onOpenContent
 }: BookmarkCardProps) {
   const [votes, setVotes] = useState(initialVotes);
   // REMOVED: const [comments] = useState(initialComments); (unused)
@@ -58,27 +60,29 @@ export default function BookmarkCard({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const menuItems = [
-    { name: "Start Research", icon: "/reserchlogo.png", action: () => {} },
-    { name: "Share", icon: "/sharelogo.png", action: () => {} },
-    {
-      name: "Remove Bookmark",
-      icon: "/bookmarklogo.png",
-      action: () => {
-        if (onRemoveFromBookmark) onRemoveFromBookmark();
-      },
+  const menuItems: { name: string; icon: string; action: () => void }[] = [
+  ...(type === "post"
+    ? [{ name: "Start Research", icon: "/reserchlogo.png", action: () => {} }]
+    : []),
+  { name: "Share", icon: "/sharelogo.png", action: () => {} },
+  {
+    name: "Remove Bookmark",
+    icon: "/bookmarklogo.png",
+    action: () => {
+      if (onRemoveFromBookmark) onRemoveFromBookmark();
     },
-    
-  ];
+  },
+];
 
-  // ✅ Add Delete button only if user is the author
-  if (user?.id === author_id && onDelete) {
-    menuItems.push({
-      name: "Delete",
-      icon: "/deletelogo.png",
-      action: () => onDelete(),
-    });
-  }
+// ✅ Add Delete button only if user is the author
+if (user?.id === author_id && onDelete) {
+  menuItems.push({
+    name: "Delete",
+    icon: "/deletelogo.png",
+    action: () => onDelete(),
+  });
+}
+
 
   return (
     <div className="flex items-center justify-center px-6">
@@ -149,16 +153,23 @@ export default function BookmarkCard({
           </div>
         </div>
 
-        {/* Image */}
-        <div className="mt-2 block rounded-[14px] overflow-hidden" style={{ width: "290px", height: "216.64px" }}>
-          <Image 
-            src={displayImage} 
-            alt={title} 
-            width={300} 
-            height={216} 
-            className="object-cover w-full h-full hover:scale-[1.02] transition-transform duration-300" 
-          />
-        </div>
+         {/* Image (opens popup) */}
+                          <div
+                            className="mt-2 block rounded-[14px] overflow-hidden cursor-pointer"
+                            style={{ width: "290px", height: "216px" }}
+                             onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenContent && onOpenContent(); // 👈 open ContentPopup via parent
+                            }}
+                          >
+                            <Image
+                              src={displayImage}
+                              alt={title}
+                              width={300}
+                              height={216}
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
 
         {/* Bottom section */}
        <div

@@ -15,7 +15,7 @@ interface DraftCardProps {
   comments?: number;
   author_id: string;     // 👈 show instead of id in header
   authorEmail?: string;  // 👈 new prop
-  onOpenComments?: () => void;
+  onOpenContent?: () => void; 
 }
 
 export default function DraftCard({
@@ -28,7 +28,7 @@ export default function DraftCard({
   comments: initialComments = 0,
   author_id,
   authorEmail,
-  onOpenComments,
+  onOpenContent
 
 }: DraftCardProps) {
   const [votes, setVotes] = useState(initialVotes);
@@ -80,29 +80,23 @@ export default function DraftCard({
       >
     
 
-        {/* Image */}
-
-        <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenComments && onOpenComments();
-                      }}
-                      className="mt-2 block rounded-[14px] overflow-hidden"
-                      style={{ width: "300px", height: "216.64px" }}
-                    >
-                      <Image
-            src={displayImage}
-            alt={title}
-            width={300}
-            height={216}
-            className="object-cover w-full h-full hover:scale-[1.02] transition-transform duration-300"
-          
-                      />
-                      {/* ✅ Display number of comments */}
-                      <span className="text-sm text-gray-400">
-                        {commentsLoading ? "..." : commentsData.length}
-                      </span>
-                    </button>
+        {/* Image (opens popup) */}
+                                  <div
+                                    className="mt-2 block rounded-[14px] overflow-hidden cursor-pointer"
+                                    style={{ width: "290px", height: "216px" }}
+                                     onClick={(e) => {
+                                      e.stopPropagation();
+                                      onOpenContent && onOpenContent(); // 👈 open ContentPopup via parent
+                                    }}
+                                  >
+                                    <Image
+                                      src={displayImage}
+                                      alt={title}
+                                      width={300}
+                                      height={216}
+                                      className="object-cover w-full h-full"
+                                    />
+                                  </div>
         
 
         {/* Inner Bottom Box */}
