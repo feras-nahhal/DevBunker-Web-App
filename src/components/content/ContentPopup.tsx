@@ -49,21 +49,11 @@ export default function ContentPopup({
   
 
   const { references = [], loading: refsLoading, error: refsError } = useReferences(id) ?? {};
-  const {
-    tags = [],
-    loading: tagsLoading,
-    error: tagsError,
-    fetchTags,
-  } = useContentTags() as {
-    tags: { id: string; name: string }[];
-    loading: boolean;
-    error?: string | null;
-    fetchTags: (contentId?: string) => void;
-  };
+  const { tags, loading: tagsLoading, error: tagsError, fetchTags } = useContentTags();
 
-  useEffect(() => {
-    if (id) fetchTags(id);
-  }, [id, fetchTags]);
+    useEffect(() => {
+      if (id) fetchTags(id);
+    }, [id]);
 
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
@@ -451,64 +441,66 @@ export default function ContentPopup({
         )}
 
 
-          {/* References section */}
-          {references && references.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
-              <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
+           {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
+            {references.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+                <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
 
-              <div
-                style={{
-                  position: "relative",
-                  width: "855px",
-                  border: "1px solid rgba(80, 80, 80, 0.24)",
-                  borderRadius: "16px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  padding: "8px",
-                  minHeight: "44px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  marginBottom: "8px",
-                }}
-              >
-                {references.map((ref: any) => (
-                  <div
-                    key={ref.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "6px 10px",
-                      borderRadius: "16px",
-                      background: "transparent",
-                      border: "1px solid rgba(80, 80, 80, 0.24)",
-                      color: "#5BE49B",
-                      height: "32px",
-                      fontSize: "12px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    <span
+                <div
+                  style={{
+                    position: "relative",
+                    width: "855px",
+                    border: "1px solid rgba(80, 80, 80, 0.24)",
+                    borderRadius: "16px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    padding: "8px",
+                    minHeight: "44px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {references.map((ref) => (
+                    <div
+                      key={ref.id}
                       style={{
-                        flex: 1,
-                        whiteSpace: "nowrap",
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "6px 10px",
+                        borderRadius: "16px", // keep pill shape
+                        background: "transparent", // transparent background
+                        border: "1px solid rgba(80, 80, 80, 0.24)", // ⚪ soft white border
+                        color: "#5BE49B", // 🟢 green text
+                        height: "32px",
+                        fontSize: "12px",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                       }}
                     >
-                      {ref.text}
-                    </span>
-                  </div>
-                ))}
+                      <span
+                        style={{
+                          flex: 1,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {ref.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {refsLoading && <p style={{ color: "gray", fontSize: "12px" }}>Loading references...</p>}
-          {refsError && <p style={{ color: "red", fontSize: "12px" }}>{refsError}</p>}
-          {!refsLoading && references.length === 0 && (
-            <p style={{ color: "gray", fontSize: "12px" }}>No references found.</p>
-          )}
+            {refsLoading && <p style={{ color: "gray", fontSize: "12px" }}>Loading references...</p>}
+            {refsError && <p style={{ color: "red", fontSize: "12px" }}>{refsError}</p>}
+            {!refsLoading && references.length === 0 && (
+              <p style={{ color: "gray", fontSize: "12px" }}>No references found.</p>
+            )}
+
+
         </div>
       </div>
 
