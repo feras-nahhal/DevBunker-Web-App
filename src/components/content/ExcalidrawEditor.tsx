@@ -16,7 +16,7 @@ import { useContent } from "@/hooks/useContent";
 import { useCategories } from "@/hooks/useCategories";
 import { useContentTags } from "@/hooks/useContentTags";
 import { useTags } from "@/hooks/useTags";
-import { NodeProps, NodeResizer } from "reactflow";
+import { Edge, NodeProps, NodeResizer } from "reactflow";
 import { useRouter } from "next/navigation"; // ✅ Add this import
 import { Position } from "reactflow";
 import ReactFlow, {
@@ -54,7 +54,7 @@ interface MindmapContentProps {
   initialCategoryId?: string;
   initialTags?: Tag[];
   initialNodes?: Node[];
-  initialEdges?: any[];
+  initialEdges?: Edge[];
 }
 
 // -----------------------------
@@ -81,7 +81,7 @@ export const CircleNode = ({
   };
 
   const handleBlur = () => {
-    setNodes((nds: any[]) =>
+    setNodes((nds: Node[]) =>
       nds.map((n) =>
         n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
       )
@@ -179,7 +179,7 @@ export const RectNode = ({
   };
 
   const handleBlur = () => {
-    setNodes((nds: any[]) =>
+    setNodes((nds: Node[]) =>
       nds.map((n) =>
         n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
       )
@@ -276,7 +276,7 @@ export const TextNode = ({
   };
 
   const handleBlur = () => {
-    setNodes((nds: any[]) =>
+    setNodes((nds: Node[]) =>
       nds.map((n) =>
         n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
       )
@@ -368,7 +368,7 @@ export const DiamondNode = ({
   };
 
   const handleBlur = () => {
-    setNodes((nds: any[]) =>
+    setNodes((nds: Node[]) =>
       nds.map((n) =>
         n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
       )
@@ -480,7 +480,7 @@ function MindmapContent({
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string>("");
 // Wrap nodes to include custom editing state
-const nodesWithCustom = nodes.map(n => ({
+const nodesWithCustom: Node[] = nodes.map(n => ({
   ...n,
   data: {
     ...n.data,
@@ -493,6 +493,7 @@ const nodesWithCustom = nodes.map(n => ({
     }
   }
 }));
+
 
 
   // -----------------------------
