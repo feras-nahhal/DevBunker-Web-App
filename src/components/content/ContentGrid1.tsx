@@ -1,65 +1,70 @@
 "use client";
 
 import { useState } from "react";
-import ContentCard from "./ContentCard";
 import CommentsPopup from "./CommentsPopup";
-import ContentPopup from "./ContentPopup";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
+import ContentCard1 from "./ContentCard1";
 import { AnyContent, Comment } from "@/types/content";
+import ContentPopup from "./ContentPopup";
 
-interface ContentGridProps {
+interface ContentGrid1Props {
   type?: "all" | "post" | "research" | "mindmap";
   searchQuery?: string;
   filters?: Record<string, string>;
 }
 
-export default function ContentGrid({
+export default function ContentGrid1({
   type = "all",
   searchQuery = "",
   filters = {},
-}: ContentGridProps) {
+}: ContentGrid1Props) {
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
+  
 
+  // 🟣 State for popups
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-
   const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
+
+  const handleOpenContentPopup = (content: AnyContent) => {
+    setSelectedContentPopup(content);
+  };
 
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-  /** Fetch comments */
+  /** ✅ Filter content to show only user's own items */
+  const filteredData = user
+    ? data.filter((item) => item.author_id === user.id)
+    : [];
+
+  /** 🗨️ Comments */
   const fetchComments = async (contentId: string) => {
     try {
       const res = await fetch(`/api/comments?content_id=${contentId}`);
-      if (!res.ok) throw new Error("Failed to fetch comments");
-      const data = await res.json();
-      if (data.success) setComments(data.comments || []);
-      else throw new Error(data.error || "Unknown error");
-    } catch (err: unknown) {
+      const json = await res.json();
+      if (json.success) setComments(json.comments || []);
+      else setComments([]);
+    } catch (err) {
       console.error("Error fetching comments:", err);
       setComments([]);
     }
   };
 
-  /** Open comments popup */
   const handleOpenComments = async (content: AnyContent) => {
     setSelectedContent(content);
     await fetchComments(content.id);
     setIsPopupOpen(true);
   };
 
-  /** Add comment */
   const handleAddComment = async (text: string, parentId?: string) => {
-    if (!token) {
-      alert("You must be logged in to comment.");
-      return;
-    }
+    if (!token) return alert("You must be logged in to comment.");
+    if (!selectedContent) return;
 
     try {
       const res = await fetch(`/api/comments`, {
@@ -69,42 +74,44 @@ export default function ContentGrid({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          content_id: selectedContent?.id,
+          content_id: selectedContent.id,
           text,
           parent_id: parentId || null,
         }),
       });
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-      await fetchComments(selectedContent!.id);
-    } catch (err: unknown) {
+      const json = await res.json();
+      if (json.success) await fetchComments(selectedContent.id);
+    } catch (err) {
       console.error("Failed to post comment:", err);
-      const message = err instanceof Error ? err.message : "Failed to post comment.";
-      alert(message);
+      alert("Failed to post comment.");
     }
   };
 
-  /** Determine API path */
+  /** 🗑️ Delete content */
   const getApiPath = (contentType: "post" | "mindmap" | "research") => {
     switch (contentType) {
-      case "post": return "posts";
-      case "mindmap": return "mindmaps";
-      case "research": return "research";
-      default: return contentType;
+      case "post":
+        return "posts";
+      case "mindmap":
+        return "mindmaps";
+      case "research":
+        return "research";
+      default:
+        return contentType;
     }
   };
 
-  /** Delete content */
   const handleDelete = async (
     id: string,
     contentType: "post" | "mindmap" | "research"
   ) => {
-    if (!token) {
-      alert("You must be logged in to delete content.");
-      return;
-    }
     try {
+      if (!token) {
+        alert("You must be logged in to delete content.");
+        return;
+      }
+
       const apiPath = getApiPath(contentType);
       const endpoint = `/api/content/${apiPath}/${id}`;
 
@@ -118,78 +125,109 @@ export default function ContentGrid({
 
       if (!res.ok) throw new Error(`Failed to delete ${contentType}`);
       await refetch();
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Error deleting item:", err);
-      const message = err instanceof Error ? err.message : "Failed to delete item.";
-      alert(message);
+      alert("Failed to delete item.");
     }
   };
 
-  /** Results summary */
-  const totalResults = data.length;
+  /** 🧭 Results text */
+  const totalResults = filteredData.length;
   const hasSearch = !!searchQuery.trim();
   const hasFilters = !!(filters.status || filters.category);
   const resultsText =
     hasSearch || hasFilters
-      ? `Showing ${totalResults} results${
-          hasSearch ? ` for "${searchQuery}"` : ""
-        }${filters.status ? ` (Status: ${filters.status})` : ""}${
-          filters.category ? ` (Category ID: ${filters.category})` : ""
-        }.`
-      : `Showing all ${totalResults} items.`;
+      ? `Showing ${totalResults} of your results${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category ID: ${filters.category})` : ""}.`
+      : `Showing all ${totalResults} of your items.`;
 
-  /** Loading / error / empty states */
-  if (loading) return <div className="flex justify-center py-10 text-gray-400 text-lg">Loading content...</div>;
-  if (error) return <div className="flex justify-center py-10 text-red-500">Error: {error}</div>;
-  if (!data.length)
+  /** 🌀 Loading / error / empty states */
+  if (loading)
+    return (
+      <div className="flex justify-center py-10 text-gray-400 text-lg">
+        Loading content...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex justify-center py-10 text-red-500">
+        Error: {error}
+      </div>
+    );
+
+  if (!filteredData.length)
     return (
       <div className="flex justify-center py-10 text-gray-400">
         {hasSearch || hasFilters
           ? `No ${type === "all" ? "content" : type} matches your search or filters.`
-          : `No ${type === "all" ? "content" : type} available.`}
+          : `You haven't created any ${type === "all" ? "content" : type} yet.`}
       </div>
     );
 
-  /** Render content grid */
+  /** 🧩 Render cards */
   return (
     <>
-      {/* Results summary */}
       <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
 
       <div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center"
-        style={{ width: "100%", maxWidth: "1429px", margin: "0 auto", overflowX: "hidden", boxSizing: "border-box" }}
+        className="
+          grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
+          gap-x-[2px] gap-y-[-10px]
+          place-items-center
+        "
+        style={{
+          width: "100%",
+          maxWidth: "1429px",
+          margin: "0 auto",
+          overflowX: "hidden",
+          boxSizing: "border-box",
+        }}
       >
-        {data.map((card) => {
-          const contentType = card.content_type as "post" | "mindmap" | "research";
+        {filteredData.map((card) => {
+          const contentType = card.content_type as
+            | "post"
+            | "mindmap"
+            | "research";
+
           return (
-            <div key={card.id} style={{ width: "360px", transform: "scale(0.9)", transformOrigin: "top center" }}>
-              <ContentCard
+            <div
+              key={card.id}
+              style={{
+                width: "360px",
+                transform: "scale(0.9)",
+                transformOrigin: "top center",
+              }}
+            >
+              <ContentCard1
                 {...card}
                 type={contentType}
+                status={card.status}
                 onDelete={() => handleDelete(card.id, contentType)}
                 onOpenComments={() => handleOpenComments(card)}
-                onOpenContent={() => setSelectedContentPopup(card)}
-                user={user}
+                onOpenContent={() => handleOpenContentPopup(card)}
               />
             </div>
           );
         })}
       </div>
 
-      {/* Comments Popup */}
+      {/* 🟢 Comments Popup */}
       {isPopupOpen && selectedContent && (
         <CommentsPopup
           id={selectedContent.id}
           title={selectedContent.title}
-          content_body={"content_body" in selectedContent ? selectedContent.content_body || "" : ""}
+          content_body={
+            "content_body" in selectedContent
+              ? selectedContent.content_body || ""
+              : ""
+          }
           comments={comments}
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
         />
       )}
 
-      {/* Content Popup */}
+      {/* 🟣 Content Popup */}
       {selectedContentPopup && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
           <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
@@ -199,10 +237,15 @@ export default function ContentGrid({
             >
               ✕
             </button>
+
             <ContentPopup
               id={selectedContentPopup.id}
               title={selectedContentPopup.title}
-              content_body={"content_body" in selectedContentPopup ? selectedContentPopup.content_body || "" : ""}
+              content_body={
+                "content_body" in selectedContentPopup
+                  ? selectedContentPopup.content_body || ""
+                  : ""
+              }
               onClose={() => setSelectedContentPopup(null)}
               created_at={selectedContentPopup.created_at}
               updated_at={selectedContentPopup.updated_at}

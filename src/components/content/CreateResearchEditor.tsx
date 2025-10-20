@@ -12,6 +12,8 @@ import TaskItem from "@tiptap/extension-task-item";
 import Image1 from "next/image";
 import { useCategories } from "@/hooks/useCategories";
 import { useTags } from "@/hooks/useTags";
+import { useContentTags } from "@/hooks/useContentTags";
+import { useReferences } from "@/hooks/useReferences";
 import {
   Bold,
   Italic,
@@ -55,6 +57,9 @@ interface Tag {
   name: string;
 }
 
+// -----------------------------
+
+
 interface CreateResearchEditorProps {
   title: string;
   body: string;
@@ -63,6 +68,10 @@ interface CreateResearchEditorProps {
   onTagsChange?: (tags: Tag[]) => void;
   onCategoryChange?: (categoryId: string | null) => void;
   onReferencesChange?: (references: string[]) => void; // NEW: For references
+  initialCategoryId?: string | null; // NEW
+  researchId?: string | null;
+  initialTags?: Tag[];  // NEW: Initial tags from parent
+  initialReferences?: string[];  // NEW: Initial references from parent
 }
 
 export default function CreateResearchEditor({
@@ -73,25 +82,78 @@ export default function CreateResearchEditor({
   onTagsChange,
   onCategoryChange,
   onReferencesChange,
+  initialCategoryId,
+  researchId,
+  initialTags = [],  // NEW: Default to empty array
+  initialReferences = [],
+
 }: CreateResearchEditorProps) {
   const [mounted, setMounted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
   // ===== CATEGORY STATE =====
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [showCategoryPopup, setShowCategoryPopup] = useState(false);
-  const [categoryId, setCategoryId] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [showCategoryPopup, setShowCategoryPopup] = useState(false);
+    const [categoryId, setCategoryId] = useState<string | null>(null);
 
   // ===== TAG STATE =====
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const [showTagPopup, setShowTagPopup] = useState(false);
-  const [tagIds, setTagIds] = useState<string[]>([]);
+    const { tags: allTags = [] } = useTags(); // fetch all tags
+    const [tagQuery, setTagQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<Tag[]>([]);
+    const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+    const [tagIds, setTagIds] = useState<string[]>([]);
+    const [showTagSelector, setShowTagSelector] = useState(false); 
+  
 
 // ===== REFERENCE STATE (NEW) =====
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
   const [showReferencePopup, setShowReferencePopup] = useState(false);
   const [referenceInput, setReferenceInput] = useState(""); // Temp input for popup
   const [referenceError, setReferenceError] = useState<string | null>(null); // Optional: For validation errors
+
+
+  const { tags: fetchedTags, fetchTags } = useContentTags();
+  const { references: fetchedReferences, refresh: refreshReferences } = useReferences(researchId || "");
+
+
+
+
+  // Search filter
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTagQuery(value);
+
+    if (value.trim()) {
+      const filteredTags = allTags.filter((tag) =>
+        tag.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setSearchResults(filteredTags);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  // Add tag
+  const addTag = (tagId: string) => {
+    const selected = allTags.find((t) => t.id === tagId);
+    if (!selected || selectedTags.some((t) => t.id === tagId)) return;
+
+    const updated = [...selectedTags, selected];
+    setSelectedTags(updated);
+    onTagsChange?.(updated);
+    // ✅ clear search input + results after selecting
+    setTagQuery("");
+    setSearchResults([]);
+  };
+
+  // Remove tag
+  const removeTag = (tagId: string) => {
+    const updated = selectedTags.filter((t) => t.id !== tagId);
+    setSelectedTags(updated);
+    onTagsChange?.(updated);
+  };
+
+    
 
   // ===== MOUNT CHECK =====
 
@@ -102,6 +164,38 @@ export default function CreateResearchEditor({
   // ===== FETCH HOOKS =====
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const { tags, loading: tagsLoading, error: tagsError } = useTags();
+
+  // Initialize local category state from parent
+  useEffect(() => {
+    if (initialCategoryId && categories.length > 0) {
+      const cat = categories.find(c => c.id === initialCategoryId) || null;
+      setSelectedCategory(cat);
+      setCategoryId(cat?.id || null);
+    }
+  }, [initialCategoryId, categories]);
+
+
+   // ===== Fetch tags on mount or researchId change ===== (unchanged, but now it can override initialTags if needed)
+  useEffect(() => {
+    if (researchId) fetchTags(researchId);
+  }, [researchId]);
+  // ===== Populate selected tags when fetched ===== (unchanged)
+  useEffect(() => {
+    if (fetchedTags.length > 0) {
+      setSelectedTags(fetchedTags);
+      onTagsChange?.(fetchedTags);
+    }
+  }, [fetchedTags]);
+  // ===== Populate selected references when fetched ===== (unchanged)
+  useEffect(() => {
+    if (fetchedReferences.length > 0) {
+      const refTexts = fetchedReferences.map(r => r.text);
+      setSelectedReferences(refTexts);
+      onReferencesChange?.(refTexts);
+    }
+  }, [fetchedReferences]);
+
+  
 
   // ===== TIPTAP EDITOR =====
   const editor = useEditor({
@@ -126,24 +220,7 @@ export default function CreateResearchEditor({
 
   const hasContent = editor.getText().trim().length > 0;
 
-  // ===== TAG HELPERS =====
-  const removeTag = (tagId: string) => {
-    const updatedTags = selectedTags.filter((tag) => tag.id !== tagId);
-    setSelectedTags(updatedTags);
-    setTagIds(updatedTags.map((t) => t.id));
-    if (onTagsChange) onTagsChange(updatedTags);
-  };
 
-  const addTag = (tagId: string) => {
-    if (tagId === "0" || selectedTags.some((tag) => tag.id === tagId)) return;
-    const selected = tags.find((tag) => tag.id === tagId);
-    if (selected) {
-      const updatedTags = [...selectedTags, selected];
-      setSelectedTags(updatedTags);
-      setTagIds(updatedTags.map((t) => t.id));
-      if (onTagsChange) onTagsChange(updatedTags);
-    }
-  };
 
   // ===== CATEGORY HELPER =====
   const handleCategoryChange = (value: string) => {
@@ -208,6 +285,9 @@ export default function CreateResearchEditor({
     setReferenceInput("");
     setReferenceError(null);
   };
+
+
+  
 
   return (
     <div className={`editor-container ${fullscreen ? "fullscreen-mode" : ""}`}>
@@ -301,178 +381,393 @@ export default function CreateResearchEditor({
 
 
         
-         {/* REFERENCES (NEW) - Similar to Tags */}
-        <div className="reference-button-wrapper">
-          <button className="btn publish" onClick={openReferencePopup}>
+       {/* ===== REFERENCES SECTION ===== */}
+        <div style={{ marginTop: "16px" }}>
+          <button
+            className="btn publish"
+            onClick={() => setShowReferencePopup(!showReferencePopup)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
             <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Reference
           </button>
-          {selectedReferences.length > 0 && (
-            <div className="selected-references-box">
-              {selectedReferences.map((refText, index) => (
-                <div key={index} className="reference-pill">
-                  <span className="reference-text">{refText}</span>
-                  <button
-                    className="remove-reference-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeReference(index);
-                    }}
-                    title="Remove reference"
-                  >
-                    <Image1 src="/x button.png" alt="Remove" width={15} height={15} />
-                  </button>
+
+          {showReferencePopup && (
+            <div
+              style={{
+                marginTop: "12px",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(80, 80, 80, 0.24)",
+                borderRadius: "16px",
+                padding: "16px",
+                width: "855px",
+              }}
+            >
+              {/* Existing References (now vertical + green text) */}
+              {selectedReferences.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column", // ✅ vertical layout
+                    gap: "8px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  {selectedReferences.map((refText, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.08)",
+                        borderRadius: "12px",
+                        padding: "8px 10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "14px",
+                          color: "#00FF88", // ✅ green text
+                          fontWeight: 500,
+                        }}
+                      >
+                        {refText}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeReference(index);
+                        }}
+                        title="Remove reference"
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "0",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Image1 src="/x button.png" alt="Remove" width={15} height={15} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Input Area */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {referenceError && (
+                  <div
+                    style={{
+                      color: "red",
+                      fontSize: "13px",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {referenceError}
+                  </div>
+                )}
+
+                <textarea
+                  value={referenceInput}
+                  onChange={(e) => setReferenceInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      if (referenceInput.trim()) {
+                        addReference(referenceInput.trim());
+                        setReferenceInput(""); // ✅ Clear input but keep box open
+                      }
+                    }
+                  }}
+                  placeholder="Enter reference (e.g. Source: https://example.com - Description...)"
+                  rows={3}
+                  style={{
+                    width: "823px",
+                    background: "rgba(0, 0, 0, 0.25)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "8px",
+                    color: "white",
+                    padding: "8px 10px",
+                    fontSize: "14px",
+                    resize: "none",
+                  }}
+                />
+
+                <button
+                  type="button"
+                  disabled={!referenceInput.trim()}
+                  onClick={() => {
+                    if (referenceInput.trim()) {
+                      addReference(referenceInput.trim());
+                      setReferenceInput(""); // ✅ Clear input only
+                    }
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    borderRadius: "99px",
+                    color: "white",
+                    padding: "6px 10px",
+                    width: "fit-content",
+                    cursor: referenceInput.trim() ? "pointer" : "not-allowed",
+                    opacity: referenceInput.trim() ? 1 : 0.5,
+                  }}
+                >
+                  <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add
+                </button>
+              </div>
             </div>
           )}
         </div>
-
 
 
 
         {/* TAGS */}
         <div className="tag-button-wrapper">
-          <button className="btn publish" onClick={() => setShowTagPopup(!showTagPopup)}>
+          <button
+            className="btn publish"
+            onClick={() => setShowTagSelector(!showTagSelector)}
+          >
             <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Tag
           </button>
 
-          {selectedTags.length > 0 && (
-            <div className="selected-tags-box">
-              {selectedTags.map((tag) => (
-                <div key={tag.id} className="tag-pill">
-                  <span className="tag-name">{tag.name}</span>
-                  <button
-                    className="remove-tag-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeTag(tag.id);
+          {showTagSelector && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                width: "100%",
+                marginTop: "8px",
+              }}
+            >
+              <label style={{ fontSize: "16px", fontWeight: 500 }}>Tags</label>
+
+              <div
+                style={{
+                  position: "relative",
+                  width: "663px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(80, 80, 80, 0.24)",
+                  borderRadius: "16px",
+                  padding: "8px",
+                  minHeight: "44px",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                {/* Pills + Input */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    alignItems: "center",
+                    flex: 1,
+                  }}
+                >
+                  {/* Selected tags */}
+                  {selectedTags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.1)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        borderRadius: "20px",
+                        height: "32px",
+                        padding: "4px 8px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "12px",
+                        color: "rgba(255, 255, 255, 0.9)",
+                        maxWidth: "200px",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      <span style={{ fontWeight: 500, flex: 1 }}>{tag.name}</span>
+                      <button
+                        style={{
+                          background: "white",
+                          border: "none",
+                          fontSize: "16px",
+                          cursor: "pointer",
+                          padding: "0",
+                          borderRadius: "50%",
+                          width: "15px",
+                          height: "15px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "black",
+                        }}
+                        onClick={() => removeTag(tag.id)}
+                        title="Remove tag"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Search input */}
+                  <input
+                    type="text"
+                    value={tagQuery}
+                    onChange={handleTagInputChange}
+                    placeholder={selectedTags.length > 0 ? "" : "Search tags..."}
+                    style={{
+                      flex: 1,
+                      minWidth: "120px",
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      color: "white",
+                      fontSize: "14px",
+                      padding: "4px 0",
+                      margin: "0 4px 4px 0",
                     }}
-                    title="Remove tag"
-                  >
-                    <Image1 src="/x button.png" alt="Remove" width={15} height={15} />
-                  </button>
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && tagQuery.trim()) {
+                        const matchedTag = searchResults.find(
+                          (t) =>
+                            t.name.toLowerCase() ===
+                            tagQuery.toLowerCase().trim()
+                        );
+                        if (matchedTag) addTag(matchedTag.id);
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
-              ))}
+
+                {/* Dropdown */}
+                {tagQuery && searchResults.length > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      background: "rgba(0,0,0,0.8)",
+                      color: "white",
+                      maxHeight: "150px",
+                      overflowY: "auto",
+                      borderRadius: "6px",
+                      zIndex: 1000,
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      marginTop: "4px",
+                    }}
+                  >
+                    {searchResults.map((tag) => (
+                      <div
+                        key={tag.id}
+                        style={{
+                          padding: "8px 12px",
+                          cursor: "pointer",
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
+                        }}
+                        onClick={() => addTag(tag.id)}
+                      >
+                        {tag.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
-        
 
         {/* CATEGORY */}
         <div className="category-button-wrapper">
-          <button className="btn publish" onClick={() => setShowCategoryPopup(!showCategoryPopup)}>
+          <button
+            className="btn publish"
+            onClick={() => setShowCategoryPopup(!showCategoryPopup)}
+          >
             <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Category
           </button>
 
-          {selectedCategory && (
-            <div className="selected-category-label">
-              <span className="selected-icon">✓</span> Selected: {selectedCategory.name}
-              <button
-                className="clear-selection-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedCategory(null);
-                  setCategoryId(null);
-                  if (onCategoryChange) onCategoryChange(null);
-                  console.log("❌ Cleared Category");
-                }}
-                title="Clear selection"
-              >
-                ×
-              </button>
+          {showCategoryPopup && (
+            <div
+              style={{
+                marginTop: "8px",
+                width: "855px",
+                height: "92px",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(80, 80, 80, 0.24)",
+                borderRadius: "16px",
+                padding: "16px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              {categoriesLoading ? (
+                <div className="popup-loading">Loading...</div>
+              ) : categoriesError ? (
+                <div className="popup-error">Error loading categories</div>
+              ) : (
+                <>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "rgba(255,255,255,0.8)",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Category
+                  </label>
+
+                  <select
+                    className="toolbar-select"
+                    value={selectedCategory?.id || "0"}
+                    onChange={(e) => {
+                      const selectedValue = e.target.value;
+                      handleCategoryChange(selectedValue);
+                      if (selectedValue === "0") setShowCategoryPopup(false);
+                    }}
+                    style={{
+                      width: "823px",
+                      height: "40px",
+                      background: "rgba(0,0,0,0.25)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "8px",
+                      color: "white",
+                      padding: "8px 10px",
+                      fontSize: "14px",
+                      outline: "none",
+                      appearance: "none",
+                    }}
+                  >
+                    <option value="0">No Category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
             </div>
           )}
         </div>
-      </div>
 
-      {/* ===== REFERENCE POPUP ===== */}
-      {showReferencePopup && (
-        <div className="reference-popup-container" onClick={closeReferencePopup}>
-          <div className="reference-popup" onClick={(e) => e.stopPropagation()}>
-            <h3 className="popup-title">Add Reference</h3>
-            {referenceError && <div className="popup-error">{referenceError}</div>}
-            <textarea
-              className="reference-textarea"
-              value={referenceInput}
-              onChange={(e) => setReferenceInput(e.target.value)}
-              onKeyDown={handleReferenceSubmit} // Enter key support (no reload)
-              placeholder="Enter reference text (e.g., Source: https://example.com - Description...)"
-              rows={4}
-            />
-            <button 
-              type="button" // FIXED: Prevents form submit/reload
-              className="add-reference-btn" 
-              disabled={!referenceInput.trim()}
-              onClick={() => addReference(referenceInput)} // FIXED: Direct call, no submit
-            >
-              <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ===== TAG POPUP ===== */}
-      {showTagPopup && (
-        <div className="category-popup-container" onClick={() => setShowTagPopup(false)}>
-          <div className="category-popup" onClick={(e) => e.stopPropagation()}>
-            <h3 className="popup-title">Tags</h3>
-            {tagsLoading ? (
-              <div className="popup-loading">Loading tags...</div>
-            ) : tagsError ? (
-              <div className="popup-error">Error loading tags</div>
-            ) : (
-              <select
-                className="toolbar-select"
-                value="0"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  addTag(value);
-                  setShowTagPopup(false);
-                }}
-              >
-                <option value="0">Select a Tag</option>
-                {tags.map((tag) => (
-                  <option key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-      )}
-
-       {/* ===== CATEGORY POPUP ===== */}
-{showCategoryPopup && (
-  <div className="category-popup-container" onClick={() => setShowCategoryPopup(false)}>
-    <div className="category-popup" onClick={(e) => e.stopPropagation()}>
-      <h3 className="popup-title">Category</h3>
-      {categoriesLoading ? (
-        <div className="popup-loading">Loading categories...</div>
-      ) : categoriesError ? (
-        <div className="popup-error">Error loading categories</div>
-      ) : (
-        <select
-          className="toolbar-select"
-          value={selectedCategory?.id || "0"}
-          onChange={(e) => {
-            handleCategoryChange(e.target.value);
-            setShowCategoryPopup(false); // ✅ Auto-close after any change (select or deselect)
-          }}
-        >
-          <option value="0">Select a Category</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      )}
-    </div>
-  </div>
-)}
-
-      {/* End Category Popup */}
+              </div>
+              
             <style jsx>{`
         .editor-container {
           position: absolute;
@@ -838,6 +1133,7 @@ export default function CreateResearchEditor({
     .category-button-wrapper {
         position: relative; /* Anchor for absolute popup */
         display: flex;
+        width:132px;
         flex-direction: column;
         gap: 8px; /* Space between button and label */
     }
@@ -1164,7 +1460,6 @@ export default function CreateResearchEditor({
 }
 
 
-    
 
       `}</style>
     </div>

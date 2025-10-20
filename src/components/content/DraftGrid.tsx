@@ -3,39 +3,39 @@ import { useState } from "react";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import DraftCard from "./DraftCard";
-import { AnyContent, Comment } from "@/types/content";
-import ContentPopup from "./ContentPopup"; // ✅ ensure path is correct
+import { AnyContent } from "@/types/content";
+import ContentPopup from "./ContentPopup";
 
 interface DraftGridProps {
   type?: "all" | "post" | "research" | "mindmap";
-  searchQuery?: string; // Raw search for display
-  filters?: Record<string, string>; // Includes q (debounced), status, category
+  searchQuery?: string;
+  filters?: Record<string, string>;
 }
 
-export default function DraftGrid({ 
-  type = "all", 
-  searchQuery = "", 
-  filters = {} 
+export default function DraftGrid({
+  type = "all",
+  searchQuery = "",
+  filters = {},
 }: DraftGridProps) {
-  // Pass combined filters to useContent (q is already debounced in parent; status defaults to "draft")
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
 
- 
   const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
-    const handleOpenContentPopup = (content: AnyContent) => {
+  const handleOpenContentPopup = (content: AnyContent) => {
     setSelectedContentPopup(content);
-    };
-
+  };
 
   const token =
-    typeof window !== "undefined" // FIXED: Typo was "" -> "undefined"
+    typeof window !== "undefined"
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-  
+  /** ✅ Filter to only logged-in user’s content */
+  const filteredData = user
+    ? data.filter((item) => item.author_id === user.id)
+    : [];
 
-  // ✅ Determine API path for deleting content
+  /** 🗑️ Delete handler */
   const getApiPath = (contentType: "post" | "mindmap" | "research") => {
     switch (contentType) {
       case "post":
@@ -49,7 +49,6 @@ export default function DraftGrid({
     }
   };
 
-  // ✅ Delete content handler
   const handleDelete = async (
     id: string,
     contentType: "post" | "mindmap" | "research"
@@ -79,18 +78,18 @@ export default function DraftGrid({
     }
   };
 
-  // UPDATED: UX text for results (highlight default draft status)
-  const totalResults = data.length;
+  /** 🧭 Results text */
+  const totalResults = filteredData.length;
   const hasSearch = !!searchQuery.trim();
   const hasFilters = !!(filters.status || filters.category);
   const isDefaultDraft = filters.status === "draft" && !hasSearch && !filters.category;
   const resultsText = hasSearch || hasFilters
-    ? `Showing ${totalResults} results${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category ID: ${filters.category})` : ""}.`
+    ? `Showing ${totalResults} of your results${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category ID: ${filters.category})` : ""}.`
     : isDefaultDraft 
-      ? `Showing all ${totalResults} draft items.` // NEW: Specific UX for default draft
-      : `Showing all ${totalResults} items.`;
+      ? `Showing all ${totalResults} of your draft items.`
+      : `Showing all ${totalResults} of your items.`;
 
-  // ✅ Loading and error states
+  /** 🌀 Loading / error / empty states */
   if (loading)
     return (
       <div className="flex justify-center py-10 text-gray-400 text-lg">
@@ -105,25 +104,21 @@ export default function DraftGrid({
       </div>
     );
 
-  if (!data.length)
+  if (!filteredData.length)
     return (
       <div className="flex justify-center py-10 text-gray-400">
         {hasSearch || hasFilters
           ? `No ${type === "all" ? "content" : type} matches your search or filters.`
           : isDefaultDraft
-            ? "No draft content available." // NEW: Specific message for default draft
-            : `No ${type === "all" ? "content" : type} available.`
-        }
+            ? "You don’t have any draft content yet."
+            : `You haven’t created any ${type === "all" ? "content" : type} yet.`}
       </div>
     );
 
-  // ✅ Render content grid
+  /** 🧩 Render cards */
   return (
     <>
-      {/* NEW: Results summary */}
-      <div className="mb-4 text-center text-gray-400 text-sm">
-        {resultsText}
-      </div>
+      <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
 
       <div
         className="
@@ -139,7 +134,7 @@ export default function DraftGrid({
           boxSizing: "border-box",
         }}
       >
-        {data.map((card) => {
+        {filteredData.map((card) => {
           const contentType = card.content_type as
             | "post"
             | "mindmap"
@@ -162,7 +157,8 @@ export default function DraftGrid({
                     ? [card.categoryName]
                     : card.categoryName
                 }
-                onOpenContent={() => handleOpenContentPopup(card)} // ✅ pass this 
+                onOpenContent={() => handleOpenContentPopup(card)}
+     
               />
             </div>
           );
@@ -170,39 +166,38 @@ export default function DraftGrid({
       </div>
 
       {/* 🟣 Content Popup */}
-                        {selectedContentPopup && (
-                          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
-                            <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
-                              <button
-                                onClick={() => setSelectedContentPopup(null)}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
-                              >
-                                ✕
-                              </button>
-                  
-                              <ContentPopup
-                                id={selectedContentPopup.id}
-                                title={selectedContentPopup.title}
-                                content_body={
-                                  "content_body" in selectedContentPopup
-                                    ? selectedContentPopup.content_body || ""
-                                    : ""
-                                }
-                                onClose={() => setSelectedContentPopup(null)}
-                                created_at={selectedContentPopup.created_at}
-                                updated_at={selectedContentPopup.updated_at}
-                                status={selectedContentPopup.status}
-                                excalidraw_data={selectedContentPopup.excalidraw_data}
-                                categoryName={
-                                    typeof selectedContentPopup.categoryName === "string"
-                                      ? [selectedContentPopup.categoryName]
-                                      : selectedContentPopup.categoryName
-                                  }
-                                
-                              />
-                            </div>
-                          </div>
-                        )}
+      {selectedContentPopup && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
+            <button
+              onClick={() => setSelectedContentPopup(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
+            >
+              ✕
+            </button>
+
+            <ContentPopup
+              id={selectedContentPopup.id}
+              title={selectedContentPopup.title}
+              content_body={
+                "content_body" in selectedContentPopup
+                  ? selectedContentPopup.content_body || ""
+                  : ""
+              }
+              onClose={() => setSelectedContentPopup(null)}
+              created_at={selectedContentPopup.created_at}
+              updated_at={selectedContentPopup.updated_at}
+              status={selectedContentPopup.status}
+              excalidraw_data={selectedContentPopup.excalidraw_data}
+              categoryName={
+                typeof selectedContentPopup.categoryName === "string"
+                  ? [selectedContentPopup.categoryName]
+                  : selectedContentPopup.categoryName
+              }
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

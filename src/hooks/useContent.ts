@@ -173,7 +173,8 @@ export function useContent({
         const json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || "Failed to update content");
         await fetchContent();
-        return json.updated;
+        return json.research || json.post || json.data || json; // support both post/research responses
+
       } catch (err: unknown) {
         if (err instanceof Error) setError(err.message);
         else setError("An unknown error occurred.");

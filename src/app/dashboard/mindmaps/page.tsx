@@ -6,8 +6,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
-import ContentGrid from "@/components/content/ContentGrid";
 import "./MindmapPage.css";
+import ContentGrid1 from "@/components/content/ContentGrid1";
 
 export default function MindmapPage() {
   const router = useRouter();
@@ -87,7 +87,7 @@ export default function MindmapPage() {
           </div>
 
           {/* 🔹 Grid Section */}
-          <ContentGrid
+          <ContentGrid1
             type="mindmap"
             searchQuery={searchQuery}
             filters={filters}

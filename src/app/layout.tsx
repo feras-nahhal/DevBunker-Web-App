@@ -1,16 +1,20 @@
+// app/layout.tsx
+"use client";
+
+import { AuthProvider } from "@/hooks/AuthProvider";
 import "./globals.css";
 import type { ReactNode } from "react";
+ // adjust path
 
-export const metadata = {
-  title: "My App",
-  description: "Next.js App with Login + Dashboard",
-};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-black text-white antialiased">{children}</body>
+      <body className="bg-black text-white antialiased">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }
-

@@ -6,7 +6,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
-import ContentGrid from "@/components/content/ContentGrid";
+import ContentGrid1 from "@/components/content/ContentGrid1";
 import "./PostPage.css";
 
 export default function PostPage() {
@@ -87,7 +87,7 @@ export default function PostPage() {
           </div>
 
           {/* 🔹 Grid Section */}
-          <ContentGrid type="post" searchQuery={searchQuery} filters={filters} />
+          <ContentGrid1 type="post" searchQuery={searchQuery} filters={filters} />
         </div>
       </div>
     </div>

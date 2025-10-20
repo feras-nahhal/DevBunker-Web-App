@@ -1,17 +1,21 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
 import CreateReserchHeader from "@/components/layout/CreateReserchHeader";
 import { useContent, ContentType } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
-import { AnyContent } from "@/types/content"; 
+import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
 import "./PostPage.css";
 
-interface Tag { id: string; name: string; }
+interface Tag {
+  id: string;
+  name: string;
+}
 
 const CreateResearchEditor = dynamic(
   () => import("@/components/content/CreateResearchEditor"),
@@ -20,15 +24,11 @@ const CreateResearchEditor = dynamic(
 
 export default function CreateResearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const researchId = searchParams.get("id");
 
-  // -----------------------------
-  // Auth Hook
-  // -----------------------------
-  const { user, loading: authLoading, token, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, token } = useAuth();
 
-  // -----------------------------
-  // States (always declared first)
-  // -----------------------------
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
@@ -37,59 +37,93 @@ export default function CreateResearchPage() {
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const { createContent, loading: contentLoading, refetch } = useContent({
-    type: "research" as ContentType,
-    autoFetch: false,
-  });
+  const { getContentById, createContent, updateContent, loading: contentLoading, refetch } =
+    useContent({
+      type: "research" as ContentType,
+      autoFetch: false,
+    });
+
+  const [ready, setReady] = useState(false);
+
+  // ✅ Wait for token before doing anything
+  useEffect(() => {
+    if (!authLoading && token) {
+      setReady(true);
+    }
+  }, [authLoading, token]);
+
+  // ✅ Load existing research for editing, only when ready
+  useEffect(() => {
+    if (!researchId || !ready) return;
+
+    const fetchResearch = async () => {
+      try {
+        const data = await getContentById(researchId); // pass token if required
+        if (data) {
+          setTitle(data.title || "");
+          setBody(data.content_body || "");
+          setSelectedCategoryId(data.category_id || null);
+          setSelectedTags(data.tags || []);
+          setSelectedReferences(data.references || []);
+        }
+      } catch (err) {
+        alert(`Error fetching research: ${err instanceof Error ? err.message : "Unknown error"}`);
+      }
+    };
+
+    fetchResearch();
+  }, [researchId, ready, getContentById, token]);
 
   const isLoading = authLoading || contentLoading || saving;
-
-  // -----------------------------
-  // Redirect effect
-  // -----------------------------
-  useEffect(() => {
-    if (!authLoading && !user) router.push("/auth/login");
-  }, [user, authLoading, router]);
 
   // -----------------------------
   // Handlers
   // -----------------------------
   const handleCancel = () => {
-    setTitle(""); setBody(""); setSelectedTags([]); setSelectedCategoryId(null); setSelectedReferences([]);
+    setTitle("");
+    setBody("");
+    setSelectedTags([]);
+    setSelectedCategoryId(null);
+    setSelectedReferences([]);
     router.push("/dashboard/research");
   };
 
   const handleSave = async (isPublished: boolean) => {
-    if (!title.trim() || !body.trim() || !isAuthenticated || !token) {
-      alert("Title, body, and authentication are required");
+    if (!title.trim() || !body.trim() || !token) {
+      alert("Title, body, and token are required");
       return;
     }
-    if (selectedReferences.some(ref => !ref.trim())) {
+    if (selectedReferences.some((ref) => !ref.trim())) {
       alert("References cannot be empty");
       return;
     }
 
     setSaving(true);
     try {
-      const newPostData: Partial<AnyContent> & { 
-        tag_ids?: string[]; 
-        status: string; 
+      const dataToSend: Partial<AnyContent> & {
+        tag_ids?: string[];
         category_id?: string | null;
         references?: string[];
+        status: string;
       } = {
         title,
         content_body: body,
         status: isPublished ? CONTENT_STATUS.PENDING_APPROVAL : CONTENT_STATUS.DRAFT,
         category_id: selectedCategoryId ?? undefined,
-        tag_ids: selectedTags.map(t => t.id),
+        tag_ids: selectedTags.map((t) => t.id),
         references: selectedReferences,
       };
 
-      const createResponse = await createContent(newPostData, token);
-      if (!createResponse) throw new Error("No response from API");
+      let response;
+      if (researchId) {
+        response = await updateContent(researchId, dataToSend, token);
+      } else {
+        response = await createContent(dataToSend, token);
+      }
+
+      if (!response) throw new Error("No response from API");
 
       refetch();
-      setTitle(""); setBody(""); setSelectedTags([]); setSelectedCategoryId(null); setSelectedReferences([]);
       router.push("/dashboard/research");
     } catch (err) {
       console.error("Save error:", err);
@@ -105,42 +139,60 @@ export default function CreateResearchPage() {
   // -----------------------------
   // Render
   // -----------------------------
+  if (!ready || contentLoading) {
+    return (
+      <div className="dashboard">
+        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+          <p className="text-center text-gray-400 mt-10">Loading Research Data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard">
       <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        {authLoading || !user ? (
-          <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
-        ) : (
-          <>
-            <CreateReserchHeader
-              onSave={handleSavePublish}
-              onSaveAsDraft={handleSaveAsDraft}
-              onCancel={handleCancel}
-              saving={isLoading || !isAuthenticated}
-              collapsed={sidebarCollapsed}
+        <CreateReserchHeader
+          onSave={handleSavePublish}
+          onSaveAsDraft={handleSaveAsDraft}
+          onCancel={handleCancel}
+          saving={isLoading}
+          collapsed={sidebarCollapsed}
+        />
+
+        <div className="post-container">
+          <div className="flex items-center mb-4">
+            <Image
+              src="/plus.svg"
+              alt="Research Icon"
+              width={20}
+              height={20}
+              className="object-contain mr-[4px] relative top-[1px]"
             />
+            <h2
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+              style={{ fontFamily: "'Public Sans', sans-serif" }}
+            >
+              Research / {researchId ? "Edit Research" : "Create Research"}
+            </h2>
+          </div>
 
-            <div className="post-container">
-              <div className="flex items-center mb-4">
-                <Image src="/plus.svg" alt="Research Icon" width={20} height={20} className="object-contain mr-[4px] relative top-[1px]" />
-                <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
-                  Research / Create Research
-                </h2>
-              </div>
-
-              <CreateResearchEditor
-                title={title}
-                body={body}
-                onTitleChange={setTitle}
-                onBodyChange={setBody}
-                onTagsChange={setSelectedTags}
-                onCategoryChange={setSelectedCategoryId}
-                onReferencesChange={setSelectedReferences}
-              />
-            </div>
-          </>
-        )}
+          <CreateResearchEditor
+            researchId={researchId}
+            title={title}
+            body={body}
+            onTitleChange={setTitle}
+            onBodyChange={setBody}
+            onTagsChange={setSelectedTags}
+            onCategoryChange={setSelectedCategoryId}
+            onReferencesChange={setSelectedReferences}
+            initialCategoryId={selectedCategoryId}
+            initialTags={selectedTags}  // NEW: Pass parent's tags
+            initialReferences={selectedReferences}  // NEW: Pass parent's references
+          />
+        </div>
       </div>
     </div>
   );

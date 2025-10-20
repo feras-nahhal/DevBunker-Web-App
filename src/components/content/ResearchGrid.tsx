@@ -6,36 +6,42 @@ import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import ResearchCard from "./ResearchCard";
 import { AnyContent, Comment } from "@/types/content";
-import ContentPopup from "./ContentPopup"; // ✅ ensure path is correct
+import ContentPopup from "./ContentPopup";
 
 interface ResearchGridProps {
   type?: "all" | "post" | "research" | "mindmap";
-  searchQuery?: string; // Raw search for display
-  filters?: Record<string, string>; // Includes q (debounced), status, category
+  searchQuery?: string;
+  filters?: Record<string, string>;
 }
 
-export default function ResearchGrid({ 
-  type = "all", 
-  searchQuery = "", 
-  filters = {} 
+export default function ResearchGrid({
+  type = "all",
+  searchQuery = "",
+  filters = {},
 }: ResearchGridProps) {
-  // Pass combined filters to useContent (q is already debounced in parent)
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
+  
 
-  // NEW: State for comments popup
-    const [isPopupOpen, setIsPopupOpen] = useState(false);
-    const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
-    const [comments, setComments] = useState<Comment[]>([]);
-    const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
-    const handleOpenContentPopup = (content: AnyContent) => {
+  // 🟣 State for popups
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
+
+  const handleOpenContentPopup = (content: AnyContent) => {
     setSelectedContentPopup(content);
-    };
+  };
 
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token") || undefined
       : undefined;
+
+  /** ✅ Filter content to show only user's own items */
+  const filteredData = user
+    ? data.filter((item) => item.author_id === user.id)
+    : [];
 
   /** 🗨️ Comments */
   const fetchComments = async (contentId: string) => {
@@ -82,7 +88,7 @@ export default function ResearchGrid({
     }
   };
 
-  // ✅ Determine API path for deleting content
+  /** 🗑️ Delete content */
   const getApiPath = (contentType: "post" | "mindmap" | "research") => {
     switch (contentType) {
       case "post":
@@ -96,7 +102,6 @@ export default function ResearchGrid({
     }
   };
 
-  // ✅ Delete content handler
   const handleDelete = async (
     id: string,
     contentType: "post" | "mindmap" | "research"
@@ -126,15 +131,16 @@ export default function ResearchGrid({
     }
   };
 
-  // NEW: UX text for results
-  const totalResults = data.length;
+  /** 🧭 Results text */
+  const totalResults = filteredData.length;
   const hasSearch = !!searchQuery.trim();
   const hasFilters = !!(filters.status || filters.category);
-  const resultsText = hasSearch || hasFilters
-    ? `Showing ${totalResults} results${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category ID: ${filters.category})` : ""}.`
-    : `Showing all ${totalResults} items.`;
+  const resultsText =
+    hasSearch || hasFilters
+      ? `Showing ${totalResults} of your results${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category ID: ${filters.category})` : ""}.`
+      : `Showing all ${totalResults} of your items.`;
 
-  // ✅ Loading and error states
+  /** 🌀 Loading / error / empty states */
   if (loading)
     return (
       <div className="flex justify-center py-10 text-gray-400 text-lg">
@@ -149,23 +155,19 @@ export default function ResearchGrid({
       </div>
     );
 
-  if (!data.length)
+  if (!filteredData.length)
     return (
       <div className="flex justify-center py-10 text-gray-400">
         {hasSearch || hasFilters
           ? `No ${type === "all" ? "content" : type} matches your search or filters.`
-          : `No ${type === "all" ? "content" : type} available.`
-        }
+          : `You haven't created any ${type === "all" ? "content" : type} yet.`}
       </div>
     );
 
-  // ✅ Render content grid
+  /** 🧩 Render cards */
   return (
     <>
-      {/* NEW: Results summary */}
-      <div className="mb-4 text-center text-gray-400 text-sm">
-        {resultsText}
-      </div>
+      <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
 
       <div
         className="
@@ -181,7 +183,7 @@ export default function ResearchGrid({
           boxSizing: "border-box",
         }}
       >
-        {data.map((card) => {
+        {filteredData.map((card) => {
           const contentType = card.content_type as
             | "post"
             | "mindmap"
@@ -199,10 +201,10 @@ export default function ResearchGrid({
               <ResearchCard
                 {...card}
                 type={contentType}
-                status={card.status }
+                status={card.status}
                 onDelete={() => handleDelete(card.id, contentType)}
-                onOpenComments={() => handleOpenComments(card)} 
-                onOpenContent={() => handleOpenContentPopup(card)} // ✅ pass this
+                onOpenComments={() => handleOpenComments(card)}
+                onOpenContent={() => handleOpenContentPopup(card)}
               />
             </div>
           );
@@ -212,54 +214,52 @@ export default function ResearchGrid({
       {/* 🟢 Comments Popup */}
       {isPopupOpen && selectedContent && (
         <CommentsPopup
-                                  id={selectedContent.id}
-                                  title={selectedContent.title}
-                                  content_body={
-                                    "content_body" in selectedContent
-                                      ? selectedContent.content_body || ""
-                                      : ""
-                                  }
-                                  comments={comments}
-                                 
-                                  onClose={() => setIsPopupOpen(false)}
-                                  onAddComment={handleAddComment}
-                />
+          id={selectedContent.id}
+          title={selectedContent.title}
+          content_body={
+            "content_body" in selectedContent
+              ? selectedContent.content_body || ""
+              : ""
+          }
+          comments={comments}
+          onClose={() => setIsPopupOpen(false)}
+          onAddComment={handleAddComment}
+        />
       )}
 
       {/* 🟣 Content Popup */}
-            {selectedContentPopup && (
-              <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
-                <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
-                  <button
-                    onClick={() => setSelectedContentPopup(null)}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
-                  >
-                    ✕
-                  </button>
-      
-                  <ContentPopup
-                    id={selectedContentPopup.id}
-                    title={selectedContentPopup.title}
-                    content_body={
-                      "content_body" in selectedContentPopup
-                        ? selectedContentPopup.content_body || ""
-                        : ""
-                    }
-                    onClose={() => setSelectedContentPopup(null)}
-                    created_at={selectedContentPopup.created_at}
-                    updated_at={selectedContentPopup.updated_at}
-                    status={selectedContentPopup.status}
-                    excalidraw_data={selectedContentPopup.excalidraw_data}
-                    categoryName={
-                        typeof selectedContentPopup.categoryName === "string"
-                          ? [selectedContentPopup.categoryName]
-                          : selectedContentPopup.categoryName
-                      }
-                    
-                  />
-                </div>
-              </div>
-            )}
+      {selectedContentPopup && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
+            <button
+              onClick={() => setSelectedContentPopup(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
+            >
+              ✕
+            </button>
+
+            <ContentPopup
+              id={selectedContentPopup.id}
+              title={selectedContentPopup.title}
+              content_body={
+                "content_body" in selectedContentPopup
+                  ? selectedContentPopup.content_body || ""
+                  : ""
+              }
+              onClose={() => setSelectedContentPopup(null)}
+              created_at={selectedContentPopup.created_at}
+              updated_at={selectedContentPopup.updated_at}
+              status={selectedContentPopup.status}
+              excalidraw_data={selectedContentPopup.excalidraw_data}
+              categoryName={
+                typeof selectedContentPopup.categoryName === "string"
+                  ? [selectedContentPopup.categoryName]
+                  : selectedContentPopup.categoryName
+              }
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
