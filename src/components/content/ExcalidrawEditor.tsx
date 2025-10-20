@@ -57,6 +57,16 @@ interface MindmapContentProps {
   initialEdges?: Edge[];
 }
 
+interface NodeCustomData {
+  editingNodeId: string | null;
+  editingLabel: string;
+  setEditingNodeId: (id: string | null) => void;
+  setEditingLabel: (label: string) => void;
+  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+}
+
+
+
 // -----------------------------
 // Node Components (unchanged)
 export const CircleNode = ({
@@ -64,7 +74,7 @@ export const CircleNode = ({
   selected,
   dragging,
   id,
-}: NodeProps<{ label: string; color?: string; custom?: any }>) => {
+}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
   const handleStyle: CSSProperties = { top: "50%" };
 
   const {
@@ -162,7 +172,7 @@ export const RectNode = ({
   selected,
   dragging,
   id,
-}: NodeProps<{ label: string; color?: string; custom?: any }>) => {
+}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
   const handleStyle: CSSProperties = { top: "50%" };
 
   const {
@@ -259,7 +269,7 @@ export const TextNode = ({
   selected,
   dragging,
   id,
-}: NodeProps<{ label: string; color?: string; custom?: any }>) => {
+}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
   const handleStyle: CSSProperties = { top: "50%", background: "#000" };
 
   const {
@@ -353,7 +363,7 @@ export const DiamondNode = ({
   selected,
   dragging,
   id,
-}: NodeProps<{ label: string; color?: string; custom?: any }>) => {
+}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
   const {
     editingNodeId = null,
     editingLabel = "",
