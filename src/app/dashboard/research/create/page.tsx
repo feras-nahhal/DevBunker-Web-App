@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
 import CreateReserchHeader from "@/components/layout/CreateReserchHeader";
@@ -24,11 +24,9 @@ const CreateResearchEditor = dynamic(
 
 export default function CreateResearchPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const researchId = searchParams.get("id");
-
   const { user, loading: authLoading, token } = useAuth();
 
+  const [researchId, setResearchId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
@@ -36,14 +34,26 @@ export default function CreateResearchPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const { getContentById, createContent, updateContent, loading: contentLoading, refetch } =
-    useContent({
-      type: "research" as ContentType,
-      autoFetch: false,
-    });
-
   const [ready, setReady] = useState(false);
+
+  const {
+    getContentById,
+    createContent,
+    updateContent,
+    loading: contentLoading,
+    refetch,
+  } = useContent({
+    type: "research" as ContentType,
+    autoFetch: false,
+  });
+
+  // ✅ Extract query param manually (no useSearchParams)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setResearchId(params.get("id"));
+    }
+  }, []);
 
   // ✅ Wait for token before doing anything
   useEffect(() => {
@@ -58,7 +68,7 @@ export default function CreateResearchPage() {
 
     const fetchResearch = async () => {
       try {
-        const data = await getContentById(researchId); // pass token if required
+        const data = await getContentById(researchId);
         if (data) {
           setTitle(data.title || "");
           setBody(data.content_body || "");
@@ -114,12 +124,9 @@ export default function CreateResearchPage() {
         references: selectedReferences,
       };
 
-      let response;
-      if (researchId) {
-        response = await updateContent(researchId, dataToSend, token);
-      } else {
-        response = await createContent(dataToSend, token);
-      }
+      const response = researchId
+        ? await updateContent(researchId, dataToSend, token)
+        : await createContent(dataToSend, token);
 
       if (!response) throw new Error("No response from API");
 
@@ -189,8 +196,8 @@ export default function CreateResearchPage() {
             onCategoryChange={setSelectedCategoryId}
             onReferencesChange={setSelectedReferences}
             initialCategoryId={selectedCategoryId}
-            initialTags={selectedTags}  // NEW: Pass parent's tags
-            initialReferences={selectedReferences}  // NEW: Pass parent's references
+            initialTags={selectedTags}
+            initialReferences={selectedReferences}
           />
         </div>
       </div>
