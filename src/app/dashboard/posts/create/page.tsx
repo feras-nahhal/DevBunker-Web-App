@@ -22,7 +22,7 @@ const CreatePostEditor = dynamic(
   { ssr: false }
 );
 
-export default function CreatePostPage() {
+export default function CreatePostPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const researchId = searchParams.get("id");
@@ -44,20 +44,16 @@ export default function CreatePostPage() {
 
   const [ready, setReady] = useState(false);
 
-  // ✅ Wait for token before doing anything
   useEffect(() => {
-    if (!authLoading && token) {
-      setReady(true);
-    }
+    if (!authLoading && token) setReady(true);
   }, [authLoading, token]);
 
-  // ✅ Load existing research for editing, only when ready
   useEffect(() => {
     if (!researchId || !ready) return;
 
     const fetchResearch = async () => {
       try {
-        const data = await getContentById(researchId); // pass token if required
+        const data = await getContentById(researchId);
         if (data) {
           setTitle(data.title || "");
           setBody(data.content_body || "");
@@ -74,15 +70,11 @@ export default function CreatePostPage() {
 
   const isLoading = authLoading || contentLoading || saving;
 
-  // -----------------------------
-  // Handlers
-  // -----------------------------
   const handleCancel = () => {
     setTitle("");
     setBody("");
     setSelectedTags([]);
     setSelectedCategoryId(null);
-  
     router.push("/dashboard/posts");
   };
 
@@ -101,7 +93,6 @@ export default function CreatePostPage() {
       const dataToSend: Partial<AnyContent> & {
         tag_ids?: string[];
         category_id?: string | null;
-        references?: string[];
         status: string;
       } = {
         title,
@@ -109,15 +100,11 @@ export default function CreatePostPage() {
         status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT,
         category_id: selectedCategoryId ?? undefined,
         tag_ids: selectedTags.map((t) => t.id),
-   
       };
 
-      let response;
-      if (researchId) {
-        response = await updateContent(researchId, dataToSend, token);
-      } else {
-        response = await createContent(dataToSend, token);
-      }
+      const response = researchId
+        ? await updateContent(researchId, dataToSend, token)
+        : await createContent(dataToSend, token);
 
       if (!response) throw new Error("No response from API");
 
@@ -134,9 +121,6 @@ export default function CreatePostPage() {
   const handleSaveAsDraft = () => handleSave(false);
   const handleSavePublish = () => handleSave(true);
 
-  // -----------------------------
-  // Render
-  // -----------------------------
   if (!ready || contentLoading) {
     return (
       <div className="dashboard">
@@ -169,10 +153,7 @@ export default function CreatePostPage() {
               height={20}
               className="object-contain mr-[4px] relative top-[1px]"
             />
-            <h2
-              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
-              style={{ fontFamily: "'Public Sans', sans-serif" }}
-            >
+            <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
               Post / {researchId ? "Edit Post" : "Create Post"}
             </h2>
           </div>
@@ -186,7 +167,7 @@ export default function CreatePostPage() {
             onTagsChange={setSelectedTags}
             onCategoryChange={setSelectedCategoryId}
             initialCategoryId={selectedCategoryId}
-            initialTags={selectedTags}  // NEW: Pass parent's tags
+            initialTags={selectedTags}
           />
         </div>
       </div>
