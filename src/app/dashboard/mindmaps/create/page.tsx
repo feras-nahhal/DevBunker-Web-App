@@ -1,5 +1,5 @@
 "use client";
-
+import { Node, Edge } from "reactflow";
 import { useState, useEffect, useMemo } from "react"; // ✅ Added useMemo for stable props
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,10 @@ interface Tag {
   id: string;
   name: string;
 }
+interface ExcalidrawData {
+  nodes: Node[];
+  edges: Edge[];
+}
 
 export default function PostPage() {
   const router = useRouter();
@@ -30,8 +34,8 @@ export default function PostPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
-  const [nodes, setNodes] = useState<any[]>([]); // ✅ Added for mindmap nodes
-  const [edges, setEdges] = useState<any[]>([]); // ✅ Added for mindmap edges
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]); // ✅ Added for mindmap edges
 
   const {
     getContentById,
@@ -104,7 +108,7 @@ export default function PostPage() {
         category_id?: string | null;
         status: string;
         content_body?: string; // ✅ Changed from "description" to "content_body"
-        excalidraw_data?: any;
+        excalidraw_data?: ExcalidrawData;
       } = {
         title,
         content_body: contentBody, // ✅ Changed from "description" to "content_body"
