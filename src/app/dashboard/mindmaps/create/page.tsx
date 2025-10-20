@@ -39,10 +39,7 @@ export default function PostPage() {
 
   const {
     getContentById,
-    createContent,
-    updateContent,
     loading: contentLoading,
-    refetch,
   } = useContent({
     type: "mindmap" as ContentType, // ✅ Changed to "mindmap"
     autoFetch: false,
@@ -83,61 +80,7 @@ export default function PostPage() {
     fetchMindmap();
   }, [mindmapId, ready, getContentById, token]);
 
-  const isLoading = authLoading || contentLoading || saving;
-
-  const handleCancel = () => {
-    setTitle("");
-    setContentBody(""); // ✅ Updated
-    setSelectedTags([]);
-    setSelectedCategoryId(null);
-    setNodes([]);
-    setEdges([]);
-    router.push("/dashboard/mindmaps"); // ✅ Adjust route if needed
-  };
-
-  const handleSave = async (isPublished: boolean) => {
-    if (!title.trim() || !token) {
-      alert("Title and token are required");
-      return;
-    }
-
-    //s
-    setSaving(true);
-    try {
-      const dataToSend: Partial<AnyContent> & {
-        tag_ids?: string[];
-        category_id?: string | null;
-        status: string;
-        content_body?: string; // ✅ Changed from "description" to "content_body"
-        excalidraw_data?: ExcalidrawData;
-      } = {
-        title,
-        content_body: contentBody, // ✅ Changed from "description" to "content_body"
-        excalidraw_data: { nodes, edges },
-        status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT,
-        category_id: selectedCategoryId ?? undefined,
-        tag_ids: selectedTags.map((t) => t.id),
-      };
-
-      const response = mindmapId
-        ? await updateContent(mindmapId, dataToSend, token)
-        : await createContent(dataToSend, token);
-
-      if (!response) throw new Error("No response from API");
-
-      refetch();
-      router.push("/dashboard/mindmaps"); // ✅ Adjust route if needed
-    } catch (err) {
-      console.error("Save error:", err);
-      alert(`Error saving: ${err instanceof Error ? err.message : "Unknown error"}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveAsDraft = () => handleSave(false);
-  const handleSavePublish = () => handleSave(true);
-
+  
   // ✅ Stable props to prevent re-renders (like post page)
   const initialTags = useMemo(() => selectedTags, [selectedTags]);
   const initialCategoryId = useMemo(() => selectedCategoryId || "", [selectedCategoryId]);
