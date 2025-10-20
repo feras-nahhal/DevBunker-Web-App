@@ -1151,7 +1151,5 @@ const handleDraft = useCallback(async () => {
 // -----------------------------
 // Main Page
 // -----------------------------
-// -----------------------------
-// Export the component with props
-// -----------------------------
+
 export default MindmapContent;
