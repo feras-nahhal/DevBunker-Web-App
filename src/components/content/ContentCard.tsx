@@ -4,6 +4,7 @@ import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
 import { useComments } from "@/hooks/useComments";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { User } from "@/types/user"; // ✅ adjust the path if different
 
 interface ContentCardProps {
   id: string;
@@ -17,7 +18,7 @@ interface ContentCardProps {
   onDelete?: () => void;
   onOpenComments?: () => void;
   onOpenContent?: () => void;
-  user?: any;
+  user?: User | null;
 }
 
 export default function ContentCard({
