@@ -57,246 +57,61 @@ interface MindmapContentProps {
   initialEdges?: Edge[];
 }
 
-interface NodeCustomData {
-  editingNodeId: string | null;
-  editingLabel: string;
-  setEditingNodeId: (id: string | null) => void;
-  setEditingLabel: (label: string) => void;
-  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
-}
-
-
-
 // -----------------------------
 // Node Components (unchanged)
-export const CircleNode = ({
-  data,
-  selected,
-  dragging,
-  id,
-}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
+export const CircleNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const handleStyle: CSSProperties = { top: "50%" };
-
-  const {
-    editingNodeId = null,
-    editingLabel = "",
-    setEditingNodeId = () => {},
-    setEditingLabel = () => {},
-    setNodes = () => {},
-  } = data.custom || {};
-
-  const handleDoubleClick = () => {
-    setEditingNodeId(id);
-    setEditingLabel(data.label);
-  };
-
-  const handleBlur = () => {
-    setNodes((nds: Node[]) =>
-      nds.map((n) =>
-        n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
-      )
-    );
-    setEditingNodeId(null);
-  };
-
   return (
     <div
-      onDoubleClick={handleDoubleClick}
       style={{
         padding: "10px 20px",
         backgroundColor: data.color || "#fff",
         border: selected ? "3px solid #fff" : "2px solid #ccc",
         borderRadius: "50%",
         textAlign: "center",
+        minWidth: "60px",
         cursor: dragging ? "grabbing" : "pointer",
         color: "#000",
         userSelect: "none",
         position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: "50px",
-        minHeight: "50px",
       }}
     >
       <Handle type="target" position={Position.Left} style={handleStyle} />
       <Handle type="source" position={Position.Right} style={handleStyle} />
-
-      {editingNodeId === id ? (
-        <input
-          autoFocus
-          value={editingLabel}
-          onChange={(e) => setEditingLabel(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={(e) => e.key === "Enter" && handleBlur()}
-          style={{
-            fontSize: "14px",
-            width: "100%",           // Fill the node width
-            height: "100%",          // Fill the node height
-            textAlign: "center",
-            border: "none",          // Remove border
-            outline: "none",         // Remove focus outline
-            background: "transparent", // Transparent background
-            color: "#000",
-            borderRadius: "50%",
-          }}
-        />
-      ) : (
-        data.label
-      )}
-
-      {selected && (
-        <NodeResizer
-          color="rgba(34,197,94,0.15)"
-          isVisible={selected}
-          minWidth={50}
-          minHeight={50}
-          handleStyle={{
-            width: 10,
-            height: 10,
-            border: "2px solid rgba(34,197,94,0.15)",
-            background: "rgba(34,197,94,0.15)",
-            borderRadius: "50%",
-          }}
-        />
-      )}
+      {data.label}
+      {selected && <NodeResizer color="#0e0e0eff" isVisible={selected} minWidth={50} minHeight={50} />} {/* ✅ Add resizer */}
     </div>
   );
 };
 
-
-
-
-export const RectNode = ({
-  data,
-  selected,
-  dragging,
-  id,
-}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
+export const RectNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const handleStyle: CSSProperties = { top: "50%" };
-
-  const {
-    editingNodeId = null,
-    editingLabel = "",
-    setEditingNodeId = () => {},
-    setEditingLabel = () => {},
-    setNodes = () => {},
-  } = data.custom || {};
-
-  const handleDoubleClick = () => {
-    setEditingNodeId(id);
-    setEditingLabel(data.label);
-  };
-
-  const handleBlur = () => {
-    setNodes((nds: Node[]) =>
-      nds.map((n) =>
-        n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
-      )
-    );
-    setEditingNodeId(null);
-  };
-
   return (
     <div
-      onDoubleClick={handleDoubleClick}
       style={{
         padding: "10px 20px",
         backgroundColor: data.color || "#fff",
         border: selected ? "3px solid #fff" : "2px solid #ccc",
         borderRadius: "6px",
         textAlign: "center",
+        minWidth: "80px",
         cursor: dragging ? "grabbing" : "pointer",
         color: "#000",
         userSelect: "none",
         position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: "50px",
-        minHeight: "50px",
       }}
     >
       <Handle type="target" position={Position.Left} style={handleStyle} />
       <Handle type="source" position={Position.Right} style={handleStyle} />
-
-      {editingNodeId === id ? (
-        <input
-          autoFocus
-          value={editingLabel}
-          onChange={(e) => setEditingLabel(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={(e) => e.key === "Enter" && handleBlur()}
-          style={{
-            fontSize: "14px",
-            width: "100%",           // Fill the node width
-            height: "100%",          // Fill the node height
-            textAlign: "center",
-            border: "none",          // Remove border
-            outline: "none",         // Remove focus outline
-            background: "transparent", // Transparent background
-            color: "#000",
-            borderRadius: "6px",
-          }}
-        />
-      ) : (
-        data.label
-      )}
-
-      {selected && (
-        <NodeResizer
-          color="rgba(34,197,94,0.15)"
-          isVisible={selected}
-          minWidth={50}
-          minHeight={50}
-          handleStyle={{
-            width: 10,
-            height: 10,
-            border: "2px solid rgba(34,197,94,0.15)",
-            background: "rgba(34,197,94,0.15)",
-            borderRadius: "50%",
-          }}
-        />
-      )}
+      {data.label}
     </div>
   );
 };
 
-
-
-export const TextNode = ({
-  data,
-  selected,
-  dragging,
-  id,
-}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
+export const TextNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const handleStyle: CSSProperties = { top: "50%", background: "#000" };
-
-  const {
-    editingNodeId = null,
-    editingLabel = "",
-    setEditingNodeId = () => {},
-    setEditingLabel = () => {},
-    setNodes = () => {},
-  } = data.custom || {};
-
-  const handleDoubleClick = () => {
-    setEditingNodeId(id);
-    setEditingLabel(data.label);
-  };
-
-  const handleBlur = () => {
-    setNodes((nds: Node[]) =>
-      nds.map((n) =>
-        n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
-      )
-    );
-    setEditingNodeId(null);
-  };
-
   return (
     <div
-      onDoubleClick={handleDoubleClick}
       style={{
         padding: "5px 10px",
         backgroundColor: "transparent",
@@ -307,89 +122,22 @@ export const TextNode = ({
         userSelect: "none",
         whiteSpace: "pre-wrap",
         position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: "50px",
-        minHeight: "30px",
       }}
     >
       <Handle type="target" position={Position.Left} style={handleStyle} />
       <Handle type="source" position={Position.Right} style={handleStyle} />
-
-      {editingNodeId === id ? (
-        <input
-          autoFocus
-          value={editingLabel}
-          onChange={(e) => setEditingLabel(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={(e) => e.key === "Enter" && handleBlur()}
-          style={{
-            fontSize: "14px",
-            width: "100%",
-            height: "100%",
-            textAlign: "center",
-            border: "none",
-            outline: "none",
-            background: "transparent",
-            color: data.color || "#000",
-          }}
-        />
-      ) : (
-        data.label
-      )}
-
-      {selected && (
-        <NodeResizer
-          color="rgba(34,197,94,0.15)"
-          isVisible={selected}
-          minWidth={50}
-          minHeight={20}
-          handleStyle={{
-            width: 10,
-            height: 10,
-            border: "2px solid rgba(34,197,94,0.15)",
-            background: "rgba(34,197,94,0.15)",
-            borderRadius: "50%",
-          }}
-        />
-      )}
+      {data.label}
     </div>
   );
 };
 
-export const DiamondNode = ({
-  data,
-  selected,
-  dragging,
-  id,
-}: NodeProps<{ label: string; color?: string; custom?: NodeCustomData }>) => {
-  const {
-    editingNodeId = null,
-    editingLabel = "",
-    setEditingNodeId = () => {},
-    setEditingLabel = () => {},
-    setNodes = () => {},
-  } = data.custom || {};
-
-  const handleDoubleClick = () => {
-    setEditingNodeId(id);
-    setEditingLabel(data.label);
-  };
-
-  const handleBlur = () => {
-    setNodes((nds: Node[]) =>
-      nds.map((n) =>
-        n.id === id ? { ...n, data: { ...n.data, label: editingLabel } } : n
-      )
-    );
-    setEditingNodeId(null);
-  };
-
+export const DiamondNode = ({ data, selected, dragging }: NodeProps<{ label: string; color?: string }>) => {
   const diamondStyle: CSSProperties = {
+    width: "60px",
+    height: "60px",
+    transform: "rotate(45deg)",
     backgroundColor: data.color || "#fff",
     border: selected ? "3px solid #fff" : "2px solid #ccc",
-    clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -397,65 +145,24 @@ export const DiamondNode = ({
     userSelect: "none",
     color: "#000",
     position: "relative",
-    minWidth: 60,
-    minHeight: 60,
-    padding: 10,
+  };
+
+  const labelStyle: CSSProperties = {
+    transform: "rotate(-45deg)",
+    fontSize: "12px",
     textAlign: "center",
   };
 
-  const handleStyle: CSSProperties = {
-    top: "50%",
-    transform: "translateY(-50%)",
-  };
+  const handleStyle: CSSProperties = { top: "50%" };
 
   return (
-    <div onDoubleClick={handleDoubleClick} style={diamondStyle}>
-      {editingNodeId === id ? (
-        <input
-          autoFocus
-          value={editingLabel}
-          onChange={(e) => setEditingLabel(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={(e) => e.key === "Enter" && handleBlur()}
-          style={{
-            width: "100%",
-            height: "100%",
-            textAlign: "center",
-            border: "none",
-            outline: "none",
-            background: "transparent",
-            color: "#000",
-            fontSize: 12,
-          }}
-        />
-      ) : (
-        <div style={{ fontSize: 12 }}>{data.label}</div>
-      )}
-
+    <div style={diamondStyle}>
+      <div style={labelStyle}>{data.label}</div>
       <Handle type="target" position={Position.Left} style={handleStyle} />
       <Handle type="source" position={Position.Right} style={handleStyle} />
-
-      {selected && (
-        <NodeResizer
-          color="rgba(34,197,94,0.15)"
-          isVisible={selected}
-          minWidth={50}
-          minHeight={50}
-          handleStyle={{
-            width: 10,
-            height: 10,
-            border: "2px solid rgba(34,197,94,0.15)",
-            background: "rgba(34,197,94,0.15)",
-            borderRadius: "50%",
-          }}
-        />
-      )}
     </div>
   );
 };
-
-
-
 
 const nodeTypes: NodeTypes = {
   circle: CircleNode,
@@ -486,25 +193,6 @@ function MindmapContent({
   const { fitView, getNode } = useReactFlow();
   const { token } = useAuth();
   const { createContent, updateContent } = useContent({ type: "mindmap" });
-//----------------------------------------------------------------------------------//
-  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-  const [editingLabel, setEditingLabel] = useState<string>("");
-// Wrap nodes to include custom editing state
-const nodesWithCustom: Node[] = nodes.map(n => ({
-  ...n,
-  data: {
-    ...n.data,
-    custom: {
-      editingNodeId,
-      editingLabel,
-      setEditingNodeId,
-      setEditingLabel,
-      setNodes
-    }
-  }
-}));
-
-
 
   // -----------------------------
   const { categories, loading: loadingCategories } = useCategories();
@@ -794,17 +482,16 @@ const handleDraft = useCallback(async () => {
       {/* React Flow */}
       <div style={{ flex: 1, position: "relative" }}>
         <ReactFlow
-        nodes={nodesWithCustom}  // <-- use this
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-        fitView
-      >
-
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+          fitView
+        >
           <MiniMap nodeColor={(n) => n.data.color || "#101211ff"} />
           <Controls />
           <Background color="#444" gap={12} size={1} />
