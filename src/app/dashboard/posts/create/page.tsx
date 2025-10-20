@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
 import CreatePageHeader from "@/components/layout/CreatePageHeader";
@@ -24,25 +24,35 @@ const CreatePostEditor = dynamic(
 
 export default function CreatePostPageInner() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const researchId = searchParams.get("id");
-
   const { user, loading: authLoading, token } = useAuth();
 
+  const [researchId, setResearchId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const { getContentById, createContent, updateContent, loading: contentLoading, refetch } =
-    useContent({
-      type: "post" as ContentType,
-      autoFetch: false,
-    });
-
   const [ready, setReady] = useState(false);
+
+  const {
+    getContentById,
+    createContent,
+    updateContent,
+    loading: contentLoading,
+    refetch,
+  } = useContent({
+    type: "post" as ContentType,
+    autoFetch: false,
+  });
+
+  // ✅ Get query parameter manually from window.location
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setResearchId(params.get("id"));
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && token) setReady(true);
@@ -83,6 +93,7 @@ export default function CreatePostPageInner() {
       alert("Title, body, and token are required");
       return;
     }
+
     if (selectedTags.some((ref) => !ref.id)) {
       alert("References cannot be empty");
       return;
@@ -148,12 +159,15 @@ export default function CreatePostPageInner() {
           <div className="flex items-center mb-4">
             <Image
               src="/plus.svg"
-              alt="Research Icon"
+              alt="Post Icon"
               width={20}
               height={20}
               className="object-contain mr-[4px] relative top-[1px]"
             />
-            <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
+            <h2
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+              style={{ fontFamily: "'Public Sans', sans-serif" }}
+            >
               Post / {researchId ? "Edit Post" : "Create Post"}
             </h2>
           </div>
