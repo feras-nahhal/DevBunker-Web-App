@@ -106,7 +106,7 @@ export default function SharePopup({ shareUrl, title, type, onClose }: SharePopu
 
           <EmailShareButton
             url={shareUrl}
-            subject={`Interesting ${type} on Trix`}
+            subject={`Interesting ${type} on Dev Bunker Website`}
             body={`Hey, check this out: ${shareUrl}`}
           >
             <EmailIcon size={40} round />
@@ -115,7 +115,7 @@ export default function SharePopup({ shareUrl, title, type, onClose }: SharePopu
           {/* Gmail */}
           <a
             href={`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(
-              `Check this ${type} on Trix`
+              `Check this ${type} on Dev Bunker Website`
             )}&body=${encodeURIComponent(`Hey, check this out: ${shareUrl}`)}`}
             target="_blank"
             rel="noopener noreferrer"

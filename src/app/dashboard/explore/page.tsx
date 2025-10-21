@@ -1,5 +1,6 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";  // Add useSearchParams
+
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -11,7 +12,6 @@ import "./ExplorePage.css";
 
 export default function ExplorePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();  // Get query params
   const { token, loading } = useAuth();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -21,6 +21,8 @@ export default function ExplorePage() {
     category: "",
   });
 
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null); // ✅ Moved above useEffect
+
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function ExplorePage() {
   }, [debouncedSearchQuery]);
 
   const handleSearchChange = (q: string) => setSearchQuery(q);
+
   const handleFiltersChange = (newFilters: Record<string, string>) => {
     setFilters((prev) => ({
       ...prev,
@@ -43,17 +46,13 @@ export default function ExplorePage() {
     }
   }, [loading, token, router]);
 
-  // NEW: Handle share link (open popup if ID in URL)
+  // ✅ Get query parameter manually from window.location
   useEffect(() => {
-    const id = searchParams.get("id");
-    if (id) {
-      // Pass the ID to ContentGrid to open the popup
-      // We'll add a prop to ContentGrid for this
-      setSelectedContentId(id);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setSelectedContentId(params.get("id"));
     }
-  }, [searchParams]);
-
-  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
+  }, []);
 
   if (loading || !token) {
     return (
@@ -99,7 +98,7 @@ export default function ExplorePage() {
             type="all"
             searchQuery={searchQuery}
             filters={filters}
-            selectedContentId={selectedContentId}  // NEW: Pass ID to open popup
+            selectedContentId={selectedContentId} // ✅ Pass ID to open popup
           />
         </div>
       </div>
