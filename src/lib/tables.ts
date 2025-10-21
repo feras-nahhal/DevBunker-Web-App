@@ -1,6 +1,6 @@
 // src/lib/tables.ts
 import { pgTable, serial, uuid, varchar, text, timestamp, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
-import { USER_ROLES, USER_STATUS, CONTENT_TYPES, CONTENT_STATUS, TAG_CATEGORY_STATUS, NOTIFICATION_TYPES } from "./enums";
+import { USER_ROLES, USER_STATUS, CONTENT_TYPES, CONTENT_STATUS, TAG_CATEGORY_STATUS, NOTIFICATION_TYPES,VOTE_TYPE } from "./enums";
 
 // Users table
 export const users = pgTable("users", {
@@ -143,3 +143,20 @@ export const references_link = pgTable("references_link", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
+
+
+// votes table
+export const votes = pgTable(
+  "votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    user_id: uuid("user_id").references(() => users.id),
+    content_id: uuid("content_id").references(() => content.id),
+    vote_type: varchar("vote_type", { length: 10 }).default(VOTE_TYPE.LIKE).notNull(),
+    created_at: timestamp("created_at").defaultNow(),
+    updated_at: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    user_content_unique: uniqueIndex("user_content_unique").on(table.user_id, table.content_id),
+  })
+);

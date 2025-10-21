@@ -6,6 +6,7 @@ import { useComments } from "@/hooks/useComments";
 import Image from "next/image";
 import { CONTENT_STATUS } from "@/lib/enums";
 import { useRouter } from "next/navigation";
+import { useVotes } from "@/hooks/useVotes";
 
 interface ResearchCardProps {
   id: string;
@@ -38,7 +39,7 @@ export default function ResearchCard({
   onEdit,
   onOpenShare
 }: ResearchCardProps) {
-  const [votes, setVotes] = useState(initialVotes);
+  const { votes, vote, loading: voteLoading } = useVotes(id);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -305,20 +306,24 @@ export default function ResearchCard({
           {/* Votes & Comments */}
           <div className="flex flex-row items-center justify-between w-full h-[44px] mt-2">
             <div className="flex flex-row items-center gap-2">
-              <button
-                onClick={() => setVotes(votes + 1)}
-                className="w-[24px] h-[24px] text-gray-400 hover:scale-105 transition"
-              >
-                <Image src="/uparrow.png" alt="Upvote" width={20} height={20} />
-              </button>
-              <span className="text-sm text-gray-400">{votes}</span>
-              <button
-                onClick={() => setVotes(votes - 1)}
-                className="w-[24px] h-[24px] text-gray-400 hover:scale-105 transition"
-              >
-                <Image src="/downarrow.png" alt="Downvote" width={20} height={20} />
-              </button>
-            </div>
+                                     {/* Likes */}
+                                     <button
+                                       onClick={() => vote("like")}
+                                       className={votes.userVote === "like" ? "text-green-400" : "text-gray-400"}
+                                     >
+                                       <Image src="/uparrow.png" alt="Upvote" width={20} height={20} />
+                                     </button>
+                                     <span>{votes.likes}</span>
+                       
+                                     {/* Dislikes */}
+                                     <button
+                                       onClick={() => vote("dislike")}
+                                       className={votes.userVote === "dislike" ? "text-red-400" : "text-gray-400"}
+                                     >
+                                       <Image src="/downarrow.png" alt="Downvote" width={20} height={20} />
+                                     </button>
+                                     <span>{votes.dislikes}</span>
+                                   </div>
 
             <button
               onClick={(e) => {

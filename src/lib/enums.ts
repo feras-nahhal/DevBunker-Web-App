@@ -37,3 +37,9 @@ export enum NOTIFICATION_TYPES {
   SYSTEM = "system",
   CONTENT = "content",
 }
+
+
+export enum VOTE_TYPE {
+  LIKE = "like",
+  DISLIKE = "dislike",
+}

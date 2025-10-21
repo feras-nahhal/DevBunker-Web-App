@@ -14,7 +14,9 @@
     "@radix-ui/react-select": "^2.2.6",
     "@shadcn/ui": "^0.0.4",
     "@supabase/supabase-js": "^2.58.0",
+    "@tiptap/extension-bubble-menu": "^3.7.2",
     "@tiptap/extension-code-block-lowlight": "^3.6.5",
+    "@tiptap/extension-floating-menu": "^3.7.2",
     "@tiptap/extension-heading": "^3.6.5",
     "@tiptap/extension-highlight": "^3.6.5",
     "@tiptap/extension-history": "^3.6.6",
@@ -44,6 +46,7 @@
     "react-icons": "^5.5.0",
     "react-share": "^5.2.2",
     "reactflow": "^11.11.4",
+    "tippy.js": "^6.3.7",
     "tsconfig-paths": "^4.2.0",
     "zod": "^4.1.11"
   },
