@@ -1,23 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CommentsPopup from "./CommentsPopup";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import ResearchCard from "./ResearchCard";
 import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
+import SharePopup from "./SharePopup";
 
 interface ResearchGridProps {
   type?: "all" | "post" | "research" | "mindmap";
   searchQuery?: string;
   filters?: Record<string, string>;
+  selectedContentId?: string | null;  // NEW: For opening popup from URL
 }
 
 export default function ResearchGrid({
   type = "all",
   searchQuery = "",
   filters = {},
+  selectedContentId,
 }: ResearchGridProps) {
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
@@ -28,6 +31,8 @@ export default function ResearchGrid({
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
+
+  const [selectedShareData, setSelectedShareData] = useState<{ id: string; title: string; type: "post" | "mindmap" | "research" } | null>(null);
 
   const handleOpenContentPopup = (content: AnyContent) => {
     setSelectedContentPopup(content);
@@ -131,6 +136,16 @@ export default function ResearchGrid({
     }
   };
 
+  // NEW: Open popup if selectedContentId matches
+    useEffect(() => {
+      if (selectedContentId && data.length > 0) {
+        const content = data.find((item) => item.id === selectedContentId);
+        if (content) {
+          setSelectedContentPopup(content);
+        }
+      }
+    }, [selectedContentId, data]);
+
   /** 🧭 Results text */
   const totalResults = filteredData.length;
   const hasSearch = !!searchQuery.trim();
@@ -205,6 +220,7 @@ export default function ResearchGrid({
                 onDelete={() => handleDelete(card.id, contentType)}
                 onOpenComments={() => handleOpenComments(card)}
                 onOpenContent={() => handleOpenContentPopup(card)}
+                onOpenShare={(data) => setSelectedShareData(data)}
               />
             </div>
           );
@@ -260,6 +276,17 @@ export default function ResearchGrid({
           </div>
         </div>
       )}
+
+      {selectedShareData && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+              <SharePopup
+                shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/explore?id=${selectedShareData.id}`}
+                title={selectedShareData.title}
+                type={selectedShareData.type}
+                onClose={() => setSelectedShareData(null)}
+              />
+            </div>
+          )}
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useComments } from "@/hooks/useComments"; // ✅ import the hook
 import { useAuth } from "@/hooks/useAuth"; // ✅ import your auth hook
+import { useRouter } from "next/navigation";
 
 interface BookmarkCardProps {
   id: string;
@@ -18,6 +19,7 @@ interface BookmarkCardProps {
   onRemoveFromBookmark?: () => void; // remove bookmark handler
   onOpenComments?: () => void;
   onOpenContent?: () => void;      // NEW: For opening comments popup
+  onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
 }
 
 export default function BookmarkCard({
@@ -32,10 +34,12 @@ export default function BookmarkCard({
   onDelete,
   onRemoveFromBookmark,
   onOpenComments,
+  onOpenShare,
   onOpenContent
 }: BookmarkCardProps) {
   const [votes, setVotes] = useState(initialVotes);
   // REMOVED: const [comments] = useState(initialComments); (unused)
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { comments: commentsData, loading: commentsLoading } = useComments(id); // ✅ hook usage for dynamic count
@@ -50,6 +54,10 @@ export default function BookmarkCard({
   const displayImage = typeImages[type];
   const authorName = authorEmail ? authorEmail.split("@")[0] : "Unknown";
 
+  const handleShareClick = () => {
+    if (onOpenShare) onOpenShare({ id, title, type });
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -62,9 +70,13 @@ export default function BookmarkCard({
 
   const menuItems: { name: string; icon: string; action: () => void }[] = [
   ...(type === "post"
-    ? [{ name: "Start Research", icon: "/reserchlogo.png", action: () => {} }]
+    ? [{ name: "Start Research", icon: "/reserchlogo.png", action: () => {router.push(`/dashboard/research/create?title=${encodeURIComponent(title)}`);} }]
     : []),
-  { name: "Share", icon: "/sharelogo.png", action: () => {} },
+  {
+      name: "Share",
+      icon: "/sharelogo.png",
+      action: handleShareClick,
+    },
   {
     name: "Remove Bookmark",
     icon: "/bookmarklogo.png",

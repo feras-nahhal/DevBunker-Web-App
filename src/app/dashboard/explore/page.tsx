@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";  // Add useSearchParams
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -11,6 +11,7 @@ import "./ExplorePage.css";
 
 export default function ExplorePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();  // Get query params
   const { token, loading } = useAuth();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -41,6 +42,18 @@ export default function ExplorePage() {
       return;
     }
   }, [loading, token, router]);
+
+  // NEW: Handle share link (open popup if ID in URL)
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id) {
+      // Pass the ID to ContentGrid to open the popup
+      // We'll add a prop to ContentGrid for this
+      setSelectedContentId(id);
+    }
+  }, [searchParams]);
+
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
 
   if (loading || !token) {
     return (
@@ -82,7 +95,12 @@ export default function ExplorePage() {
             </h2>
           </div>
 
-          <ContentGrid type="all" searchQuery={searchQuery} filters={filters} />
+          <ContentGrid
+            type="all"
+            searchQuery={searchQuery}
+            filters={filters}
+            selectedContentId={selectedContentId}  // NEW: Pass ID to open popup
+          />
         </div>
       </div>
     </div>

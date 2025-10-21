@@ -1,23 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ContentCard from "./ContentCard";
 import CommentsPopup from "./CommentsPopup";
 import ContentPopup from "./ContentPopup";
 import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import { AnyContent, Comment } from "@/types/content";
+import SharePopup from "./SharePopup";
 
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
   searchQuery?: string;
   filters?: Record<string, string>;
+  selectedContentId?: string | null;  // NEW: For opening popup from URL
 }
 
 export default function ContentGrid({
   type = "all",
   searchQuery = "",
   filters = {},
+  selectedContentId,
 }: ContentGridProps) {
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user } = useAuth();
@@ -27,6 +30,8 @@ export default function ContentGrid({
   const [comments, setComments] = useState<Comment[]>([]);
 
   const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
+
+  const [selectedShareData, setSelectedShareData] = useState<{ id: string; title: string; type: "post" | "mindmap" | "research" } | null>(null);
 
   const token =
     typeof window !== "undefined"
@@ -124,6 +129,15 @@ export default function ContentGrid({
       alert(message);
     }
   };
+  // NEW: Open popup if selectedContentId matches
+  useEffect(() => {
+    if (selectedContentId && data.length > 0) {
+      const content = data.find((item) => item.id === selectedContentId);
+      if (content) {
+        setSelectedContentPopup(content);
+      }
+    }
+  }, [selectedContentId, data]);
 
   /** Results summary */
   const totalResults = data.length;
@@ -171,6 +185,8 @@ export default function ContentGrid({
                 onOpenComments={() => handleOpenComments(card)}
                 onOpenContent={() => setSelectedContentPopup(card)}
                 user={user}
+                onOpenShare={(data) => setSelectedShareData(data)}
+
               />
             </div>
           );
@@ -217,6 +233,19 @@ export default function ContentGrid({
           </div>
         </div>
       )}
+
+
+      {selectedShareData && (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+        <SharePopup
+          shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/explore?id=${selectedShareData.id}`}
+          title={selectedShareData.title}
+          type={selectedShareData.type}
+          onClose={() => setSelectedShareData(null)}
+        />
+      </div>
+    )}
+
     </>
   );
 }

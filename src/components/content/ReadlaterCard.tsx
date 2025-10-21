@@ -2,10 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useComments } from "@/hooks/useComments"; // NEW: For dynamic comment count
 import { useAuth } from "@/hooks/useAuth"; // ✅ import your auth hook
-
+import { useRouter } from "next/navigation";
 interface ReadlaterCardProps {
   id: string;
   title: string;
@@ -19,6 +18,7 @@ interface ReadlaterCardProps {
   onRemoveFromReadlater?: () => void; // ✅ new prop
   onOpenComments?: () => void; // NEW: For opening comments popup\
   onOpenContent?: () => void;
+  onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
 }
 
 export default function ReadlaterCard({
@@ -33,16 +33,22 @@ export default function ReadlaterCard({
   onDelete,
   onRemoveFromReadlater,
   onOpenComments,
-  onOpenContent
+  onOpenContent,
+  onOpenShare
 }: ReadlaterCardProps) {
   const [votes, setVotes] = useState(initialVotes);
   // REMOVED: const [comments] = useState(initialComments); (unused)
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
   // NEW: Hook for dynamic comment count
   const { comments: commentsData, loading: commentsLoading } = useComments(id);
   const { user } = useAuth(); // ✅ get logged-in user
   const authorIdShort = author_id.split("-")[0]; // "b655deff"
+
+  const handleShareClick = () => {
+    if (onOpenShare) onOpenShare({ id, title, type });
+  };
 
 
   const typeImages: Record<"post" | "mindmap" | "research", string> = {
@@ -68,10 +74,14 @@ export default function ReadlaterCard({
   const menuItems: { name: string; icon: string; action: () => void }[] = [
   ...(type === "post"
     ? [
-        { name: "Start Research", icon: "/reserchlogo.png", action: () => {} },
+        { name: "Start Research", icon: "/reserchlogo.png", action: () => {router.push(`/dashboard/research/create?title=${encodeURIComponent(title)}`);} },
       ]
     : []),
-  { name: "Share", icon: "/sharelogo.png", action: () => {} },
+  {
+      name: "Share",
+      icon: "/sharelogo.png",
+      action: handleShareClick,
+    },
   {
     name: "Remove Readlater",
     icon: "/readlaterlogo.png",

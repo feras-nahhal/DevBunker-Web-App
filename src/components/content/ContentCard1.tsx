@@ -19,6 +19,7 @@ interface ContentCard1Props {
   onDelete?: () => void;
   onOpenComments?: () => void;
   onOpenContent?: () => void;
+  onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
 }
 
 export default function ContentCard1({
@@ -33,6 +34,7 @@ export default function ContentCard1({
   onDelete,
   onOpenComments,
   onOpenContent,
+  onOpenShare
 }: ContentCard1Props) {
   const [votes, setVotes] = useState(initialVotes);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -42,6 +44,10 @@ export default function ContentCard1({
   const { comments: commentsData, loading: commentsLoading } = useComments(id);
   const authorName = authorEmail ? authorEmail.split("@")[0] : "Unknown";
   const { addBookmark, addReadLater } = useBookmarksAndReadLater();
+
+  const handleShareClick = () => {
+    if (onOpenShare) onOpenShare({ id, title, type });
+  };
 
   const typeImages: Record<"post" | "mindmap" | "research", string> = {
     post: "/postcard.png",
@@ -68,11 +74,15 @@ export default function ContentCard1({
           {
             name: "Start Research",
             icon: "/reserchlogo.png",
-            action: () => console.log("Starting research…"),
+            action: () => {router.push(`/dashboard/research/create?title=${encodeURIComponent(title)}`);},
           },
         ]
       : []),
-    { name: "Share", icon: "/sharelogo.png", action: () => {} },
+    {
+      name: "Share",
+      icon: "/sharelogo.png",
+      action: handleShareClick,
+    },
     {
       name: "Add Bookmark",
       icon: "/bookmarklogo.png",

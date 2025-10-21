@@ -19,6 +19,7 @@ interface ContentCardProps {
   onOpenComments?: () => void;
   onOpenContent?: () => void;
   user?: User | null;
+  onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
 }
 
 export default function ContentCard({
@@ -32,6 +33,7 @@ export default function ContentCard({
   onDelete,
   onOpenComments,
   onOpenContent,
+  onOpenShare,
   user,
 }: ContentCardProps) {
   const [votes, setVotes] = useState(initialVotes);
@@ -41,6 +43,11 @@ export default function ContentCard({
   const router = useRouter();
   const { comments: commentsData = [], loading: commentsLoading } = useComments(id);
   const { addBookmark, addReadLater } = useBookmarksAndReadLater();
+
+
+  const handleShareClick = () => {
+    if (onOpenShare) onOpenShare({ id, title, type });
+  };
 
   const authorName = authorEmail ? authorEmail.split("@")[0] : "Unknown";
 
@@ -65,8 +72,13 @@ export default function ContentCard({
 
   /** Menu items */
   const menuItems: { name: string; icon: string; action: () => void }[] = [
-    ...(type === "post" ? [{ name: "Start Research", icon: "/reserchlogo.png", action: () => {} }] : []),
-    { name: "Share", icon: "/sharelogo.png", action: () => {} },
+    ...(type === "post" ? [{ name: "Start Research", icon: "/reserchlogo.png", action: () => {router.push(`/dashboard/research/create?title=${encodeURIComponent(title)}`);} }] : []),
+
+    {
+      name: "Share",
+      icon: "/sharelogo.png",
+      action: handleShareClick,
+    },
     {
       name: "Add Bookmark",
       icon: "/bookmarklogo.png",
@@ -152,7 +164,6 @@ export default function ContentCard({
         >
           <Image src={displayImage} alt={title} width={300} height={216} className="object-cover w-full h-full" />
         </div>
-
         {/* Bottom */}
         <div className="flex flex-col items-start bg-white/[0.05] rounded-[16px] backdrop-blur-md border border-white/10 shadow-[inset_0px_0px_4px_rgba(239,214,255,0.25)] mt-4" style={{ width: "297px", height: "265px", padding: "17px 20px" }}>
           {/* Type */}

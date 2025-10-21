@@ -20,6 +20,7 @@ interface ResearchCardProps {
   onOpenComments?: () => void;
   onOpenContent?: () => void;
   onEdit?: () => void; // ✅ new edit handler
+  onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
 }
 
 export default function ResearchCard({
@@ -35,10 +36,15 @@ export default function ResearchCard({
   onOpenComments,
   onOpenContent,
   onEdit,
+  onOpenShare
 }: ResearchCardProps) {
   const [votes, setVotes] = useState(initialVotes);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const handleShareClick = () => {
+    if (onOpenShare) onOpenShare({ id, title, type });
+  };
   
   const router = useRouter();
   const { comments: commentsData, loading: commentsLoading } = useComments(id);
@@ -74,7 +80,11 @@ export default function ResearchCard({
           },
         ]
       : []),
-    { name: "Share", icon: "/sharelogo.png", action: () => {} },
+    {
+      name: "Share",
+      icon: "/sharelogo.png",
+      action: handleShareClick,
+    },
     {
       name: "Add Bookmark",
       icon: "/bookmarklogo.png",

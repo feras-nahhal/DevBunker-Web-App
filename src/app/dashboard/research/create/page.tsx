@@ -48,12 +48,19 @@ export default function CreateResearchPage() {
   });
 
   // ✅ Extract query param manually (no useSearchParams)
-  useEffect(() => {
+    useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      setResearchId(params.get("id"));
+      const id = params.get("id");
+      const initialTitle = params.get("title") || "";
+
+      setResearchId(id);
+      if (initialTitle) {
+        setTitle(initialTitle);
+      }
     }
   }, []);
+
 
   // ✅ Wait for token before doing anything
   useEffect(() => {

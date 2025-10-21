@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import BookmarkCard from "./BookmarkCard";
 import CommentsPopup from "./CommentsPopup";
 import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
@@ -8,44 +8,57 @@ import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import { CONTENT_TYPES } from "@/lib/enums";
 import { AnyContent, Comment } from "@/types/content";
-import ContentPopup from "./ContentPopup"; // ✅ ensure path is correct
+import ContentPopup from "./ContentPopup";
+import SharePopup from "./SharePopup";
 
 interface BookmarksGridProps {
   searchQuery?: string;
   filters?: {
     status?: string;
     category?: string;
+    selectedContentId?: string | null;
   };
+  selectedContentId?: string | null; // ✅ added missing prop to match usage
 }
 
 export default function BookmarksGrid({
   searchQuery = "",
   filters = {},
+  selectedContentId,
 }: BookmarksGridProps) {
-  const { bookmarks, loading, error, refetchBookmarks } = useBookmarksAndReadLater({ autoFetch: true });
-  const { data: allContent = [], refetch } = useContent({ type: "all", autoFetch: true });
+  const { bookmarks, loading, error, refetchBookmarks } =
+    useBookmarksAndReadLater({ autoFetch: true });
+  const { data: allContent = [], refetch } = useContent({
+    type: "all",
+    autoFetch: true,
+  });
   const { user } = useAuth();
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
+  const [selectedContent, setSelectedContent] = useState<AnyContent | null>(
+    null
+  );
   const [comments, setComments] = useState<Comment[]>([]);
-  const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
-    const handleOpenContentPopup = (content: AnyContent) => {
-    setSelectedContentPopup(content);
-    };
+  const [selectedContentPopup, setSelectedContentPopup] =
+    useState<AnyContent | null>(null);
+  const [selectedShareData, setSelectedShareData] = useState<{
+    id: string;
+    title: string;
+    type: "post" | "mindmap" | "research";
+  } | null>(null);
 
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-  /** 🧩 Merge bookmarks with content */
+  // 🧩 Merge bookmarks with content
   const bookmarkedContent = useMemo(() => {
     const matched = bookmarks
       .map((b) => allContent.find((c) => c.id === b.content_id))
       .filter(Boolean) as AnyContent[];
 
-    // 🔍 Client-side search
+    // 🔍 Search filter
     let filtered = matched;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -69,13 +82,12 @@ export default function BookmarksGrid({
     return filtered;
   }, [bookmarks, allContent, searchQuery, filters]);
 
-  /** 🗨️ Comments */
+  // 🗨️ Comments logic
   const fetchComments = async (contentId: string) => {
     try {
       const res = await fetch(`/api/comments?content_id=${contentId}`);
       const json = await res.json();
-      if (json.success) setComments(json.comments || []);
-      else setComments([]);
+      setComments(json.success ? json.comments || [] : []);
     } catch (err) {
       console.error("Error fetching comments:", err);
       setComments([]);
@@ -114,7 +126,7 @@ export default function BookmarksGrid({
     }
   };
 
-  /** 🗑 Delete content */
+  // 🗑 Delete content
   const getApiPath = (type: CONTENT_TYPES) => {
     switch (type) {
       case CONTENT_TYPES.POST:
@@ -128,14 +140,20 @@ export default function BookmarksGrid({
     }
   };
 
-  const handleDelete = async (contentId: string, contentType: CONTENT_TYPES) => {
+  const handleDelete = async (
+    contentId: string,
+    contentType: CONTENT_TYPES
+  ) => {
     if (!token) return alert("You must be logged in to delete content.");
 
     try {
-      const res = await fetch(`/api/content/${getApiPath(contentType)}/${contentId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `/api/content/${getApiPath(contentType)}/${contentId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!res.ok) throw new Error("Failed to delete content");
 
       const bookmark = bookmarks.find((b) => b.content_id === contentId);
@@ -154,16 +172,29 @@ export default function BookmarksGrid({
     }
   };
 
-  /** 🧠 Derived UI info */
+  // 🟣 Auto-open content popup if selectedContentId provided
+  useEffect(() => {
+    if (selectedContentId && allContent.length > 0) {
+      const content = allContent.find((item) => item.id === selectedContentId);
+      if (content) setSelectedContentPopup(content);
+    }
+  }, [selectedContentId, allContent]);
+
+  // Derived UI
   const totalResults = bookmarkedContent.length;
   const hasSearch = !!searchQuery.trim();
   const hasFilters = !!(filters.status || filters.category);
 
-  const resultsText = hasSearch || hasFilters
-    ? `Showing ${totalResults} bookmarked items${hasSearch ? ` for "${searchQuery}"` : ""}${filters.status ? ` (Status: ${filters.status})` : ""}${filters.category ? ` (Category: ${filters.category})` : ""}.`
-    : `Showing all ${totalResults} bookmarked items.`;
+  const resultsText =
+    hasSearch || hasFilters
+      ? `Showing ${totalResults} bookmarked items${
+          hasSearch ? ` for "${searchQuery}"` : ""
+        }${filters.status ? ` (Status: ${filters.status})` : ""}${
+          filters.category ? ` (Category: ${filters.category})` : ""
+        }.`
+      : `Showing all ${totalResults} bookmarked items.`;
 
-  /** 🌀 Render */
+  // 🌀 Render
   if (loading)
     return (
       <div className="flex justify-center py-10 text-gray-400 text-lg">
@@ -210,7 +241,9 @@ export default function BookmarksGrid({
                 type={contentType}
                 onDelete={() => handleDelete(card.id, contentType)}
                 onRemoveFromBookmark={async () => {
-                  const bookmark = bookmarks.find((b) => b.content_id === card.id);
+                  const bookmark = bookmarks.find(
+                    (b) => b.content_id === card.id
+                  );
                   if (!bookmark) return;
 
                   try {
@@ -226,7 +259,8 @@ export default function BookmarksGrid({
                   }
                 }}
                 onOpenComments={() => handleOpenComments(card)}
-                onOpenContent={() => handleOpenContentPopup(card)} // ✅ pass this
+                onOpenContent={() => setSelectedContentPopup(card)}
+                onOpenShare={(data) => setSelectedShareData(data)}
               />
             </div>
           );
@@ -243,46 +277,56 @@ export default function BookmarksGrid({
               : ""
           }
           comments={comments}
-        
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
         />
       )}
 
-       {/* 🟣 Content Popup */}
-                  {selectedContentPopup && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
-                      <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
-                        <button
-                          onClick={() => setSelectedContentPopup(null)}
-                          className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
-                        >
-                          ✕
-                        </button>
-            
-                        <ContentPopup
-                          id={selectedContentPopup.id}
-                          title={selectedContentPopup.title}
-                          content_body={
-                            "content_body" in selectedContentPopup
-                              ? selectedContentPopup.content_body || ""
-                              : ""
-                          }
-                          onClose={() => setSelectedContentPopup(null)}
-                          created_at={selectedContentPopup.created_at}
-                          updated_at={selectedContentPopup.updated_at}
-                          status={selectedContentPopup.status}
-                          excalidraw_data={selectedContentPopup.excalidraw_data}
-                          categoryName={
-                              typeof selectedContentPopup.categoryName === "string"
-                                ? [selectedContentPopup.categoryName]
-                                : selectedContentPopup.categoryName
-                            }
-                          
-                        />
-                      </div>
-                    </div>
-                  )}
+      {selectedContentPopup && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
+            <button
+              onClick={() => setSelectedContentPopup(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
+            >
+              ✕
+            </button>
+
+            <ContentPopup
+              id={selectedContentPopup.id}
+              title={selectedContentPopup.title}
+              content_body={
+                "content_body" in selectedContentPopup
+                  ? selectedContentPopup.content_body || ""
+                  : ""
+              }
+              onClose={() => setSelectedContentPopup(null)}
+              created_at={selectedContentPopup.created_at}
+              updated_at={selectedContentPopup.updated_at}
+              status={selectedContentPopup.status}
+              excalidraw_data={selectedContentPopup.excalidraw_data}
+              categoryName={
+                typeof selectedContentPopup.categoryName === "string"
+                  ? [selectedContentPopup.categoryName]
+                  : selectedContentPopup.categoryName
+              }
+            />
+          </div>
+        </div>
+      )}
+
+      {selectedShareData && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <SharePopup
+            shareUrl={`${
+              typeof window !== "undefined" ? window.location.origin : ""
+            }/dashboard/explore?id=${selectedShareData.id}`}
+            title={selectedShareData.title}
+            type={selectedShareData.type}
+            onClose={() => setSelectedShareData(null)}
+          />
+        </div>
+      )}
     </>
   );
 }
