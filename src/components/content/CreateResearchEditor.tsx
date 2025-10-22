@@ -371,10 +371,11 @@ export default function CreateResearchEditor({
       </div>
 
       {/* ===== EDITOR ===== */}
-      <div className="editor-wrapper">
+      <div className={`editor-wrapper ${hasContent ? "has-content" : ""}`}>
         {!hasContent && <div className="fake-placeholder">Write your post content here...</div>}
         <EditorContent editor={editor} className="editor" />
       </div>
+
 
       {/* ===== ACTIONS BOX ===== */}
       <div className="action-box">
@@ -928,14 +929,26 @@ export default function CreateResearchEditor({
           background: rgba(255, 255, 255, 0.15);
           margin: 0 6px;
         }
+        /* Outer wrapper frame */
         .editor-wrapper {
           position: relative;
-          flex: 1; /* Allow it to grow in flex container */
+          flex: 1;
+          padding: 24px;
+          border-radius: 16px;
+          background: transparent;
+          border: none; /* hide border by default */
+          transition: border 0.2s ease, background 0.2s ease;
         }
+
+        /* Show border only when there is content */
+        .editor-wrapper.has-content {
+          border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
         .fake-placeholder {
           position: absolute;
-          top: 4px;
-          left: 20px;
+          top: 25px;
+          left: 25px;
           pointer-events: none;
           font-size: 16px;
           font-family: "Barlow", sans-serif;
