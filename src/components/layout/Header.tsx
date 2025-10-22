@@ -465,7 +465,11 @@ export default function Header({
               {/* Dropdown menu */}
               {statusDropdownOpen && (
                 <div
-                  className="absolute top-full left-0 w-full mt-1 bg-white/10 border border-white/20 rounded-lg backdrop-blur-lg shadow-[0_0_10px_rgba(255,255,255,0.1)] z-50 max-h-48 overflow-y-scroll"
+                 className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+
+
+
+
                   style={{
                     scrollbarWidth: "none", // Firefox
                     msOverflowStyle: "none", // IE/Edge
