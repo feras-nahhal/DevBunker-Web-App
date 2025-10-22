@@ -8,6 +8,7 @@ import ResearchCard from "./ResearchCard";
 import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
+import ContentCardSkeleton from "./ContentCardSkeleton";
 
 interface ResearchGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -156,13 +157,7 @@ export default function ResearchGrid({
       : `Showing all ${totalResults} of your items.`;
 
   /** 🌀 Loading / error / empty states */
-  if (loading)
-    return (
-      <div className="flex justify-center py-10 text-gray-400 text-lg">
-        Loading content...
-      </div>
-    );
-
+ 
   if (error)
     return (
       <div className="flex justify-center py-10 text-red-500">
@@ -182,8 +177,6 @@ export default function ResearchGrid({
   /** 🧩 Render cards */
   return (
     <>
-      <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
-
       <div
         className="
           grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
@@ -198,7 +191,13 @@ export default function ResearchGrid({
           boxSizing: "border-box",
         }}
       >
-        {filteredData.map((card) => {
+        {loading
+                    ? Array(8).fill(0).map((_, i) => (
+                        <div key={i} style={{ width: "310px", transform: "scale(0.9)", transformOrigin: "top center" }}>
+                          <ContentCardSkeleton />
+                        </div>
+                      ))
+                    : filteredData.map((card) => {
           const contentType = card.content_type as
             | "post"
             | "mindmap"

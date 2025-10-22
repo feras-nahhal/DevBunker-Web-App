@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
+import ContentCardSkeleton from "./ContentCardSkeleton";
 
 interface ReadLaterGridProps {
   searchQuery?: string;
@@ -178,14 +179,9 @@ export default function ReadLaterGrid({
           filters.category ? ` (Category: ${filters.category})` : ""
         }.`
       : `Showing all ${totalResults} read-later items.`;
-
+const isLoading = loading || !allContent.length;
   // 🌀 Loading / Error states
-  if (loading)
-    return (
-      <div className="flex justify-center py-10 text-gray-400 text-lg">
-        Loading read-later items...
-      </div>
-    );
+  
   if (error)
     return (
       <div className="flex justify-center py-10 text-red-500">
@@ -203,51 +199,71 @@ export default function ReadLaterGrid({
 
   return (
     <>
-      {/* 🧾 Results summary */}
-      <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
-
       {/* 📚 Read Later Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center">
-        {readLaterContent.map((card) => {
-          const contentType = card.content_type as "post" | "mindmap" | "research";
-
-          return (
-            <div
-              key={card.id}
-              style={{
-                width: "360px",
-                transform: "scale(0.9)",
-                transformOrigin: "top center",
-              }}
-            >
-              <ReadlaterCard
-                {...card}
-                authorEmail={card.authorEmail || ""}
-                type={contentType}
-                onDelete={() => handleDelete(card.id, contentType)}
-                onRemoveFromReadlater={async () => {
-                  const readLaterItem = readLater.find((r) => r.content_id === card.id);
-                  if (!readLaterItem) return;
-                  try {
-                    const res = await fetch(`/api/read-later/${readLaterItem.id}`, {
-                      method: "DELETE",
-                      headers: { Authorization: `Bearer ${token}` },
-                    });
-                    if (!res.ok) throw new Error("Failed to remove from read-later");
-                    await refetchReadLater();
-                  } catch (err) {
-                    console.error(err);
-                    alert("Failed to remove from read-later");
-                  }
-                }}
-                onOpenComments={() => handleOpenComments(card)}
-                onOpenContent={() => handleOpenContentPopup(card)}
-                onOpenShare={(data) => setSelectedShareData(data)}
-              />
+        {loading
+          ? // 🔹 Show skeletons while loading
+            Array(8)
+              .fill(0)
+              .map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: "310px",
+                    transform: "scale(0.9)",
+                    transformOrigin: "top center",
+                  }}
+                >
+                  <ContentCardSkeleton />
+                </div>
+              ))
+          : readLaterContent.length === 0
+          ? // 🔹 Show empty state if no read-later items
+            <div className="col-span-full text-center py-10 text-gray-400">
+              You have no items in your Read Later list.
             </div>
-          );
-        })}
+          : // 🔹 Show actual ReadlaterCard items
+            readLaterContent.map((card) => {
+              const contentType = card.content_type as "post" | "mindmap" | "research";
+
+              return (
+                <div
+                  key={card.id}
+                  style={{
+                    width: "360px",
+                    transform: "scale(0.9)",
+                    transformOrigin: "top center",
+                  }}
+                >
+                  <ReadlaterCard
+                    {...card}
+                    authorEmail={card.authorEmail || ""}
+                    type={contentType}
+                    onDelete={() => handleDelete(card.id, contentType)}
+                    onRemoveFromReadlater={async () => {
+                      const readLaterItem = readLater.find((r) => r.content_id === card.id);
+                      if (!readLaterItem) return;
+                      try {
+                        const res = await fetch(`/api/read-later/${readLaterItem.id}`, {
+                          method: "DELETE",
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        if (!res.ok) throw new Error("Failed to remove from read-later");
+                        await refetchReadLater();
+                      } catch (err) {
+                        console.error(err);
+                        alert("Failed to remove from read-later");
+                      }
+                    }}
+                    onOpenComments={() => handleOpenComments(card)}
+                    onOpenContent={() => handleOpenContentPopup(card)}
+                    onOpenShare={(data) => setSelectedShareData(data)}
+                  />
+                </div>
+              );
+            })}
       </div>
+
 
       {/* 💬 Comments Popup */}
       {isPopupOpen && selectedContent && (

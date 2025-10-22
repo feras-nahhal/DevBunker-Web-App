@@ -6,6 +6,7 @@ import NotificationsCard from "./NotificationsCard";
 import { useNotifications } from "@/hooks/useNotifications"; // Hook for notifications API
 import { useAuth } from "@/hooks/useAuth";
 import { createPortal } from "react-dom"; // For centered modal popup
+import NotificationsCardSkeleton from "../content/NotificationsCardSkeleton";
 
 export default function NotificationsGrid() {
   const { notifications, loading, error, markAsRead, markAllAsRead, refetch } = useNotifications();
@@ -109,11 +110,39 @@ const handleOpenPopup = (notification: Notification) => {
 
   /** Loading/Error States */
   if (loading)
-    return (
-      <div className="flex justify-center py-10 text-gray-400 text-lg">
-        Loading notifications...
+  return (
+    <div
+      className="flex flex-col items-center justify-start mx-auto"
+      style={{
+        width: "1200px",
+        backgroundColor: "rgba(255,255,255,0.05)",
+        borderRadius: "10px",
+        border: "1px solid rgba(80,80,80,0.24)",
+        boxShadow: "inset 0 0 7px rgba(255,255,255,0.16)",
+        backdropFilter: "blur(12px)",
+        overflow: "hidden",
+      }}
+    >
+      <div className="w-[1190px] h-[56px] bg-white/[0.05] border border-[rgba(145,158,171,0.2)] rounded-xl flex items-center justify-between px-2 mb-1 mt-1 gap-2">
+        {[{ label: "All" }, { label: "Unread" }, { label: "Archived" }].map(
+          (item) => (
+            <div
+              key={item.label}
+              className="flex-1 h-[40px] rounded-xl bg-white/[0.08] animate-pulse"
+            />
+          )
+        )}
       </div>
-    );
+
+      {/* Skeleton notification cards */}
+      <div className="flex flex-col w-full items-center">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <NotificationsCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+
 
   if (error)
     return (

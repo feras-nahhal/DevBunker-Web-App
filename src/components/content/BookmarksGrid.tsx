@@ -10,6 +10,7 @@ import { CONTENT_TYPES } from "@/lib/enums";
 import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
+import ContentCardSkeleton from "./ContentCardSkeleton";
 
 interface BookmarksGridProps {
   searchQuery?: string;
@@ -195,12 +196,6 @@ export default function BookmarksGrid({
       : `Showing all ${totalResults} bookmarked items.`;
 
   // 🌀 Render
-  if (loading)
-    return (
-      <div className="flex justify-center py-10 text-gray-400 text-lg">
-        Loading bookmarks...
-      </div>
-    );
 
   if (error)
     return (
@@ -220,52 +215,75 @@ export default function BookmarksGrid({
 
   return (
     <>
-      <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center">
-        {bookmarkedContent.map((card) => {
-          const contentType = card.content_type as CONTENT_TYPES;
-
-          return (
-            <div
-              key={card.id}
-              style={{
-                width: "360px",
-                transform: "scale(0.9)",
-                transformOrigin: "top center",
-              }}
-            >
-              <BookmarkCard
-                {...card}
-                authorEmail={card.authorEmail || ""}
-                type={contentType}
-                onDelete={() => handleDelete(card.id, contentType)}
-                onRemoveFromBookmark={async () => {
-                  const bookmark = bookmarks.find(
-                    (b) => b.content_id === card.id
-                  );
-                  if (!bookmark) return;
-
-                  try {
-                    const res = await fetch(`/api/bookmarks/${bookmark.id}`, {
-                      method: "DELETE",
-                      headers: { Authorization: `Bearer ${token}` },
-                    });
-                    if (!res.ok) throw new Error("Failed to remove bookmark");
-                    await refetchBookmarks();
-                  } catch (err) {
-                    console.error("Remove bookmark error:", err);
-                    alert("Failed to remove bookmark");
-                  }
-                }}
-                onOpenComments={() => handleOpenComments(card)}
-                onOpenContent={() => setSelectedContentPopup(card)}
-                onOpenShare={(data) => setSelectedShareData(data)}
-              />
-            </div>
-          );
-        })}
+      <div
+  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center"
+>
+  {loading
+    ? // Show skeletons while loading
+      Array(8)
+        .fill(0)
+        .map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: "360px",
+              transform: "scale(0.9)",
+              transformOrigin: "top center",
+            }}
+          >
+            <ContentCardSkeleton />
+          </div>
+        ))
+    : bookmarkedContent.length === 0
+    ? // Show empty state if no bookmarks
+      <div className="col-span-full text-center py-10 text-gray-400">
+        You have no bookmarked items yet.
       </div>
+    : // Show actual BookmarkCard items
+      bookmarkedContent.map((card) => {
+        const contentType = card.content_type as CONTENT_TYPES;
+
+        return (
+          <div
+            key={card.id}
+            style={{
+              width: "360px",
+              transform: "scale(0.9)",
+              transformOrigin: "top center",
+            }}
+          >
+            <BookmarkCard
+              {...card}
+              authorEmail={card.authorEmail || ""}
+              type={contentType}
+              onDelete={() => handleDelete(card.id, contentType)}
+              onRemoveFromBookmark={async () => {
+                const bookmark = bookmarks.find(
+                  (b) => b.content_id === card.id
+                );
+                if (!bookmark) return;
+
+                try {
+                  const res = await fetch(`/api/bookmarks/${bookmark.id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  if (!res.ok) throw new Error("Failed to remove bookmark");
+                  await refetchBookmarks();
+                } catch (err) {
+                  console.error("Remove bookmark error:", err);
+                  alert("Failed to remove bookmark");
+                }
+              }}
+              onOpenComments={() => handleOpenComments(card)}
+              onOpenContent={() => setSelectedContentPopup(card)}
+              onOpenShare={(data) => setSelectedShareData(data)}
+            />
+          </div>
+        );
+      })}
+</div>
+
 
       {isPopupOpen && selectedContent && (
         <CommentsPopup

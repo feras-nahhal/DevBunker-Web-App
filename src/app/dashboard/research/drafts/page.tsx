@@ -8,6 +8,7 @@ import HeaderDraft from "@/components/layout/HeaderDraft";
 import Sidebar from "@/components/layout/Sidebar";
 import DraftGrid from "@/components/content/DraftGrid";
 import "./researchDraftPage.css";
+import DraftCardSkeleton from "@/components/content/DraftCardSkeleton";
 
 export default function ResearchDraftPage() {
   const router = useRouter();
@@ -53,14 +54,70 @@ export default function ResearchDraftPage() {
   // Conditional render until auth finishes
   // -----------------------------
   if (authLoading || (!user && !authLoading)) return (
-                <div className="dashboard">
-                            <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
-                              <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-                                <p className="text-center text-gray-400 mt-10">Loading...</p>
-                              </div>
-                          </div>
-              );;
-
+        <div className="dashboard">
+          <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+          <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+            <HeaderDraft
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              collapsed={sidebarCollapsed}
+            />
+    
+            {/* Mindmap / Draft header */}
+            <div className="mindmap-container mb-6">
+              <div className="flex items-center">
+                <Image
+                  src="/draft.svg"
+                  alt="Mindmap Icon"
+                  width={20}
+                  height={20}
+                  className="object-contain mr-[4px] relative top-[1px]"
+                />
+                <h2
+                  className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+                  style={{ fontFamily: "'Public Sans', sans-serif" }}
+                >
+                  Research / Draft
+                </h2>
+              </div>
+            </div>
+    
+            {/* Grid of draft skeletons */}
+            <div
+              className="
+                grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
+                gap-x-[2px] gap-y-[-10px]
+                place-items-center mt-4
+              "
+              style={{
+                width: "100%",
+                maxWidth: "1429px",
+                margin: "0 auto",
+                overflowX: "hidden",
+                boxSizing: "border-box",
+              }}
+            >
+              {Array(8)
+                .fill(0)
+                .map((_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: "310px",
+                      transform: "scale(0.9)",
+                      transformOrigin: "top center",
+                    }}
+                  >
+                    <DraftCardSkeleton />
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      );
+              
   // -----------------------------
   // Render
   // -----------------------------

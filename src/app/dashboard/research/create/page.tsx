@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
 import "./PostPage.css";
+import CreateResearchSkeleton from "@/components/content/CreateResearchSkeleton";
 
 interface Tag {
   id: string;
@@ -154,15 +155,45 @@ export default function CreateResearchPage() {
   // Render
   // -----------------------------
   if (!ready || contentLoading) {
-    return (
-      <div className="dashboard">
-        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
-        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <p className="text-center text-gray-400 mt-10">Loading Research Data...</p>
+  return (
+    <div className="dashboard">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+        {/* 🔹 Header */}
+        <CreateReserchHeader
+          onSave={handleSavePublish}
+          onSaveAsDraft={handleSaveAsDraft}
+          onCancel={handleCancel}
+          saving={isLoading}
+          collapsed={sidebarCollapsed}
+        />
+
+        {/* 🔹 Page Title Row */}
+        <div className="post-container">
+          <div className="flex items-center mb-4">
+            <Image
+              src="/plus.svg"
+              alt="Research Icon"
+              width={20}
+              height={20}
+              className="object-contain mr-[4px] relative top-[1px]"
+            />
+            <h2
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+              style={{ fontFamily: "'Public Sans', sans-serif" }}
+            >
+              Research / {researchId ? "Edit Research" : "Create Research"}
+            </h2>
+          </div>
+
+          {/* 🧩 Skeleton */}
+          <CreateResearchSkeleton />
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   return (
     <div className="dashboard">

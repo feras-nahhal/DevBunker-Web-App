@@ -188,14 +188,32 @@ export default function DraftCard({
 
         {/* Inner Bottom Box */}
         <div
-          className="flex flex-col items-start bg-white/[0.05] rounded-[16px] backdrop-blur-md border border-white/10 shadow-[inset_0px_0px_4px_rgba(239,214,255,0.25)] mt-4"
+          className="flex flex-col items-start bg-white/[0.05] rounded-[16px] backdrop-blur-md border border-white/10 shadow-[inset_0px_0px_4px_rgba(239,214,255,0.25)] mt-4 overflow-hidden group
+              transition-all duration-300
+              hover:shadow-[inset_0px_0px_4px_rgba(239,214,255,0.35)]"
           style={{
             width: "300px",
             height: "166px",
             padding: "17px 10px",
             gap: "19px",
           }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenContent && onOpenContent();
+          }}
         >
+          {/* 🌟 Bottom Glow (only on hover) */}
+            <span
+              className="
+                absolute inset-x-0 bottom-0 h-1/2
+                bg-[linear-gradient(to_top,rgba(91,228,155,0.25)_0%,rgba(91,228,155,0.15)_30%,transparent_100%)]
+
+                opacity-0 group-hover:opacity-100
+                transition-opacity duration-700
+                blur-[12px]
+                pointer-events-none
+              "
+            />
           {/* Type with Strong Glow */}
           <div className="flex items-center justify-center w-[58px] h-[28px] relative">
             <div className="w-full h-full rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-[13px] flex items-center justify-center relative overflow-hidden">

@@ -8,6 +8,7 @@ import { useContent } from "@/hooks/useContent";
 import { useAuth } from "@/hooks/useAuth";
 import { AnyContent, Comment } from "@/types/content";
 import SharePopup from "./SharePopup";
+import ContentCardSkeleton from "./ContentCardSkeleton";
 
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -153,45 +154,54 @@ export default function ContentGrid({
       : `Showing all ${totalResults} items.`;
 
   /** Loading / error / empty states */
-  if (loading) return <div className="flex justify-center py-10 text-gray-400 text-lg">Loading content...</div>;
-  if (error) return <div className="flex justify-center py-10 text-red-500">Error: {error}</div>;
-  if (!data.length)
-    return (
-      <div className="flex justify-center py-10 text-gray-400">
-        {hasSearch || hasFilters
-          ? `No ${type === "all" ? "content" : type} matches your search or filters.`
-          : `No ${type === "all" ? "content" : type} available.`}
-      </div>
-    );
 
-  /** Render content grid */
+  /** Loading / error / empty states */
+if (error) return <div className="flex justify-center py-10 text-red-500">Error: {error}</div>;
+
+const isEmpty = !loading && data.length === 0;
+
+if (isEmpty)
+  return (
+    <div className="flex justify-center py-10 text-gray-400">
+      {hasSearch || hasFilters
+        ? `No ${type === "all" ? "content" : type} matches your search or filters.`
+        : `No ${type === "all" ? "content" : type} available.`}
+    </div>
+  );
+
+
   return (
     <>
-      {/* Results summary */}
-      <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
+    
 
       <div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center"
-        style={{ width: "100%", maxWidth: "1429px", margin: "0 auto", overflowX: "hidden", boxSizing: "border-box" }}
-      >
-        {data.map((card) => {
-          const contentType = card.content_type as "post" | "mindmap" | "research";
-          return (
-            <div key={card.id} style={{ width: "360px", transform: "scale(0.9)", transformOrigin: "top center" }}>
-              <ContentCard
-                {...card}
-                type={contentType}
-                onDelete={() => handleDelete(card.id, contentType)}
-                onOpenComments={() => handleOpenComments(card)}
-                onOpenContent={() => setSelectedContentPopup(card)}
-                user={user}
-                onOpenShare={(data) => setSelectedShareData(data)}
+  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center"
+  style={{ width: "100%", maxWidth: "1429px", margin: "0 auto", overflowX: "hidden", boxSizing: "border-box" }}
+>
+  {loading
+    ? Array(8).fill(0).map((_, i) => (
+        <div key={i} style={{ width: "310px", transform: "scale(0.9)", transformOrigin: "top center" }}>
+          <ContentCardSkeleton />
+        </div>
+      ))
+    : data.map((card) => {
+        const contentType = card.content_type as "post" | "mindmap" | "research";
+        return (
+          <div key={card.id} style={{ width: "360px", transform: "scale(0.9)", transformOrigin: "top center" }}>
+            <ContentCard
+              {...card}
+              type={contentType}
+              onDelete={() => handleDelete(card.id, contentType)}
+              onOpenComments={() => handleOpenComments(card)}
+              onOpenContent={() => setSelectedContentPopup(card)}
+              user={user}
+              onOpenShare={(data) => setSelectedShareData(data)}
+            />
+          </div>
+        );
+      })}
+</div>
 
-              />
-            </div>
-          );
-        })}
-      </div>
 
       {/* Comments Popup */}
       {isPopupOpen && selectedContent && (

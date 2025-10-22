@@ -12,6 +12,7 @@ import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
 import { ReactFlowProvider } from "reactflow"; // ✅ Added for React Flow provider
 import "./PostPage.css";
+import MindmapEditorSkeleton from "@/components/content/MindmapEditorSkeleton";
 
 interface Tag {
   id: string;
@@ -144,16 +145,40 @@ export default function PostPage() {
   const initialNodes = useMemo(() => nodes, [nodes]);
   const initialEdges = useMemo(() => edges, [edges]);
 
-  if (!ready || contentLoading) {
-    return (
-      <div className="dashboard">
-        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
-        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <p className="text-center text-gray-400 mt-10">Loading Mindmap Data ...</p>
+ if (!ready || contentLoading) {
+  return (
+    <div className="dashboard">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+        {/* 🧭 Top Header (Toolbar Placeholder) */}
+        <CreateMinemapHeader />
+
+        <div className="post-container">
+          {/* 🔹 Title Row (icon + page name) */}
+          <div className="flex items-center mb-4">
+            <Image
+              src="/pen.svg"
+              alt="Menu Icon"
+              width={20}
+              height={20}
+              className="object-contain mr-[4px]"
+            />
+            <h2
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+              style={{ fontFamily: "'Public Sans', sans-serif" }}
+            >
+              Mindmap / {mindmapId ? "Edit Mindmap" : "Create Mindmap"}
+            </h2>
+          </div>
+
+          {/* 🧠 Skeleton for Editor */}
+          <MindmapEditorSkeleton />
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   return (
     <div className="dashboard">

@@ -8,6 +8,7 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import BookmarksGrid from "@/components/content/BookmarksGrid";
 import "./ExplorePage.css";
+import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
 
 export default function BookmarksPage() {
   // 🔐 Auth & Redirect Logic
@@ -50,11 +51,46 @@ export default function BookmarksPage() {
   if (loading || !token) {
     return (
       <div className="dashboard">
-              <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
-              <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-                <p className="text-center text-gray-400 mt-10">Loading...</p>
-              </div>
+        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+          <Header
+            collapsed={sidebarCollapsed}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+          />
+          <div className="explore-container">
+            <div className="flex items-center mb-4">
+              <Image
+                src="/bookmark.svg"
+                alt="Menu Icon"
+                width={20}
+                height={20}
+                className="object-contain mr-[4px] relative top-[1px]"
+              />
+              <h2
+                className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+                style={{ fontFamily: "'Public Sans', sans-serif" }}
+              >
+                Menu / Bookmarks
+              </h2>
             </div>
+  
+            {/* Skeleton grid */}
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center"
+              style={{ width: "100%", maxWidth: "1429px", margin: "0 auto", overflowX: "hidden", boxSizing: "border-box" }}
+            >
+              {Array(8).fill(0).map((_, i) => (
+                <div key={i} style={{ width: "310px", transform: "scale(0.9)", transformOrigin: "top center" }}>
+                  <ContentCardSkeleton />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -74,7 +110,7 @@ export default function BookmarksPage() {
           {/* 🔹 Menu / Bookmarks Title Row */}
           <div className="flex items-center mb-4">
             <Image
-              src="/bookmarklogo.png"
+              src="/bookmark.svg"
               alt="Menu Icon"
               width={20}
               height={20}

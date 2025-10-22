@@ -9,6 +9,7 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import ContentGrid from "@/components/content/ContentGrid";
 import "./ExplorePage.css";
+import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
 
 export default function ExplorePage() {
   const router = useRouter();
@@ -55,15 +56,51 @@ export default function ExplorePage() {
   }, []);
 
   if (loading || !token) {
-    return (
-      <div className="dashboard">
-        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
-        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <p className="text-center text-gray-400 mt-10">Loading...</p>
+  return (
+    <div className="dashboard">
+      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+        <Header
+          collapsed={sidebarCollapsed}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+        />
+        <div className="explore-container">
+          <div className="flex items-center mb-4">
+            <Image
+              src="/explore.svg"
+              alt="Menu Icon"
+              width={20}
+              height={20}
+              className="object-contain mr-[4px] relative top-[1px]"
+            />
+            <h2
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+              style={{ fontFamily: "'Public Sans', sans-serif" }}
+            >
+              Menu / Explore
+            </h2>
+          </div>
+
+          {/* Skeleton grid */}
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center"
+            style={{ width: "100%", maxWidth: "1429px", margin: "0 auto", overflowX: "hidden", boxSizing: "border-box" }}
+          >
+            {Array(8).fill(0).map((_, i) => (
+              <div key={i} style={{ width: "310px", transform: "scale(0.9)", transformOrigin: "top center" }}>
+                <ContentCardSkeleton />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   return (
     <div className="dashboard">
@@ -80,7 +117,7 @@ export default function ExplorePage() {
         <div className="explore-container">
           <div className="flex items-center mb-4">
             <Image
-              src="/explorelogo.png"
+              src="/explore.svg"
               alt="Menu Icon"
               width={20}
               height={20}

@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import DraftCard from "./DraftCard";
 import { AnyContent } from "@/types/content";
 import ContentPopup from "./ContentPopup";
+import DraftCardSkeleton from "./DraftCardSkeleton";
 
 interface DraftGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -90,12 +91,6 @@ export default function DraftGrid({
       : `Showing all ${totalResults} of your items.`;
 
   /** 🌀 Loading / error / empty states */
-  if (loading)
-    return (
-      <div className="flex justify-center py-10 text-gray-400 text-lg">
-        Loading content...
-      </div>
-    );
 
   if (error)
     return (
@@ -118,7 +113,6 @@ export default function DraftGrid({
   /** 🧩 Render cards */
   return (
     <>
-      <div className="mb-4 text-center text-gray-400 text-sm">{resultsText}</div>
 
       <div
         className="
@@ -134,7 +128,22 @@ export default function DraftGrid({
           boxSizing: "border-box",
         }}
       >
-        {filteredData.map((card) => {
+        {loading
+    ? Array(8) // number of skeleton cards to show
+        .fill(0)
+        .map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: "360px",
+              transform: "scale(0.9)",
+              transformOrigin: "top center",
+            }}
+          >
+            <DraftCardSkeleton />
+          </div>
+        ))
+    : filteredData.map((card) => {
           const contentType = card.content_type as
             | "post"
             | "mindmap"

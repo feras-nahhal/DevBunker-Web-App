@@ -184,11 +184,32 @@ if (user?.id === author_id && onDelete) {
                             />
                           </div>
 
-        {/* Bottom section */}
-       <div
-         className="flex flex-col items-start bg-white/[0.05] rounded-[16px] backdrop-blur-md border border-white/10 shadow-[inset_0px_0px_4px_rgba(239,214,255,0.25)] mt-4"
-         style={{ width: "297px", height: "265px", padding: "17px 20px" }}
-       >
+         {/* Bottom section with glass & hover glow */}
+          <div
+            className="
+              relative flex flex-col items-start
+              bg-white/[0.05] rounded-[16px]
+              backdrop-blur-md border border-white/10
+              shadow-[inset_0px_0px_4px_rgba(239,214,255,0.25)]
+              mt-4 overflow-hidden group
+              transition-all duration-300
+              hover:shadow-[inset_0px_0px_4px_rgba(239,214,255,0.35)]
+            "
+            style={{ width: "297px", height: "265px", padding: "17px 20px" }}
+            
+          >
+            {/* 🌟 Bottom Glow (only on hover) */}
+            <span
+              className="
+                absolute inset-x-0 bottom-0 h-1/2
+                bg-[linear-gradient(to_top,rgba(91,228,155,0.25)_0%,rgba(91,228,155,0.15)_30%,transparent_100%)]
+
+                opacity-0 group-hover:opacity-100
+                transition-opacity duration-700
+                blur-[12px]
+                pointer-events-none
+              "
+            />
          {/* Type Label */}
          <div className="flex items-center justify-center w-[80px] h-[32px] relative mb-2">
            <div className="relative flex items-center justify-center w-[90px] h-[28px] rounded-full 
@@ -248,7 +269,7 @@ if (user?.id === author_id && onDelete) {
                            onClick={() => vote("like")}
                            className={votes.userVote === "like" ? "text-green-400" : "text-gray-400"}
                          >
-                           <Image src="/uparrow.png" alt="Upvote" width={20} height={20} />
+                           <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
                          </button>
                          <span>{votes.likes}</span>
            
@@ -257,29 +278,64 @@ if (user?.id === author_id && onDelete) {
                            onClick={() => vote("dislike")}
                            className={votes.userVote === "dislike" ? "text-red-400" : "text-gray-400"}
                          >
-                           <Image src="/downarrow.png" alt="Downvote" width={20} height={20} />
+                           <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
                          </button>
                          <span>{votes.dislikes}</span>
                        </div>
        
            <button
-             onClick={(e) => {
-               e.stopPropagation();
-               onOpenComments && onOpenComments();
-             }}
-             className="flex items-center gap-2 cursor-pointer"
-           >
-             <Image
-               src="/commentlogo.png"
-               alt="Comment"
-               width={20}
-               height={20}
-               className="hover:scale-105 transition"
-             />
-             <span className="text-sm text-gray-400">
-               {commentsLoading ? "..." : commentsData.length}
-             </span>
-           </button>
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           onOpenComments && onOpenComments();
+                         }}
+                         className="relative flex items-center gap-[4px] cursor-pointer group"
+                       >
+                         {/* 🌟 Icon container — only shows glass + glow on hover */}
+                         <div
+                           className="
+                             relative flex items-center justify-center
+                             w-[32px] h-[32px] rounded-md
+                             transition-all duration-300
+                             overflow-hidden
+                             group-hover:bg-white/[0.03]
+                             group-hover:border group-hover:border-white/10
+                             group-hover:shadow-[inset_0_0_4px_rgba(239,214,255,0.25)]
+                             group-hover:backdrop-blur-md
+                           "
+                         >
+                           {/* 💡 Bottom glow */}
+                           <span
+                             className="
+                               absolute inset-x-0 bottom-0 h-1/2
+                               bg-[radial-gradient(circle_at_bottom,rgba(91,228,155,0.6)_0%,transparent_80%)]
+                               opacity-0 group-hover:opacity-100
+                               transition-opacity duration-500
+                               blur-[6px]
+                             "
+                           />
+           
+                           {/* 🟢 Comment icon — swaps on hover */}
+                           <Image
+                             src="/coment1.svg"
+                             alt="Comment"
+                             width={18}
+                             height={18}
+                             className="relative z-10 transition-opacity duration-300 group-hover:opacity-0"
+                           />
+                           <Image
+                             src="/coment.svg"
+                             alt="Comment Hover"
+                             width={18}
+                             height={18}
+                             className="absolute z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                           />
+                         </div>
+           
+                         {/* 🔢 Comment count */}
+                         <span className="text-sm text-gray-400 relative top-[1px]">
+                           {commentsLoading ? "..." : commentsData.length}
+                         </span>
+                       </button>
          </div>
        </div>
       </div>
