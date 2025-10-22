@@ -4,13 +4,12 @@ import type { Notification } from "@/types/content";
 import { useState, useEffect, useMemo } from "react";
 import NotificationsCard from "./NotificationsCard";
 import { useNotifications } from "@/hooks/useNotifications"; // Hook for notifications API
-import { useAuth } from "@/hooks/useAuth";
 import { createPortal } from "react-dom"; // For centered modal popup
 import NotificationsCardSkeleton from "../content/NotificationsCardSkeleton";
 
 export default function NotificationsGrid() {
   const { notifications, loading, error, markAsRead, markAllAsRead, refetch } = useNotifications();
-  const { user: authUser } = useAuth(); // Optional: For current user checks
+
 
   // Filters: Only read/unread (top clickable labels – no search/multi-select)
   const [selectedReadStatus, setSelectedReadStatus] = useState<string>(""); // "" = All, "read" = read only, "unread" = unread only

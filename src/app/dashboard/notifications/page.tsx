@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+
 import { useEffect,useState } from "react";
 import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
@@ -8,11 +8,12 @@ import "./ExplorePage.css";
 import NotificationsGrid from "@/components/admin/NotificationsGrid";
 import HeaderOther from "@/components/layout/HeaderOther";
 import NotificationsCardSkeleton from "@/components/content/NotificationsCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
       const router = useRouter();
-      const { token, loading } = useAuth();
+      const { token, loading, isAuthenticated } = useAuthContext();
       const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     
       useEffect(() => {

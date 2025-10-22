@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import CommentsPopup from "./CommentsPopup";
 import { useContent } from "@/hooks/useContent";
-import { useAuth } from "@/hooks/useAuth";
 import ResearchCard from "./ResearchCard";
 import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
 import ContentCardSkeleton from "./ContentCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface ResearchGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -24,7 +24,7 @@ export default function ResearchGrid({
   selectedContentId,
 }: ResearchGridProps) {
   const { data, loading, error, refetch } = useContent({ type, filters });
-  const { user } = useAuth();
+  const { user} = useAuthContext();
   
 
   // 🟣 State for popups

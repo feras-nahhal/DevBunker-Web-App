@@ -11,7 +11,6 @@ import {
   Edit,
 } from "lucide-react";
 import React, { useState, useCallback, useRef, useEffect, CSSProperties } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { useContent } from "@/hooks/useContent";
 import { useCategories } from "@/hooks/useCategories";
 import { useContentTags } from "@/hooks/useContentTags";
@@ -37,6 +36,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import html2canvas from "html2canvas";
 import { CONTENT_STATUS } from "@/lib/enums";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 // -----------------------------
 type Tag = {
@@ -483,7 +483,7 @@ function MindmapContent({
   const [selectedEdgeType, setSelectedEdgeType] = useState<"default" | "straight" | "step" | "smoothstep">("default");
   const reactFlowWrapperRef = useRef<HTMLDivElement>(null);
   const { fitView, getNode } = useReactFlow();
-  const { token } = useAuth();
+  const { token} = useAuthContext();
   const { createContent, updateContent } = useContent({ type: "mindmap" });
 //----------------------------------------------------------------------------------//
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);

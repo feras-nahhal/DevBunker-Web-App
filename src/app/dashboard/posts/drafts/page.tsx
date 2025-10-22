@@ -2,17 +2,17 @@
 import { useState, useEffect } from "react"; 
 import { useDebounce } from "@/hooks/useDebounce"; 
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import HeaderDraft from "@/components/layout/HeaderDraft";
 import Sidebar from "@/components/layout/Sidebar";
 import DraftGrid from "@/components/content/DraftGrid";
 import "./PostDraftPage.css";
 import DraftCardSkeleton from "@/components/content/DraftCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function PostDraftPage() {
   const router = useRouter();
-  const { user, loading } = useAuth(); // ✅ check auth state
+  const { user, loading, isAuthenticated } = useAuthContext();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // 🔐 Redirect if not authenticated

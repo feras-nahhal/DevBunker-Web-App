@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+
 import Image from "next/image";
 import "./Header1.css";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function Header({ collapsed = false }: { collapsed?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { logout } = useAuth();
-
+  const { logout } = useAuthContext();
   // Close menu on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

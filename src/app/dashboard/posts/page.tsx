@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // ✅ For redirect
-import { useAuth } from "@/hooks/useAuth"; // ✅ For authentication
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
 import Header from "@/components/layout/Header";
@@ -9,10 +8,11 @@ import Sidebar from "@/components/layout/Sidebar";
 import ContentGrid1 from "@/components/content/ContentGrid1";
 import "./PostPage.css";
 import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function PostPage() {
   const router = useRouter();
-  const { user, loading } = useAuth(); // ✅ check authentication state
+  const { user, loading, isAuthenticated } = useAuthContext(); // ✅ check authentication state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 

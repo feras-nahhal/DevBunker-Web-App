@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // ✅ For redirect
-import { useAuth } from "@/hooks/useAuth"; // ✅ Auth context
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
 import HeaderDraft from "@/components/layout/HeaderDraft";
@@ -9,18 +8,20 @@ import Sidebar from "@/components/layout/Sidebar";
 import DraftGrid from "@/components/content/DraftGrid";
 import "./MindmapDraftPage.css";
 import DraftCardSkeleton from "@/components/content/DraftCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function MindmapDraftPage() {
   const router = useRouter();
-  const { user, loading } = useAuth(); // ✅ Check auth state
+  const { user, loading, isAuthenticated } = useAuthContext(); // ✅ check auth state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // 🔐 Redirect if not authenticated
-  useEffect(() => {
-    if (!loading && !user) {
+  // 🔐 Redirect if not authenticated
+   useEffect(() => {
+    if (!loading && !isAuthenticated) {
       router.push("/auth/login");
     }
-  }, [user, loading, router]);
+  }, [loading, isAuthenticated, router]);
 
   const [searchQuery, setSearchQuery] = useState(""); // Raw search input
 
@@ -52,7 +53,7 @@ export default function MindmapDraftPage() {
   };
 
   // 🚫 Prevent rendering UI until auth finishes
-  if (loading || (!user && !loading)) 
+  if (loading || !user) 
   return (
     <div className="dashboard">
       <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />

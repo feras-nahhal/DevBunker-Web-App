@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { User } from "@/types/user"; // ✅ use shared type
+import { User } from "@/types/user";
 
 interface AuthResult {
   success: boolean;
@@ -10,34 +10,41 @@ interface AuthResult {
   token?: string;
 }
 
+// Module-level cache to prevent multiple /me calls
+let cachedUser: User | null = null;
+let cachedToken: string | null = null;
+
 export function useAuth() {
-  const [user, setUser ] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>(cachedUser);
+  const [loading, setLoading] = useState<boolean>(!cachedUser);
   const [error, setError] = useState<string | null>(null);
 
   const API_BASE = "/api/auth";
 
-  // ✅ SSR-safe Token helpers (check for browser environment)
   const saveToken = useCallback((token: string) => {
     if (typeof window !== "undefined") {
       localStorage.setItem("token", token);
+      cachedToken = token; // cache token in memory
     }
   }, []);
 
   const getToken = useCallback((): string | null => {
+    if (cachedToken) return cachedToken;
     if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
+      const t = localStorage.getItem("token");
+      cachedToken = t;
+      return t;
     }
-    return null; // Safe default on server
+    return null;
   }, []);
 
   const removeToken = useCallback(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
     }
+    cachedToken = null;
   }, []);
 
-  /** Register new user */
   const register = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -47,15 +54,13 @@ export function useAuth() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data: AuthResult = await res.json();
       if (!data.success) {
         setError(data.error || "Registration failed");
         return false;
       }
-
       return true;
-    } catch (err) {
+    } catch {
       setError("Network error during registration");
       return false;
     } finally {
@@ -63,8 +68,6 @@ export function useAuth() {
     }
   }, []);
 
-  /** Login user */
-  /** Login user (UPDATED: Returns user on success, null on failure) */
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -77,73 +80,72 @@ export function useAuth() {
       const data: AuthResult = await res.json();
       if (!data.success || !data.token || !data.user) {
         setError(data.error || "Login failed");
-        return null; // Return null on failure
+        return null;
       }
-      saveToken(data.token); // Now SSR-safe
-      setUser(data.user); // Set state
-      return data.user; // UPDATED: Return user for immediate access in component
-    } catch (err) {
+      saveToken(data.token);
+      setUser(data.user);
+      cachedUser = data.user; // cache user in memory
+      return data.user;
+    } catch {
       setError("Network error during login");
-      return null; // Return null on error
+      return null;
     } finally {
       setLoading(false);
     }
   }, [saveToken]);
-  
 
-  /** Logout user */
   const logout = useCallback(async () => {
     try {
       await fetch(`${API_BASE}/logout`, { method: "POST" });
-    } catch {
-      // ignore API errors for stateless logout
-    }
-    removeToken(); // Now SSR-safe
-    setUser (null);
+    } catch {}
+    removeToken();
+    setUser(null);
+    cachedUser = null; // clear cache
   }, [removeToken]);
 
-  /** Get current logged in user */
-  const getCurrentUser  = useCallback(async () => {
-    // Early return if on server (no localStorage)
-    if (typeof window === "undefined") {
-      setUser (null);
+  const getCurrentUser = useCallback(async () => {
+    if (cachedUser) {
+      setUser(cachedUser);
       setLoading(false);
-      return;
+      return cachedUser;
     }
 
-    const token = getToken(); // Now SSR-safe
+    const token = getToken();
     if (!token) {
-      setUser (null);
+      setUser(null);
       setLoading(false);
-      return;
+      return null;
     }
 
     try {
       const res = await fetch(`${API_BASE}/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const data: AuthResult = await res.json();
       if (data.success && data.user) {
-        setUser (data.user);
+        setUser(data.user);
+        cachedUser = data.user; // cache
+        return data.user;
       } else {
-        setUser (null);
+        setUser(null);
+        cachedUser = null;
         removeToken();
+        return null;
       }
     } catch {
-      setUser (null);
+      setUser(null);
+      cachedUser = null;
       removeToken();
+      return null;
     } finally {
       setLoading(false);
     }
   }, [getToken, removeToken]);
 
-  // Auto load user on mount (client-only due to useEffect)
   useEffect(() => {
-    getCurrentUser ();
-  }, [getCurrentUser ]);
+    getCurrentUser();
+  }, [getCurrentUser]);
 
-  // ✅ Optional: Expose token and auth state (SSR-safe)
   const token = getToken();
   const isAuthenticated = !!user && !!token;
 
@@ -154,8 +156,8 @@ export function useAuth() {
     register,
     login,
     logout,
-    getCurrentUser ,
-    token, // ✅ Now safely exposed (null on server)
+    getCurrentUser,
+    token,
     isAuthenticated,
   };
 }

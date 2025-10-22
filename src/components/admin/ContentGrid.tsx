@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import ContentCard from "./ContentCard";
 import CommentsPopup from "./CommentsPopup";
 import { useContent } from "@/hooks/useContent";
-import { useAuth } from "@/hooks/useAuth";
+
 import { CONTENT_STATUS, CONTENT_TYPES } from "@/lib/enums";
 import { AnyContent, Comment } from "@/types/content";
 import Image from "next/image";
@@ -14,7 +14,7 @@ interface ContentGridProps {
 
 export default function ContentGrid({ type = "all" }: ContentGridProps) {
   const { data = [], loading, error, refetch } = useContent({ type });
-  const { user } = useAuth();
+
   
 
   // Filters

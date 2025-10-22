@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useComments } from "@/hooks/useComments"; // ✅ import the hook
-import { useAuth } from "@/hooks/useAuth"; // ✅ import your auth hook
+
 import { useRouter } from "next/navigation";
 import { useVotes } from "@/hooks/useVotes";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface BookmarkCardProps {
   id: string;
@@ -44,7 +45,7 @@ export default function BookmarkCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { comments: commentsData, loading: commentsLoading } = useComments(id); // ✅ hook usage for dynamic count
-  const { user } = useAuth(); // ✅ get logged-in user
+  const { user} = useAuthContext();
   const authorIdShort = author_id.split("-")[0]; // "b655deff"
 
   const typeImages: Record<"post" | "mindmap" | "research", string> = {

@@ -7,11 +7,11 @@ import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
 import CreatePageHeader from "@/components/layout/CreatePageHeader";
 import { useContent, ContentType } from "@/hooks/useContent";
-import { useAuth } from "@/hooks/useAuth";
 import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
 import "./PostPage.css";
 import CreatePostSkeleton from "@/components/content/CreatePostSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface Tag {
   id: string;
@@ -25,7 +25,7 @@ const CreatePostEditor = dynamic(
 
 export default function CreatePostPageInner() {
   const router = useRouter();
-  const { user, loading: authLoading, token } = useAuth();
+  const { user,token, loading, isAuthenticated } = useAuthContext();
 
   const [researchId, setResearchId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -56,8 +56,8 @@ export default function CreatePostPageInner() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && token) setReady(true);
-  }, [authLoading, token]);
+    if (!loading && token) setReady(true);
+  }, [loading, token]);
 
   useEffect(() => {
     if (!researchId || !ready) return;
@@ -79,7 +79,7 @@ export default function CreatePostPageInner() {
     fetchResearch();
   }, [researchId, ready, getContentById, token]);
 
-  const isLoading = authLoading || contentLoading || saving;
+  const isLoading = loading || contentLoading || saving;
 
   const handleCancel = () => {
     setTitle("");

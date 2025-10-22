@@ -5,7 +5,7 @@ import BookmarkCard from "./BookmarkCard";
 import CommentsPopup from "./CommentsPopup";
 import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
 import { useContent } from "@/hooks/useContent";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/hooks/AuthProvider";
 import { CONTENT_TYPES } from "@/lib/enums";
 import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
@@ -19,7 +19,7 @@ interface BookmarksGridProps {
     category?: string;
     selectedContentId?: string | null;
   };
-  selectedContentId?: string | null; // ✅ added missing prop to match usage
+  selectedContentId?: string | null;
 }
 
 export default function BookmarksGrid({
@@ -33,7 +33,7 @@ export default function BookmarksGrid({
     type: "all",
     autoFetch: true,
   });
-  const { user } = useAuth();
+  const { user } = useAuthContext(); // ✅ updated to use AuthContext
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(
@@ -53,14 +53,14 @@ export default function BookmarksGrid({
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-  // 🧩 Merge bookmarks with content
+  // Merge bookmarks with content
   const bookmarkedContent = useMemo(() => {
     const matched = bookmarks
       .map((b) => allContent.find((c) => c.id === b.content_id))
       .filter(Boolean) as AnyContent[];
 
-    // 🔍 Search filter
     let filtered = matched;
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter((item) =>
@@ -68,22 +68,16 @@ export default function BookmarksGrid({
       );
     }
 
-    // 🎯 Status/category filters
-    if (filters.status) {
-      filtered = filtered.filter((i) => i.status === filters.status);
-    }
-    if (filters.category) {
+    if (filters.status) filtered = filtered.filter((i) => i.status === filters.status);
+    if (filters.category)
       filtered = filtered.filter(
-        (i) =>
-          i.category_id === filters.category ||
-          i.categoryName === filters.category
+        (i) => i.category_id === filters.category || i.categoryName === filters.category
       );
-    }
 
     return filtered;
   }, [bookmarks, allContent, searchQuery, filters]);
 
-  // 🗨️ Comments logic
+  // Comments logic
   const fetchComments = async (contentId: string) => {
     try {
       const res = await fetch(`/api/comments?content_id=${contentId}`);
@@ -118,7 +112,6 @@ export default function BookmarksGrid({
           parent_id: parentId || null,
         }),
       });
-
       const json = await res.json();
       if (json.success) await fetchComments(selectedContent.id);
     } catch (err) {
@@ -127,33 +120,23 @@ export default function BookmarksGrid({
     }
   };
 
-  // 🗑 Delete content
+  // Delete content
   const getApiPath = (type: CONTENT_TYPES) => {
     switch (type) {
-      case CONTENT_TYPES.POST:
-        return "posts";
-      case CONTENT_TYPES.MINDMAP:
-        return "mindmaps";
-      case CONTENT_TYPES.RESEARCH:
-        return "research";
-      default:
-        return "content";
+      case CONTENT_TYPES.POST: return "posts";
+      case CONTENT_TYPES.MINDMAP: return "mindmaps";
+      case CONTENT_TYPES.RESEARCH: return "research";
+      default: return "content";
     }
   };
 
-  const handleDelete = async (
-    contentId: string,
-    contentType: CONTENT_TYPES
-  ) => {
+  const handleDelete = async (contentId: string, contentType: CONTENT_TYPES) => {
     if (!token) return alert("You must be logged in to delete content.");
 
     try {
       const res = await fetch(
         `/api/content/${getApiPath(contentType)}/${contentId}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) throw new Error("Failed to delete content");
 
@@ -173,7 +156,7 @@ export default function BookmarksGrid({
     }
   };
 
-  // 🟣 Auto-open content popup if selectedContentId provided
+  // Auto-open content popup if selectedContentId provided
   useEffect(() => {
     if (selectedContentId && allContent.length > 0) {
       const content = allContent.find((item) => item.id === selectedContentId);
@@ -181,119 +164,53 @@ export default function BookmarksGrid({
     }
   }, [selectedContentId, allContent]);
 
-  // Derived UI
-  const totalResults = bookmarkedContent.length;
-  const hasSearch = !!searchQuery.trim();
-  const hasFilters = !!(filters.status || filters.category);
-
-  const resultsText =
-    hasSearch || hasFilters
-      ? `Showing ${totalResults} bookmarked items${
-          hasSearch ? ` for "${searchQuery}"` : ""
-        }${filters.status ? ` (Status: ${filters.status})` : ""}${
-          filters.category ? ` (Category: ${filters.category})` : ""
-        }.`
-      : `Showing all ${totalResults} bookmarked items.`;
-
-  // 🌀 Render
-
-  if (error)
-    return (
-      <div className="flex justify-center py-10 text-red-500">
-        Error: {error}
-      </div>
-    );
-
-  if (!bookmarkedContent.length)
-    return (
-      <div className="flex justify-center py-10 text-gray-400 text-sm">
-        {hasSearch || hasFilters
-          ? "No bookmarked content matches your search or filters."
-          : "No bookmarks yet."}
-      </div>
-    );
+  if (error) return <div className="flex justify-center py-10 text-red-500">Error: {error}</div>;
+  if (!bookmarkedContent.length) return <div className="flex justify-center py-10 text-gray-400 text-sm">No bookmarks yet.</div>;
 
   return (
     <>
-      <div
-  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center"
->
-  {loading
-    ? // Show skeletons while loading
-      Array(8)
-        .fill(0)
-        .map((_, i) => (
-          <div
-            key={i}
-            style={{
-              width: "360px",
-              transform: "scale(0.9)",
-              transformOrigin: "top center",
-            }}
-          >
-            <ContentCardSkeleton />
-          </div>
-        ))
-    : bookmarkedContent.length === 0
-    ? // Show empty state if no bookmarks
-      <div className="col-span-full text-center py-10 text-gray-400">
-        You have no bookmarked items yet.
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-[2px] gap-y-[-10px] place-items-center">
+        {loading
+          ? Array(8).fill(0).map((_, i) => (
+              <div key={i} style={{ width: "360px", transform: "scale(0.9)", transformOrigin: "top center" }}>
+                <ContentCardSkeleton />
+              </div>
+            ))
+          : bookmarkedContent.map((card) => {
+              const contentType = card.content_type as CONTENT_TYPES;
+              return (
+                <div key={card.id} style={{ width: "360px", transform: "scale(0.9)", transformOrigin: "top center" }}>
+                  <BookmarkCard
+                    {...card}
+                    authorEmail={card.authorEmail || ""}
+                    type={contentType}
+                    onDelete={() => handleDelete(card.id, contentType)}
+                    onRemoveFromBookmark={async () => {
+                      const bookmark = bookmarks.find((b) => b.content_id === card.id);
+                      if (!bookmark) return;
+                      try {
+                        const res = await fetch(`/api/bookmarks/${bookmark.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+                        if (!res.ok) throw new Error("Failed to remove bookmark");
+                        await refetchBookmarks();
+                      } catch (err) {
+                        console.error("Remove bookmark error:", err);
+                        alert("Failed to remove bookmark");
+                      }
+                    }}
+                    onOpenComments={() => handleOpenComments(card)}
+                    onOpenContent={() => setSelectedContentPopup(card)}
+                    onOpenShare={(data) => setSelectedShareData(data)}
+                  />
+                </div>
+              );
+            })}
       </div>
-    : // Show actual BookmarkCard items
-      bookmarkedContent.map((card) => {
-        const contentType = card.content_type as CONTENT_TYPES;
-
-        return (
-          <div
-            key={card.id}
-            style={{
-              width: "360px",
-              transform: "scale(0.9)",
-              transformOrigin: "top center",
-            }}
-          >
-            <BookmarkCard
-              {...card}
-              authorEmail={card.authorEmail || ""}
-              type={contentType}
-              onDelete={() => handleDelete(card.id, contentType)}
-              onRemoveFromBookmark={async () => {
-                const bookmark = bookmarks.find(
-                  (b) => b.content_id === card.id
-                );
-                if (!bookmark) return;
-
-                try {
-                  const res = await fetch(`/api/bookmarks/${bookmark.id}`, {
-                    method: "DELETE",
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
-                  if (!res.ok) throw new Error("Failed to remove bookmark");
-                  await refetchBookmarks();
-                } catch (err) {
-                  console.error("Remove bookmark error:", err);
-                  alert("Failed to remove bookmark");
-                }
-              }}
-              onOpenComments={() => handleOpenComments(card)}
-              onOpenContent={() => setSelectedContentPopup(card)}
-              onOpenShare={(data) => setSelectedShareData(data)}
-            />
-          </div>
-        );
-      })}
-</div>
-
 
       {isPopupOpen && selectedContent && (
         <CommentsPopup
           id={selectedContent.id}
           title={selectedContent.title}
-          content_body={
-            "content_body" in selectedContent
-              ? selectedContent.content_body || ""
-              : ""
-          }
+          content_body={"content_body" in selectedContent ? selectedContent.content_body || "" : ""}
           comments={comments}
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
@@ -303,31 +220,17 @@ export default function BookmarksGrid({
       {selectedContentPopup && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
           <div className="relative w-[80%] max-w-[800px] max-h-[85vh] overflow-y-auto bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-lg p-6">
-            <button
-              onClick={() => setSelectedContentPopup(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
-            >
-              ✕
-            </button>
-
+            <button onClick={() => setSelectedContentPopup(null)} className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">✕</button>
             <ContentPopup
               id={selectedContentPopup.id}
               title={selectedContentPopup.title}
-              content_body={
-                "content_body" in selectedContentPopup
-                  ? selectedContentPopup.content_body || ""
-                  : ""
-              }
+              content_body={"content_body" in selectedContentPopup ? selectedContentPopup.content_body || "" : ""}
               onClose={() => setSelectedContentPopup(null)}
               created_at={selectedContentPopup.created_at}
               updated_at={selectedContentPopup.updated_at}
               status={selectedContentPopup.status}
               excalidraw_data={selectedContentPopup.excalidraw_data}
-              categoryName={
-                typeof selectedContentPopup.categoryName === "string"
-                  ? [selectedContentPopup.categoryName]
-                  : selectedContentPopup.categoryName
-              }
+              categoryName={typeof selectedContentPopup.categoryName === "string" ? [selectedContentPopup.categoryName] : selectedContentPopup.categoryName}
             />
           </div>
         </div>
@@ -336,9 +239,7 @@ export default function BookmarksGrid({
       {selectedShareData && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
           <SharePopup
-            shareUrl={`${
-              typeof window !== "undefined" ? window.location.origin : ""
-            }/dashboard/explore?id=${selectedShareData.id}`}
+            shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/explore?id=${selectedShareData.id}`}
             title={selectedShareData.title}
             type={selectedShareData.type}
             onClose={() => setSelectedShareData(null)}

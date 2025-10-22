@@ -1,18 +1,20 @@
 "use client";
 import { Node, Edge } from "reactflow";
-import { useState, useEffect, useMemo } from "react"; // ✅ Added useMemo for stable props
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
+
 import Sidebar from "@/components/layout/Sidebar";
-import ExcalidrawEditor from "@/components/content/ExcalidrawEditor"; // ✅ Fixed import (assuming MindmapEditor is the file name)
+import ExcalidrawEditor from "@/components/content/ExcalidrawEditor";
 import CreateMinemapHeader from "@/components/layout/CreateMinemapHeader";
-import { useContent, ContentType } from "@/hooks/useContent"; // ✅ Added for fetching/updating
+import MindmapEditorSkeleton from "@/components/content/MindmapEditorSkeleton";
+
+import { useContent, ContentType } from "@/hooks/useContent";
+import { useAuthContext } from "@/hooks/AuthProvider";
 import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
-import { ReactFlowProvider } from "reactflow"; // ✅ Added for React Flow provider
+import { ReactFlowProvider } from "reactflow";
 import "./PostPage.css";
-import MindmapEditorSkeleton from "@/components/content/MindmapEditorSkeleton";
 
 interface Tag {
   id: string;
@@ -25,43 +27,35 @@ interface ExcalidrawData {
 
 export default function PostPage() {
   const router = useRouter();
-  const { user, loading: authLoading, token } = useAuth();
-
+  const { user, loading: authLoading, isAuthenticated } = useAuthContext(); // ✅ Updated
   const [mindmapId, setMindmapId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [contentBody, setContentBody] = useState(""); // ✅ Renamed from "description" to "contentBody"
+  const [contentBody, setContentBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]); // ✅ Added for mindmap edges
+  const [edges, setEdges] = useState<Edge[]>([]);
 
-  const {
-    getContentById,
-    createContent,
-    updateContent,
-    loading: contentLoading,
-    refetch,
-  } = useContent({
-    type: "mindmap" as ContentType, // ✅ Changed to "mindmap"
-    autoFetch: false,
-  });
+  const { getContentById, createContent, updateContent, loading: contentLoading, refetch } =
+    useContent({ type: "mindmap" as ContentType, autoFetch: false });
 
-  // ✅ Get query parameter manually from window.location (like post page)
+  // ✅ Get query param
   useEffect(() => {
-    if (typeof window !== "undefined") { // ✅ Fixed typo: "undefined" not ""
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       setMindmapId(params.get("id"));
     }
   }, []);
 
+  // ✅ Wait until auth state is ready
   useEffect(() => {
-    if (!authLoading && token) setReady(true);
-  }, [authLoading, token]);
+    if (!authLoading && isAuthenticated) setReady(true);
+  }, [authLoading, isAuthenticated]);
 
-  // ✅ Fetch mindmap data if editing (like post page)
+  // ✅ Fetch mindmap data if editing
   useEffect(() => {
     if (!mindmapId || !ready) return;
 
@@ -70,7 +64,7 @@ export default function PostPage() {
         const data = await getContentById(mindmapId);
         if (data) {
           setTitle(data.title || "");
-          setContentBody(data.content_body || ""); // ✅ Changed from "data.description" to "data.content_body"
+          setContentBody(data.content_body || "");
           setSelectedCategoryId(data.category_id || null);
           setSelectedTags(data.tags || []);
           setNodes(data.excalidraw_data?.nodes || []);
@@ -82,43 +76,43 @@ export default function PostPage() {
     };
 
     fetchMindmap();
-  }, [mindmapId, ready, getContentById, token]);
+  }, [mindmapId, ready, getContentById]);
 
   const isLoading = authLoading || contentLoading || saving;
 
   const handleCancel = () => {
     setTitle("");
-    setContentBody(""); // ✅ Updated
+    setContentBody("");
     setSelectedTags([]);
     setSelectedCategoryId(null);
     setNodes([]);
     setEdges([]);
-    router.push("/dashboard/mindmaps"); // ✅ Adjust route if needed
+    router.push("/dashboard/mindmaps");
   };
 
   const handleSave = async (isPublished: boolean) => {
-    if (!title.trim() || !token) {
-      alert("Title and token are required");
+    if (!title.trim() || !isAuthenticated) {
+      alert("Title and authentication are required");
       return;
     }
 
-    //s
     setSaving(true);
     try {
       const dataToSend: Partial<AnyContent> & {
         tag_ids?: string[];
         category_id?: string | null;
         status: string;
-        content_body?: string; // ✅ Changed from "description" to "content_body"
+        content_body?: string;
         excalidraw_data?: ExcalidrawData;
       } = {
         title,
-        content_body: contentBody, // ✅ Changed from "description" to "content_body"
+        content_body: contentBody,
         excalidraw_data: { nodes, edges },
         status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT,
         category_id: selectedCategoryId ?? undefined,
         tag_ids: selectedTags.map((t) => t.id),
       };
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
 
       const response = mindmapId
         ? await updateContent(mindmapId, dataToSend, token)
@@ -127,7 +121,7 @@ export default function PostPage() {
       if (!response) throw new Error("No response from API");
 
       refetch();
-      router.push("/dashboard/mindmaps"); // ✅ Adjust route if needed
+      router.push("/dashboard/mindmaps");
     } catch (err) {
       console.error("Save error:", err);
       alert(`Error saving: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -139,85 +133,56 @@ export default function PostPage() {
   const handleSaveAsDraft = () => handleSave(false);
   const handleSavePublish = () => handleSave(true);
 
-  // ✅ Stable props to prevent re-renders (like post page)
   const initialTags = useMemo(() => selectedTags, [selectedTags]);
   const initialCategoryId = useMemo(() => selectedCategoryId || "", [selectedCategoryId]);
   const initialNodes = useMemo(() => nodes, [nodes]);
   const initialEdges = useMemo(() => edges, [edges]);
 
- if (!ready || contentLoading) {
-  return (
-    <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
-      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        {/* 🧭 Top Header (Toolbar Placeholder) */}
-        <CreateMinemapHeader />
-
-        <div className="post-container">
-          {/* 🔹 Title Row (icon + page name) */}
-          <div className="flex items-center mb-4">
-            <Image
-              src="/pen.svg"
-              alt="Menu Icon"
-              width={20}
-              height={20}
-              className="object-contain mr-[4px]"
-            />
-            <h2
-              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
-              style={{ fontFamily: "'Public Sans', sans-serif" }}
-            >
-              Mindmap / {mindmapId ? "Edit Mindmap" : "Create Mindmap"}
-            </h2>
+  if (!ready || contentLoading) {
+    return (
+      <div className="dashboard">
+        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+          <CreateMinemapHeader />
+          <div className="post-container">
+            <div className="flex items-center mb-4">
+              <Image src="/pen.svg" alt="Menu Icon" width={20} height={20} className="object-contain mr-[4px]" />
+              <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
+                Mindmap / {mindmapId ? "Edit Mindmap" : "Create Mindmap"}
+              </h2>
+            </div>
+            <MindmapEditorSkeleton />
           </div>
-
-          {/* 🧠 Skeleton for Editor */}
-          <MindmapEditorSkeleton />
         </div>
       </div>
-    </div>
-  );
-}
-
+    );
+  }
 
   return (
     <div className="dashboard">
       <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <CreateMinemapHeader
-         
-        />
-
+        <CreateMinemapHeader />
         <div className="post-container">
           <div className="flex items-center mb-4">
-            <Image
-              src="/pen.svg"
-              alt="Menu Icon"
-              width={20}
-              height={20}
-              className="object-contain mr-[4px]"
-            />
-            <h2
-              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
-              style={{ fontFamily: "'Public Sans', sans-serif" }}
-            >
+            <Image src="/pen.svg" alt="Menu Icon" width={20} height={20} className="object-contain mr-[4px]" />
+            <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
               Mindmap / {mindmapId ? "Edit Mindmap" : "Create Mindmap"}
             </h2>
           </div>
 
-          {/* 🧠 Editor Section */}
           <div className="editor-container">
-            <ReactFlowProvider> {/* ✅ Added wrapper for React Flow */}
+            <ReactFlowProvider>
               <ExcalidrawEditor
                 mindmapId={mindmapId}
                 initialTitle={title}
-                initialContentBody={contentBody} // ✅ Changed from "initialDescription" to "initialContentBody"
+                initialContentBody={contentBody}
                 initialCategoryId={initialCategoryId}
                 initialTags={initialTags}
                 initialNodes={initialNodes}
                 initialEdges={initialEdges}
               />
-            </ReactFlowProvider> {/* ✅ Close wrapper */}
+            </ReactFlowProvider>
           </div>
         </div>
       </div>

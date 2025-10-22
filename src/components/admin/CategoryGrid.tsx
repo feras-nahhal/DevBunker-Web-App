@@ -3,13 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import CategoryCard from "./CategoryCard"; // NEW: Use CategoryCard
 import { useAdminCategories } from "@/hooks/useAdminCategories"; // FIXED: Use categories hook
-import { useAuth } from "@/hooks/useAuth";
+
 import { TAG_CATEGORY_STATUS } from "@/lib/enums"; // For category status (no roles)
 import Image from "next/image";
 
 export default function CategoryGrid() {
   const { requests, loading, error, approveCategory, rejectCategory } = useAdminCategories(); // FIXED: Categories hook + renamed functions
-  const { user: authUser } = useAuth(); // Optional: For current user checks
+
 
   // DEBUG: Log hook data immediately (check if requests has category_name)
   console.log("Grid: Hook data - requests length:", requests.length, "First category_name:", requests[0]?.category_name, "Error:", error); // DEBUG: Should be 10, "Databases", null

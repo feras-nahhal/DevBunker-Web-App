@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useContent } from "@/hooks/useContent";
-import { useAuth } from "@/hooks/useAuth"; // ✅ to know current user
 import { CONTENT_STATUS } from "@/lib/enums";
+import { useAuthContext } from "@/hooks/AuthProvider";
 interface DraftCardProps {
   id: string;
   title: string;
@@ -36,7 +36,7 @@ export default function DraftCard({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
-  const { user, token } = useAuth(); // ✅ get logged-in user and token
+  const { user,token} = useAuthContext(); // ✅ get logged-in user and token
   const { deleteContent, updateContent } = useContent({ type });
   const [loading, setLoading] = useState(false);
 

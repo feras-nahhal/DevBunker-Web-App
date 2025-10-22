@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "./useAuth"; // Import your useAuth hook
+
 import type { Tag } from "@/types/content";
+import { useAuthContext } from "./AuthProvider";
 
 
 interface RequestResult {
@@ -12,7 +13,7 @@ interface RequestResult {
 }
 
 export function useTags() {
-  const { token } = useAuth(); // Get token from useAuth (SSR-safe)
+  const { token} = useAuthContext();
 
   // useState for GET data management
   const [tags, setTags] = useState<Tag[]>([]);

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "./AuthProvider";
+
 
 export type VoteType = "like" | "dislike";
 
@@ -12,7 +13,7 @@ interface VoteState {
 }
 
 export function useVotes(contentId: string) {
-  const { token } = useAuth(); // ✅ get token from auth hook
+  const { token} = useAuthContext();
   const [votes, setVotes] = useState<VoteState>({
     likes: 0,
     dislikes: 0,

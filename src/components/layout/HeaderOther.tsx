@@ -3,18 +3,19 @@
 import { useState, useEffect, useRef } from "react";
 import DraftCategoryCard from "./DraftCategoryCard";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+
 import { useTags } from "@/hooks/useTags";
 import { useCategories } from "@/hooks/useCategories";
 import Image from "next/image";
 import "./Header1.css";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function HeaderOther({ collapsed = false }: { collapsed?: boolean }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout } = useAuthContext();
 
   const { requestNewTag, loading: tagsLoading } = useTags();
   const { requestNewCategory, loading: categoriesRequestLoading } = useCategories();

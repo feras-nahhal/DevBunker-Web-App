@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useComments } from "@/hooks/useComments"; // NEW: For dynamic comment count
-import { useAuth } from "@/hooks/useAuth"; // ✅ import your auth hook
 import { useRouter } from "next/navigation";
 import { useVotes } from "@/hooks/useVotes";
+import { useAuthContext } from "@/hooks/AuthProvider";
 interface ReadlaterCardProps {
   id: string;
   title: string;
@@ -44,7 +44,7 @@ export default function ReadlaterCard({
   const router = useRouter();
   // NEW: Hook for dynamic comment count
   const { comments: commentsData, loading: commentsLoading } = useComments(id);
-  const { user } = useAuth(); // ✅ get logged-in user
+  const { user} = useAuthContext();
   const authorIdShort = author_id.split("-")[0]; // "b655deff"
 
   const handleShareClick = () => {

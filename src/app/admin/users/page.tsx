@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import Header from "@/components/admin/Header";
 import Sidebar from "@/components/admin/Sidebar";
 import UserGrid from "@/components/admin/UserGrid";
 import "./ExplorePage.css";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
-  const { token, loading } = useAuth();
+  const { user,token, loading, isAuthenticated } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 

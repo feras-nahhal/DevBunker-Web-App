@@ -8,11 +8,12 @@ import Header from "@/components/admin/Header";
 import Sidebar from "@/components/admin/Sidebar";
 import NotificationsGrid from "@/components/admin/NotificationsGrid";
 import "./ExplorePage.css";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
-  const { token, loading } = useAuth();
+  const { user,token, loading, isAuthenticated } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 

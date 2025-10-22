@@ -12,6 +12,7 @@ import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
 import "./PostPage.css";
 import CreateResearchSkeleton from "@/components/content/CreateResearchSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface Tag {
   id: string;
@@ -25,7 +26,7 @@ const CreateResearchEditor = dynamic(
 
 export default function CreateResearchPage() {
   const router = useRouter();
-  const { user, loading: authLoading, token } = useAuth();
+  const { user,token, loading, isAuthenticated } = useAuthContext(); // ✅ check authentication state
 
   const [researchId, setResearchId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -65,10 +66,10 @@ export default function CreateResearchPage() {
 
   // ✅ Wait for token before doing anything
   useEffect(() => {
-    if (!authLoading && token) {
+    if (!loading && token) {
       setReady(true);
     }
-  }, [authLoading, token]);
+  }, [loading, token]);
 
   // ✅ Load existing research for editing, only when ready
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function CreateResearchPage() {
     fetchResearch();
   }, [researchId, ready, getContentById, token]);
 
-  const isLoading = authLoading || contentLoading || saving;
+  const isLoading = loading || contentLoading || saving;
 
   // -----------------------------
   // Handlers

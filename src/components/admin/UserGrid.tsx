@@ -3,13 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import UserCard from "./UserCard";
 import { useUsers } from "@/hooks/useUsers"; // NEW: Custom hook for admin users API
-import { useAuth } from "@/hooks/useAuth";
+
 import { USER_ROLES, USER_STATUS } from "@/lib/enums";
 import Image from "next/image";
 
 export default function UserGrid() {
   const { users, loading, error, refetch, deleteUser } = useUsers(); // NEW: Hook fetches from /api/admin/users
-  const { user: authUser } = useAuth(); // Optional: For current user checks
+
 const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 const [roleSearch, setRoleSearch] = useState("");
 const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);

@@ -5,11 +5,11 @@ import ReadlaterCard from "./ReadlaterCard";
 import CommentsPopup from "./CommentsPopup";
 import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
 import { useContent } from "@/hooks/useContent";
-import { useAuth } from "@/hooks/useAuth";
 import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
 import ContentCardSkeleton from "./ContentCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface ReadLaterGridProps {
   searchQuery?: string;
@@ -26,7 +26,7 @@ export default function ReadLaterGrid({
     autoFetch: true,
   });
   const { data: allContent, refetch } = useContent({ type: "all", autoFetch: true });
-  const { user } = useAuth();
+  const { user} = useAuthContext();
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);

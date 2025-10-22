@@ -1,6 +1,5 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
@@ -9,11 +8,12 @@ import Sidebar from "@/components/layout/Sidebar";
 import ReadLaterGrid from "@/components/content/ReadLaterGrid";
 import "./ExplorePage.css";
 import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function ReadLaterPage() {
   // 🔐 Auth
   const router = useRouter();
-  const { token, loading } = useAuth();
+  const { token, loading, isAuthenticated } = useAuthContext(); // ✅ check authentication state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 

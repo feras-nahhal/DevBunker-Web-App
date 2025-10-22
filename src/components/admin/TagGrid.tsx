@@ -3,12 +3,10 @@
 import { useState, useEffect, useMemo } from "react";
 import TagCard from "./TagCard"; // NEW: Use TagCard instead of UserCard
 import { useAdminTags } from "@/hooks/useAdminTags"; // NEW: Use tag requests hook
-import { useAuth } from "@/hooks/useAuth";
 import { TAG_CATEGORY_STATUS } from "@/lib/enums"; // NEW: For tag status (no roles)
 import Image from "next/image";
 export default function TagGrid() {
   const { requests, loading, error, refetch, approveTag, rejectTag } = useAdminTags(); // NEW: Hook for tag requests
-  const { user: authUser } = useAuth(); // Optional: For current user checks
 
   // Filters (client-side – status only, no roles for tags)
   const [search, setSearch] = useState("");

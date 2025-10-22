@@ -3,12 +3,13 @@
 import { useState, ChangeEvent, useEffect, useRef } from "react";
 import DraftCategoryCard from "./DraftCategoryCard";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth"; 
+ 
 import { useTags } from "@/hooks/useTags"; 
 import { useCategories } from "@/hooks/useCategories"; // Uses your hook for categories list
-import { CONTENT_STATUS } from "@/lib/enums"; // For status options
+
 import Image from "next/image";
 import "./Header1.css";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface HeaderDraftProps {
   searchQuery: string; // Raw search for input value
@@ -32,7 +33,7 @@ export default function HeaderDraft({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null); 
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout } = useAuthContext();
 
   // Existing hooks for requests
   const { requestNewTag, loading: tagsLoading } = useTags();

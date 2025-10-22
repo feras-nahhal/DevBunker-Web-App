@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useContent } from "@/hooks/useContent";
-import { useAuth } from "@/hooks/useAuth";
 import DraftCard from "./DraftCard";
 import { AnyContent } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import DraftCardSkeleton from "./DraftCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface DraftGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -19,7 +19,7 @@ export default function DraftGrid({
   filters = {},
 }: DraftGridProps) {
   const { data, loading, error, refetch } = useContent({ type, filters });
-  const { user } = useAuth();
+  const { user} = useAuthContext();
 
   const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
   const handleOpenContentPopup = (content: AnyContent) => {

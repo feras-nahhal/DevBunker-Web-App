@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "./useAuth"; // Import your useAuth hook
+import { useAuthContext } from "./AuthProvider";
 
 interface Category {
   id: string; // UUID from schema
@@ -28,7 +28,7 @@ interface RequestResult {
 }
 
 export function useCategories() {
-  const { token } = useAuth(); // Get token from useAuth (SSR-safe)
+  const { token} = useAuthContext();
 
   // useState for GET data management
   const [categories, setCategories] = useState<Category[]>([]);

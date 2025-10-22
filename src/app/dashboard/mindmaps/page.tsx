@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // ✅ For redirect
-import { useAuth } from "@/hooks/useAuth"; // ✅ For auth context
+
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
 import Header from "@/components/layout/Header";
@@ -9,19 +9,20 @@ import Sidebar from "@/components/layout/Sidebar";
 import "./MindmapPage.css";
 import ContentGrid1 from "@/components/content/ContentGrid1";
 import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function MindmapPage() {
   const router = useRouter();
-  const {token, loading } = useAuth(); // ✅ check auth state
+  const { user, loading, isAuthenticated } = useAuthContext(); // ✅ check auth state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // 🔐 Redirect if not authenticated
-  useEffect(() => {
-    if (!loading && !token) {
+   useEffect(() => {
+    if (!loading && !isAuthenticated) {
       router.push("/auth/login");
     }
-  }, [token, loading, router]);
+  }, [loading, isAuthenticated, router]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -48,7 +49,7 @@ export default function MindmapPage() {
   };
 
   // 🚫 Prevent rendering UI until auth check finishes
-  if (loading || !token) {
+  if (loading || !user) {
     return (
       <div className="dashboard">
         <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />

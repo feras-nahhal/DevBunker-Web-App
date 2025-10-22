@@ -2,17 +2,17 @@
 import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import HeaderDraft from "@/components/layout/HeaderDraft";
 import Sidebar from "@/components/layout/Sidebar";
 import DraftGrid from "@/components/content/DraftGrid";
 import "./researchDraftPage.css";
 import DraftCardSkeleton from "@/components/content/DraftCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function ResearchDraftPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth(); // ✅ optional auth
+  const { user, loading, isAuthenticated } = useAuthContext();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // -----------------------------
@@ -45,15 +45,15 @@ export default function ResearchDraftPage() {
   // Redirect if not authenticated (optional)
   // -----------------------------
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!loading && !user) {
       router.push("/auth/login");
     }
-  }, [user, authLoading, router]);
+  }, [user, loading, router]);
 
   // -----------------------------
   // Conditional render until auth finishes
   // -----------------------------
-  if (authLoading || (!user && !authLoading)) return (
+  if (loading || (!user && !loading)) return (
         <div className="dashboard">
           <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
           <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>

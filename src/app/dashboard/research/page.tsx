@@ -1,6 +1,5 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
@@ -9,11 +8,12 @@ import Sidebar from "@/components/layout/Sidebar";
 import ResearchGrid from "@/components/content/ResearchGrid";
 import "./ResearchPage.css";
 import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function ResearchPage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
-  const { token, loading } = useAuth();
+  const { user,token, loading, isAuthenticated } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
