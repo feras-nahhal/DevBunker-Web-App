@@ -1,17 +1,7 @@
 // src/lib/db.ts
-import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres"; // node-postgres adapter
 import * as schema from "./tables";
 
-const globalForDb = global as unknown as { db?: ReturnType<typeof drizzle> };
-
-export const db =
-  globalForDb.db ??
-  drizzle(new Pool({
-    connectionString: process.env.DATABASE_URL!,
-    ssl: { rejectUnauthorized: false },
-  }), { schema });
-
-if (process.env.NODE_ENV !== "production") globalForDb.db = db;
-
-
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool, { schema });
