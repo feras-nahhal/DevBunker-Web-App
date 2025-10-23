@@ -566,7 +566,7 @@ const handleRemoveTag = (tagId: string) => {
 
 // Prepare tag_ids for API
 const tag_ids = selectedTags.map(tag => tag.id);
-
+const [dropdownOpen, setDropdownOpen] = useState(false);
     
 
   // -----------------------------
@@ -841,7 +841,7 @@ const handleDraft = useCallback(async () => {
               padding: "20px",
               borderRadius: "8px",
               width: "711px",
-              height: "565px",
+              height: "570px",
               display: "flex",
               flexDirection: "column",
               gap: "16px",
@@ -883,80 +883,69 @@ const handleDraft = useCallback(async () => {
               />
             </div>
 
-            {/* Category label + selector */}
+           {/* Category Select */}
+          <div className="relative w-full mt-2 mx-auto flex flex-col items-start gap-2">
+            <label className="text-base font-medium text-left text-white">Category</label>
+
+            {/* Dropdown header */}
             <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                width: "100%",
-                gap: "6px",
-              }}
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer  transition hover:bg-white/20 w-[663px]"
             >
-              <label
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  textAlign: "left",
-                }}
-              >
-                Category
-              </label>
-              <div
-                style={{
-                  position: "relative",
-                  width: "663px",
-                }}
-              >
-                <select
-                  value={selectedCategoryId}
-                  onChange={(e) => setSelectedCategoryId(e.target.value)}
-                  style={{
-                    appearance: "none",
-                    WebkitAppearance: "none",
-                    MozAppearance: "none",
-                    padding: "8px",
-                    borderRadius: "6px",
-                    width: "100%",
-                    backgroundColor: "",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  <option
-                    value=""
-                    style={{ backgroundColor: "rgba(0,0,0,0.8)", color: "white" }}
-                  >
-                    {loadingCategories ? "Loading categories..." : "Select a category"}
-                  </option>
-                  {categories.map((cat) => (
-                    <option
-                      key={cat.id}
-                      value={cat.id}
-                      style={{ backgroundColor: "rgba(0,0,0,0.8)", color: "white" }}
-                    >
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-                {/* Custom arrow */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    right: "10px",
-                    pointerEvents: "none",
-                    transform: "translateY(-50%)",
-                    width: 0,
-                    height: 0,
-                    borderLeft: "6px solid transparent",
-                    borderRight: "6px solid transparent",
-                    borderTop: "6px solid gray",
-                  }}
-                />
-              </div>
+              {selectedCategoryId
+                ? categories.find((cat) => cat.id === selectedCategoryId)?.name
+                : loadingCategories
+                ? "Loading categories..."
+                : "Select a category"}
+              <span className="ml-2 text-xs opacity-70">▼</span>
             </div>
+
+            {/* Dropdown menu */}
+            {dropdownOpen && (
+              <div
+                className="absolute top-full left-0 w-[663px] mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                style={{
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
+              >
+                {/* Hide scrollbar for Chrome, Safari, Edge */}
+                <style>
+                  {`
+                    div::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}
+                </style>
+
+                {/* Default option */}
+                <div
+                  onClick={() => {
+                    setSelectedCategoryId("");
+                    setDropdownOpen(false);
+                  }}
+                  className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                >
+                  Select a category
+                </div>
+
+                {/* Category list */}
+                {categories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategoryId(cat.id);
+                      setDropdownOpen(false);
+                    }}
+                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                  >
+                    {cat.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
 
             {/* Tags label + input */}
             <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
