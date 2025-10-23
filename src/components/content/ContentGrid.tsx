@@ -6,7 +6,6 @@ import CommentsPopup from "./CommentsPopup";
 import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
 import ContentCardSkeleton from "./ContentCardSkeleton";
-
 import { useContent } from "@/hooks/useContent";
 import { useAuthContext } from "@/hooks/AuthProvider";
 import { AnyContent, Comment } from "@/types/content";
@@ -37,6 +36,78 @@ export default function ContentGrid({
     type: "post" | "mindmap" | "research";
   } | null>(null);
 
+  //new part 
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+ 
+  useEffect(() => {
+  if (data.length === 0) return;
+
+  const contentIds = data.map((c) => c.id).join(",");
+
+  fetch(`/api/comments/counts?content_ids=${contentIds}`)
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) setCommentCounts(json.counts);
+      else setCommentCounts({});
+    })
+    .catch((err) => {
+      console.error("Failed to fetch comment counts:", err);
+      setCommentCounts({});
+    });
+  }, [data]);
+
+/** Fetch vote */
+const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dislikes: number }>>({});
+
+  // Fetch vote counts for all cards
+  const fetchVoteCounts = async () => {
+    if (data.length === 0) return;
+
+    const contentIds = data.map((c) => c.id).join(",");
+
+    try {
+      const res = await fetch(`/api/vote/counts?content_ids=${contentIds}`);
+      const json = await res.json();
+      if (json.success) setVoteCounts(json.counts);
+      else setVoteCounts({});
+    } catch (err) {
+      console.error("Failed to fetch vote counts:", err);
+      setVoteCounts({});
+    }
+  };
+
+  useEffect(() => {
+    fetchVoteCounts();
+  }, [data]);
+
+  // Handle voting: Post vote, then refetch counts for all cards
+  const handleVote = async (contentId: string, voteType: "like" | "dislike") => {
+    if (!token) {
+      alert("You must be logged in to vote.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/vote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content_id: contentId, vote_type: voteType }),
+      });
+
+      if (!res.ok) throw new Error(`Vote failed: ${res.status}`);
+
+      // Refetch counts for all cards to update the grid
+      await fetchVoteCounts();
+    } catch (err) {
+      console.error("Vote error:", err);
+      alert("Failed to vote. Please try again.");
+    }
+  };
+
+
   /** Fetch comments */
   const fetchComments = async (contentId: string) => {
     try {
@@ -58,36 +129,45 @@ export default function ContentGrid({
     setIsPopupOpen(true);
   };
 
-  /** Add comment */
   const handleAddComment = async (text: string, parentId?: string) => {
-    if (!token) {
-      alert("You must be logged in to comment.");
-      return;
-    }
+  if (!token) {
+    alert("You must be logged in to comment.");
+    return;
+  }
 
-    try {
-      const res = await fetch(`/api/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content_id: selectedContent?.id,
-          text,
-          parent_id: parentId || null,
-        }),
-      });
+  try {
+    const res = await fetch(`/api/comments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        content_id: selectedContent?.id,
+        text,
+        parent_id: parentId || null,
+      }),
+    });
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-      await fetchComments(selectedContent!.id);
-    } catch (err) {
-      console.error("Failed to post comment:", err);
-      const message = err instanceof Error ? err.message : "Failed to post comment.";
-      alert(message);
-    }
-  };
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    // ✅ Update the comments popup
+    await fetchComments(selectedContent!.id);
+
+    // ✅ Update the comment count for the card
+    setCommentCounts((prev) => ({
+      ...prev,
+      [selectedContent!.id]: (prev[selectedContent!.id] || 0) + 1,
+    }));
+
+  } catch (err) {
+    console.error("Failed to post comment:", err);
+    const message = err instanceof Error ? err.message : "Failed to post comment.";
+    alert(message);
+  }
+};
+
 
   /** Determine API path */
   const getApiPath = (contentType: "post" | "mindmap" | "research") => {
@@ -186,6 +266,11 @@ export default function ContentGrid({
                     onOpenContent={() => setSelectedContentPopup(card)}
                     user={user}
                     onOpenShare={(data) => setSelectedShareData(data)}
+                    commentCount={commentCounts[card.id] || 0}// ✅ pass count
+                    likes={voteCounts[card.id]?.likes || 0} // Pass from grid's state
+                    dislikes={voteCounts[card.id]?.dislikes || 0} // Pass from grid's state
+                    onVote={(voteType) => handleVote(card.id, voteType)} // Pass vote handler
+
                   />
                 </div>
               );

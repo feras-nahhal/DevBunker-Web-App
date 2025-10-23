@@ -2,11 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
-import { useComments } from "@/hooks/useComments";
 import Image from "next/image";
 import { CONTENT_STATUS } from "@/lib/enums";
 import { useRouter } from "next/navigation";
-import { useVotes } from "@/hooks/useVotes";
 
 interface ResearchCardProps {
   id: string;
@@ -22,6 +20,10 @@ interface ResearchCardProps {
   onOpenContent?: () => void;
   onEdit?: () => void; // ✅ new edit handler
   onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
+  commentCount?: number;
+  likes?: number; // Now used directly from props
+  dislikes?: number; // Now used directly from props
+  onVote?: (voteType: "like" | "dislike") => void; // New: Callback to grid for voting
 }
 
 export default function ResearchCard({
@@ -37,9 +39,13 @@ export default function ResearchCard({
   onOpenComments,
   onOpenContent,
   onEdit,
-  onOpenShare
+  onOpenShare,
+  commentCount = 0,
+  likes = 0, // Use directly from props
+  dislikes = 0, // Use directly from props
+  onVote, // Use this to handle votes
 }: ResearchCardProps) {
-  const { votes, vote, loading: voteLoading } = useVotes(id);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,7 +54,7 @@ export default function ResearchCard({
   };
   
   const router = useRouter();
-  const { comments: commentsData, loading: commentsLoading } = useComments(id);
+
   const authorName = authorEmail ? authorEmail.split("@")[0] : "Unknown";
   const { addBookmark, addReadLater } = useBookmarksAndReadLater();
 
@@ -326,25 +332,24 @@ export default function ResearchCard({
 
           {/* Votes & Comments */}
           <div className="flex flex-row items-center justify-between w-full h-[44px] mt-2">
-            <div className="flex flex-row items-center gap-2">
-                                     {/* Likes */}
-                                     <button
-                                       onClick={() => vote("like")}
-                                       className={votes.userVote === "like" ? "text-green-400" : "text-gray-400"}
-                                     >
-                                       <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
-                                     </button>
-                                     <span>{votes.likes}</span>
-                       
-                                     {/* Dislikes */}
-                                     <button
-                                       onClick={() => vote("dislike")}
-                                       className={votes.userVote === "dislike" ? "text-red-400" : "text-gray-400"}
-                                     >
-                                       <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
-                                     </button>
-                                     <span>{votes.dislikes}</span>
-                                   </div>
+          {/* Likes/Dislikes */}
+            <div className="flex items-center gap-2">
+            <button
+              onClick={() => onVote && onVote("like")}
+              className="flex items-center gap-1 text-gray-400"
+            >
+              <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
+              <span>{likes}</span>
+            </button>
+
+            <button
+              onClick={() => onVote && onVote("dislike")}
+              className="flex items-center gap-1 text-gray-400"
+            >
+              <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
+              <span>{dislikes}</span>
+            </button>
+          </div>
 
            <button
                          onClick={(e) => {
@@ -396,7 +401,7 @@ export default function ResearchCard({
            
                          {/* 🔢 Comment count */}
                          <span className="text-sm text-gray-400 relative top-[1px]">
-                           {commentsLoading ? "..." : commentsData.length}
+                           {commentCount}
                          </span>
                        </button>
           </div>

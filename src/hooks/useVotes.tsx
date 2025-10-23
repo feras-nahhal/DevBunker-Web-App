@@ -1,58 +1,71 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useAuthContext } from "./AuthProvider";
 
+export function useVote(contentId: string) {
+  const { token, isAuthenticated } = useAuthContext(); // ✅ use token + auth check
+  const [likes, setLikes] = useState(0);
+  const [dislikes, setDislikes] = useState(0);
+  const [userVote, setUserVote] = useState<"like" | "dislike" | null>(null);
+  const [loading, setLoading] = useState(false);
 
-export type VoteType = "like" | "dislike";
-
-interface VoteState {
-  likes: number;
-  dislikes: number;
-  userVote: VoteType | null;
-}
-
-export function useVotes(contentId: string) {
-  const { token} = useAuthContext();
-  const [votes, setVotes] = useState<VoteState>({
-    likes: 0,
-    dislikes: 0,
-    userVote: null,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  /** Fetch votes */
-  const fetchVotes = useCallback(async () => {
+  // ✅ Fetch counts for one card
+  const fetchCounts = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const res = await fetch(`/api/vote?content_id=${contentId}`, {
+      const res = await fetch(`/api/vote/counts?content_ids=${contentId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      const data = await res.json();
 
-      const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.error || "Failed to fetch votes");
-
-      setVotes({
-        likes: json.likes,
-        dislikes: json.dislikes,
-        userVote: json.userVote || null,
-      });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
+      if (data.success && data.counts[contentId]) {
+        setLikes(data.counts[contentId].likes);
+        setDislikes(data.counts[contentId].dislikes);
+        if (data.counts[contentId].user_vote) {
+          setUserVote(data.counts[contentId].user_vote);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching vote counts:", err);
     }
   }, [contentId, token]);
 
-  /** Vote action */
+  // ✅ Optimistic UI vote handler
   const vote = useCallback(
-    async (type: VoteType) => {
-      try {
-        setLoading(true);
+    async (type: "like" | "dislike") => {
+      if (loading) return;
+      if (!isAuthenticated) {
+        console.warn("User must be logged in to vote.");
+        return;
+      }
 
+      // ⚡ Optimistic update
+      setLoading(true);
+      const previousVote = userVote;
+      const prevLikes = likes;
+      const prevDislikes = dislikes;
+
+      if (type === "like") {
+        if (userVote === "like") {
+          setLikes(likes - 1);
+          setUserVote(null);
+        } else {
+          setLikes(likes + 1);
+          if (userVote === "dislike") setDislikes(dislikes - 1);
+          setUserVote("like");
+        }
+      } else {
+        if (userVote === "dislike") {
+          setDislikes(dislikes - 1);
+          setUserVote(null);
+        } else {
+          setDislikes(dislikes + 1);
+          if (userVote === "like") setLikes(likes - 1);
+          setUserVote("dislike");
+        }
+      }
+
+      try {
         const res = await fetch(`/api/vote`, {
           method: "POST",
           headers: {
@@ -62,23 +75,25 @@ export function useVotes(contentId: string) {
           body: JSON.stringify({ content_id: contentId, vote_type: type }),
         });
 
-        const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || "Failed to vote");
+        if (!res.ok) throw new Error(`Vote request failed: ${res.status}`);
 
-        // Refetch votes after action
-        await fetchVotes();
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        const data = await res.json();
+        console.log("Vote result:", data);
+
+        // ✅ Sync with server (ensure accurate count)
+        await fetchCounts();
+      } catch (err) {
+        console.error("Error voting:", err);
+        // ❌ Revert optimistic update if API fails
+        setLikes(prevLikes);
+        setDislikes(prevDislikes);
+        setUserVote(previousVote);
       } finally {
         setLoading(false);
       }
     },
-    [contentId, token, fetchVotes]
+    [contentId, likes, dislikes, userVote, loading, fetchCounts, token, isAuthenticated]
   );
 
-  useEffect(() => {
-    fetchVotes();
-  }, [fetchVotes]);
-
-  return { votes, vote, loading, error, refetch: fetchVotes };
+  return { likes, dislikes, userVote, loading, vote, fetchCounts };
 }

@@ -2,9 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { useComments } from "@/hooks/useComments"; // NEW: For dynamic comment count
 import { useRouter } from "next/navigation";
-import { useVotes } from "@/hooks/useVotes";
 import { useAuthContext } from "@/hooks/AuthProvider";
 interface ReadlaterCardProps {
   id: string;
@@ -20,6 +18,10 @@ interface ReadlaterCardProps {
   onOpenComments?: () => void; // NEW: For opening comments popup\
   onOpenContent?: () => void;
   onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
+  commentCount?: number;
+  likes?: number; // Now used directly from props
+  dislikes?: number; // Now used directly from props
+  onVote?: (voteType: "like" | "dislike") => void; // New: Callback to grid for voting
 }
 
 export default function ReadlaterCard({
@@ -35,15 +37,19 @@ export default function ReadlaterCard({
   onRemoveFromReadlater,
   onOpenComments,
   onOpenContent,
-  onOpenShare
+  onOpenShare,
+  commentCount = 0,
+  likes = 0, // Use directly from props
+  dislikes = 0, // Use directly from props
+  onVote, // Use this to handle votes
 }: ReadlaterCardProps) {
-  const { votes, vote, loading: voteLoading } = useVotes(id);
+  
   // REMOVED: const [comments] = useState(initialComments); (unused)
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   // NEW: Hook for dynamic comment count
-  const { comments: commentsData, loading: commentsLoading } = useComments(id);
+
   const { user} = useAuthContext();
   const authorIdShort = author_id.split("-")[0]; // "b655deff"
 
@@ -276,25 +282,24 @@ if (user?.id === author_id && onDelete) {
                
                  {/* Votes & Comments */}
                  <div className="flex flex-row items-center justify-between w-full h-[44px] mt-2">
-                   <div className="flex flex-row items-center gap-2">
-                                            {/* Likes */}
-                                            <button
-                                              onClick={() => vote("like")}
-                                              className={votes.userVote === "like" ? "text-green-400" : "text-gray-400"}
-                                            >
-                                              <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
-                                            </button>
-                                            <span>{votes.likes}</span>
-                              
-                                            {/* Dislikes */}
-                                            <button
-                                              onClick={() => vote("dislike")}
-                                              className={votes.userVote === "dislike" ? "text-red-400" : "text-gray-400"}
-                                            >
-                                              <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
-                                            </button>
-                                            <span>{votes.dislikes}</span>
-                                          </div>
+                   {/* Likes/Dislikes */}
+                               <div className="flex items-center gap-2">
+                               <button
+                                 onClick={() => onVote && onVote("like")}
+                                 className="flex items-center gap-1 text-gray-400"
+                               >
+                                 <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
+                                 <span>{likes}</span>
+                               </button>
+                   
+                               <button
+                                 onClick={() => onVote && onVote("dislike")}
+                                 className="flex items-center gap-1 text-gray-400"
+                               >
+                                 <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
+                                 <span>{dislikes}</span>
+                               </button>
+                             </div>
                
                     <button
                                             onClick={(e) => {
@@ -346,7 +351,7 @@ if (user?.id === author_id && onDelete) {
                               
                                             {/* 🔢 Comment count */}
                                             <span className="text-sm text-gray-400 relative top-[1px]">
-                                              {commentsLoading ? "..." : commentsData.length}
+                                              {commentCount}
                                             </span>
                                           </button>
                  </div>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useComments } from "@/hooks/useComments"; // ✅ import the hook
 
 import { useRouter } from "next/navigation";
-import { useVotes } from "@/hooks/useVotes";
+
 import { useAuthContext } from "@/hooks/AuthProvider";
 
 interface BookmarkCardProps {
@@ -22,6 +22,10 @@ interface BookmarkCardProps {
   onOpenComments?: () => void;
   onOpenContent?: () => void;      // NEW: For opening comments popup
   onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
+  commentCount?: number;
+  likes?: number; // Now used directly from props
+  dislikes?: number; // Now used directly from props
+  onVote?: (voteType: "like" | "dislike") => void; // New: Callback to grid for voting
 }
 
 export default function BookmarkCard({
@@ -37,14 +41,18 @@ export default function BookmarkCard({
   onRemoveFromBookmark,
   onOpenComments,
   onOpenShare,
-  onOpenContent
+  onOpenContent,
+  commentCount = 0,
+  likes = 0, // Use directly from props
+  dislikes = 0, // Use directly from props
+  onVote, // Use this to handle votes
 }: BookmarkCardProps) {
-  const { votes, vote, loading: voteLoading } = useVotes(id);
+  
   // REMOVED: const [comments] = useState(initialComments); (unused)
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const { comments: commentsData, loading: commentsLoading } = useComments(id); // ✅ hook usage for dynamic count
+
   const { user} = useAuthContext();
   const authorIdShort = author_id.split("-")[0]; // "b655deff"
 
@@ -264,25 +272,23 @@ if (user?.id === author_id && onDelete) {
        
          {/* Votes & Comments */}
          <div className="flex flex-row items-center justify-between w-full h-[44px] mt-2">
-                       <div className="flex flex-row items-center gap-2">
-                         {/* Likes */}
-                         <button
-                           onClick={() => vote("like")}
-                           className={votes.userVote === "like" ? "text-green-400" : "text-gray-400"}
-                         >
-                           <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
-                         </button>
-                         <span>{votes.likes}</span>
-           
-                         {/* Dislikes */}
-                         <button
-                           onClick={() => vote("dislike")}
-                           className={votes.userVote === "dislike" ? "text-red-400" : "text-gray-400"}
-                         >
-                           <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
-                         </button>
-                         <span>{votes.dislikes}</span>
-                       </div>
+                       <div className="flex items-center gap-2">
+                                   <button
+                                     onClick={() => onVote && onVote("like")}
+                                     className="flex items-center gap-1 text-gray-400"
+                                   >
+                                     <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
+                                     <span>{likes}</span>
+                                   </button>
+                       
+                                   <button
+                                     onClick={() => onVote && onVote("dislike")}
+                                     className="flex items-center gap-1 text-gray-400"
+                                   >
+                                     <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
+                                     <span>{dislikes}</span>
+                                   </button>
+                                 </div>
        
            <button
                          onClick={(e) => {
@@ -334,7 +340,7 @@ if (user?.id === author_id && onDelete) {
            
                          {/* 🔢 Comment count */}
                          <span className="text-sm text-gray-400 relative top-[1px]">
-                           {commentsLoading ? "..." : commentsData.length}
+                           {commentCount}
                          </span>
                        </button>
          </div>

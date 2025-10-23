@@ -31,7 +31,6 @@ export default function DraftCard({
   authorEmail,
   onOpenContent
 }: DraftCardProps) {
-  const [votes] = useState(initialVotes);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
