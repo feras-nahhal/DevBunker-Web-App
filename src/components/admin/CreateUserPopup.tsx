@@ -83,7 +83,7 @@ export default function CreateUserPopup({ onClose }: CreateUserPopupProps) {
             <span className="ml-2">▼</span>
           </div>
           {dropdownOpen && (
-            <div className="absolute top-full left-0 w-full mt-1 bg-white/5 backdrop-blur-[37px] border border-[#918AAB26] rounded z-50 max-h-40 overflow-auto">
+            <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48">
               {Object.values(USER_ROLES).map((r) => (
                 <div
                   key={r}

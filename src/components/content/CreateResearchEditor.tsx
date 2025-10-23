@@ -110,7 +110,7 @@ export default function CreateResearchEditor({
   const [showReferencePopup, setShowReferencePopup] = useState(false);
   const [referenceInput, setReferenceInput] = useState(""); // Temp input for popup
   const [referenceError, setReferenceError] = useState<string | null>(null); // Optional: For validation errors
-
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { tags: fetchedTags, fetchTags } = useContentTags();
   const { references: fetchedReferences, refresh: refreshReferences } = useReferences(researchId || "");
@@ -257,7 +257,6 @@ export default function CreateResearchEditor({
     if (onReferencesChange) onReferencesChange(updatedReferences); // Pass up to parent (reveals/saves on publish)
     setReferenceInput(""); // Clear input
     setReferenceError(null); // Clear error
-    setShowReferencePopup(false); // Close popup
   };
 
   const removeReference = (index: number) => {
@@ -692,80 +691,112 @@ export default function CreateResearchEditor({
           )}
         </div>
 
-        {/* CATEGORY */}
-        <div className="category-button-wrapper">
-          <button
-            className="btn publish"
-            onClick={() => setShowCategoryPopup(!showCategoryPopup)}
-          >
-            <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Category
-          </button>
+       {/* CATEGORY */}
+              <div className="category-button-wrapper">
+                <button
+                  className="btn publish"
+                  onClick={() => setShowCategoryPopup(!showCategoryPopup)}
+                >
+                  <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Category
+                </button>
 
-          {showCategoryPopup && (
-            <div
-              style={{
-                marginTop: "8px",
-                width: "855px",
-                height: "92px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(80, 80, 80, 0.24)",
-                borderRadius: "16px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-              }}
-            >
-              {categoriesLoading ? (
-                <div className="popup-loading">Loading...</div>
-              ) : categoriesError ? (
-                <div className="popup-error">Error loading categories</div>
-              ) : (
-                <>
-                  <label
+                {showCategoryPopup && (
+                  <div
                     style={{
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "rgba(255,255,255,0.8)",
-                      marginBottom: "6px",
+                      marginTop: "8px",
+                      width: "855px",
+                      height: "92px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(80, 80, 80, 0.24)",
+                      borderRadius: "16px",
+                      padding: "16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
                     }}
                   >
-                    Category
-                  </label>
+                    {categoriesLoading ? (
+                      <div className="popup-loading">Loading...</div>
+                    ) : categoriesError ? (
+                      <div className="popup-error">Error loading categories</div>
+                    ) : (
+                      <>
+                        <label
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: 500,
+                            color: "rgba(255,255,255,0.8)",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          Category
+                        </label>
 
-                  <select
-                    className="toolbar-select"
-                    value={selectedCategory?.id || "0"}
-                    onChange={(e) => {
-                      const selectedValue = e.target.value;
-                      handleCategoryChange(selectedValue);
-                      if (selectedValue === "0") setShowCategoryPopup(false);
-                    }}
-                    style={{
-                      width: "823px",
-                      height: "40px",
-                      background: "rgba(0,0,0,0.25)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: "8px",
-                      color: "white",
-                      padding: "8px 10px",
-                      fontSize: "14px",
-                      outline: "none",
-                      appearance: "none",
-                    }}
-                  >
-                    <option value="0">No Category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+                        {/* Custom Dropdown Header */}
+                        <div
+                          onClick={() => setDropdownOpen(!dropdownOpen)} // ✅ Toggle dropdown
+                          className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer  transition hover:bg-white/20"
+                          style={{
+                            width: "823px", // Match original width
+                            height: "40px", // Match original height
+                          }}
+                        >
+                          {selectedCategory?.name || "No Category"}
+                          <span className="ml-2 text-xs opacity-70">▼</span>
+                        </div>
+
+                        {/* Custom Dropdown Menu (with your specified styling) */}
+                        {dropdownOpen && (
+                          <div
+                            className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                            style={{
+                              scrollbarWidth: "none", // Firefox
+                              msOverflowStyle: "none", // IE/Edge
+                              width: "823px", // Match header width for alignment
+                            }}
+                          >
+                            {/* Hide scrollbar for Chrome, Safari, Edge */}
+                            <style>
+                              {`
+                                div::-webkit-scrollbar {
+                                  display: none;
+                                }
+                              `}
+                            </style>
+
+                            {/* "No Category" Option */}
+                            <div
+                              onClick={() => {
+                                handleCategoryChange("0"); // Or your logic for no category
+                                setDropdownOpen(false);
+                                setShowCategoryPopup(false); // Close popup as in original
+                              }}
+                              className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                            >
+                              No Category
+                            </div>
+
+                            {/* Category Options */}
+                            {categories.map((cat) => (
+                              <div
+                                key={cat.id}
+                                onClick={() => {
+                                  handleCategoryChange(cat.id);
+                                  setDropdownOpen(false);
+                                  // Optionally close popup: setShowCategoryPopup(false);
+                                }}
+                                className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                              >
+                                {cat.name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
 
               </div>
               

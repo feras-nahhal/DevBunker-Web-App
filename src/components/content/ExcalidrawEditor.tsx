@@ -54,6 +54,8 @@ interface MindmapContentProps {
   initialTags?: Tag[];
   initialNodes?: Node[];
   initialEdges?: Edge[];
+    isModalOpen?: boolean; // New: External control for modal
+  setIsModalOpen?: (open: boolean) => void; // New: External setter for modal
 }
 
 interface NodeCustomData {
@@ -475,6 +477,8 @@ function MindmapContent({
   initialTags = [],
   initialNodes = [{ id: "1", type: "circle", data: { label: "Central Node", color: "#fff" }, position: { x: 400, y: 100 }, draggable: true }],
   initialEdges = [],
+  isModalOpen: externalIsModalOpen, // New: Use external if provided
+  setIsModalOpen: externalSetIsModalOpen,
 }: MindmapContentProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -568,7 +572,13 @@ const tag_ids = selectedTags.map(tag => tag.id);
   // -----------------------------
   // Modal State
   // -----------------------------
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // -----------------------------
+  // Modal State (now conditional based on props)
+  // -----------------------------
+  const [internalIsModalOpen, setInternalIsModalOpen] = useState(false);
+  const isModalOpen = externalIsModalOpen !== undefined ? externalIsModalOpen : internalIsModalOpen;
+  const setIsModalOpen = externalSetIsModalOpen || setInternalIsModalOpen;
+
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialContentBody);
   const [saving, setSaving] = useState(false);
@@ -775,7 +785,6 @@ const handleDraft = useCallback(async () => {
         <button onClick={() => changeColor("#f43f5e")}>🟥</button>
         <button onClick={renameNode}><Edit size={16} /></button>
         <button onClick={deleteNode}><Trash2 size={16} /></button>
-        <button onClick={() => setIsModalOpen(true)}><Save size={16} /></button>
         <button onClick={exportPng}><Camera size={16} /></button>
         <label>Line Type:</label>
         {(["default","straight","step","smoothstep"] as const).map((type) => (

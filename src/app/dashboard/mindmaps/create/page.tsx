@@ -26,6 +26,7 @@ interface ExcalidrawData {
 }
 
 export default function PostPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useAuthContext(); // ✅ Updated
   const [mindmapId, setMindmapId] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export default function PostPage() {
   const [ready, setReady] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+
 
   const { getContentById, createContent, updateContent, loading: contentLoading, refetch } =
     useContent({ type: "mindmap" as ContentType, autoFetch: false });
@@ -80,7 +82,7 @@ export default function PostPage() {
 
   const isLoading = authLoading || contentLoading || saving;
 
-  const handleCancel = () => {
+    const handleCancel = () => {
     setTitle("");
     setContentBody("");
     setSelectedTags([]);
@@ -89,49 +91,6 @@ export default function PostPage() {
     setEdges([]);
     router.push("/dashboard/mindmaps");
   };
-
-  const handleSave = async (isPublished: boolean) => {
-    if (!title.trim() || !isAuthenticated) {
-      alert("Title and authentication are required");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const dataToSend: Partial<AnyContent> & {
-        tag_ids?: string[];
-        category_id?: string | null;
-        status: string;
-        content_body?: string;
-        excalidraw_data?: ExcalidrawData;
-      } = {
-        title,
-        content_body: contentBody,
-        excalidraw_data: { nodes, edges },
-        status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT,
-        category_id: selectedCategoryId ?? undefined,
-        tag_ids: selectedTags.map((t) => t.id),
-      };
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
-
-      const response = mindmapId
-        ? await updateContent(mindmapId, dataToSend, token)
-        : await createContent(dataToSend, token);
-
-      if (!response) throw new Error("No response from API");
-
-      refetch();
-      router.push("/dashboard/mindmaps");
-    } catch (err) {
-      console.error("Save error:", err);
-      alert(`Error saving: ${err instanceof Error ? err.message : "Unknown error"}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveAsDraft = () => handleSave(false);
-  const handleSavePublish = () => handleSave(true);
 
   const initialTags = useMemo(() => selectedTags, [selectedTags]);
   const initialCategoryId = useMemo(() => selectedCategoryId || "", [selectedCategoryId]);
@@ -143,7 +102,11 @@ export default function PostPage() {
       <div className="dashboard">
         <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <CreateMinemapHeader />
+          <CreateMinemapHeader
+           onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
+          onCancel={handleCancel} // ✅ Unchanged: Still redirects
+            saving={isLoading}
+            collapsed={sidebarCollapsed} />
           <div className="post-container">
             <div className="flex items-center mb-4">
               <Image src="/pen.svg" alt="Menu Icon" width={20} height={20} className="object-contain mr-[4px]" />
@@ -162,7 +125,12 @@ export default function PostPage() {
     <div className="dashboard">
       <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <CreateMinemapHeader />
+        <CreateMinemapHeader
+         onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
+          onCancel={handleCancel} // ✅ Unchanged: Still redirects
+            saving={isLoading}
+            collapsed={sidebarCollapsed}
+         />
         <div className="post-container">
           <div className="flex items-center mb-4">
             <Image src="/pen.svg" alt="Menu Icon" width={20} height={20} className="object-contain mr-[4px]" />
@@ -181,6 +149,8 @@ export default function PostPage() {
                 initialTags={initialTags}
                 initialNodes={initialNodes}
                 initialEdges={initialEdges}
+                isModalOpen={isModalOpen} // ✅ New: Pass lifted state
+                setIsModalOpen={setIsModalOpen} // ✅ New: Pass setter
               />
             </ReactFlowProvider>
           </div>

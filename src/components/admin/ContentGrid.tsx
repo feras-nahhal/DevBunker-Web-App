@@ -314,7 +314,7 @@ const clearAllFilters = () => {
                   className="w-full bg-transparent text-white text-sm border-none outline-none placeholder:text-gray-400"
                 />
                 {statusDropdownOpen && (
-                  <div className="absolute top-full left-0 w-full mt-1 border border-white/20 rounded-lg max-h-40 overflow-y-auto bg-black/50 z-50">
+                  <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 ">
                     {Object.values(CONTENT_STATUS)
                       .filter((s) => s.toLowerCase().includes(statusSearch.toLowerCase()))
                       .map((s) => (
@@ -331,43 +331,58 @@ const clearAllFilters = () => {
               </div>
             </div>
 
-            {/* Category Multi-Select */}
-            <div className="w-[220px] relative">
-              <label className="block text-white text-[12px] mb-1">Categories</label>
-              <div className="relative bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
-                <div className="flex flex-wrap gap-1 mb-1">
-                  {selectedCategories.map((cat) => (
-                    <div key={cat} className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all">
+          {/* Category Multi-Select */}
+        <div className="w-[220px] relative">
+          <label className="block text-white text-[12px] mb-1">Categories</label>
+          <div className="relative bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+            <div className="flex flex-wrap gap-1 mb-1">
+              {selectedCategories.map((cat) => (
+                <div key={cat} className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all">
+                  {cat}
+                  <button onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)} className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]">×</button>
+                </div>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={categorySearch}
+              onChange={(e) => { setCategorySearch(e.target.value); setCategoryDropdownOpen(true); }}
+              onFocus={() => setCategoryDropdownOpen(true)}
+              placeholder="Type to search..."
+              className="w-full bg-transparent text-white text-sm border-none outline-none placeholder:text-gray-400"
+            />
+            {categoryDropdownOpen && (
+              <div
+                className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                style={{
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
+              >
+                {/* Hide scrollbar for Chrome, Safari, Edge */}
+                <style>
+                  {`
+                    div::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}
+                </style>
+                {categoriesList
+                  .filter((cat) => cat.toLowerCase().includes(categorySearch.toLowerCase()))
+                  .map((cat) => (
+                    <div
+                      key={cat}
+                      onClick={() => { addToArray(selectedCategories, setSelectedCategories, cat, categoriesList); setCategorySearch(""); setCategoryDropdownOpen(false); }}
+                      className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md"
+                    >
                       {cat}
-                      <button onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)} className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]">×</button>
                     </div>
                   ))}
-                </div>
-                <input
-                  type="text"
-                  value={categorySearch}
-                  onChange={(e) => { setCategorySearch(e.target.value); setCategoryDropdownOpen(true); }}
-                  onFocus={() => setCategoryDropdownOpen(true)}
-                  placeholder="Type to search..."
-                  className="w-full bg-transparent text-white text-sm border-none outline-none placeholder:text-gray-400"
-                />
-                {categoryDropdownOpen && (
-                  <div className="absolute top-full left-0 w-full mt-1 border border-white/20 rounded-lg max-h-40 overflow-y-auto bg-black/50 z-50">
-                    {categoriesList
-                      .filter((cat) => cat.toLowerCase().includes(categorySearch.toLowerCase()))
-                      .map((cat) => (
-                        <div
-                          key={cat}
-                          onClick={() => { addToArray(selectedCategories, setSelectedCategories, cat, categoriesList); setCategorySearch(""); setCategoryDropdownOpen(false); }}
-                          className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md"
-                        >
-                          {cat}
-                        </div>
-                      ))}
-                  </div>
-                )}
               </div>
-            </div>
+            )}
+          </div>
+        </div>
+
 
             {(selectedStatuses.length > 0 || selectedCategories.length > 0) && (
                         <button

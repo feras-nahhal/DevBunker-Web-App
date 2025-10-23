@@ -264,7 +264,7 @@ const handleClearFilters = () => {
                 gap: "1px",
                 position: "absolute",
                 width: "198px",
-                height: "78px",
+                height: "76px",
                 top: "110%",
                 right: 0,
                 background: "rgba(255, 255, 255, 0.05)",

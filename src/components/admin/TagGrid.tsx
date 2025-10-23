@@ -310,7 +310,7 @@ const bulkRejectSelected = async () => {
                                      />
                        
                                      {statusDropdownOpen && (
-                                       <div className="absolute top-full left-0 w-full mt-1  border border-white/20 rounded-lg backdrop-blur-lg  z-50 max-h-40 overflow-y-auto">
+                                       <div  className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48">
                                          {Object.values(TAG_CATEGORY_STATUS)
                                            .filter((status) =>
                                              status.toLowerCase().includes(statusSearch.toLowerCase())
