@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus"; // FIXED: Import from the correct path as per TipTap docs
 import StarterKit from "@tiptap/starter-kit";
 import Link1 from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -59,7 +60,6 @@ interface Tag {
 
 // -----------------------------
 
-
 interface CreateResearchEditorProps {
   title: string;
   body: string;
@@ -90,6 +90,8 @@ export default function CreateResearchEditor({
 }: CreateResearchEditorProps) {
   const [mounted, setMounted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [headingDropdownOpen, setHeadingDropdownOpen] = useState(false);
+  const [selectedHeading, setSelectedHeading] = useState("Normal"); // Track selected option
 
   // ===== CATEGORY STATE =====
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -298,80 +300,129 @@ export default function CreateResearchEditor({
         className="post-title"
       />
 
-      {/* ===== TOOLBAR ===== */}
-      <div className={`toolbar ${hasContent ? "visible" : "hidden"}`}>
-        <select
-          className="toolbar-select1"
-          onChange={(e) => {
-            const value = parseInt(e.target.value, 10);
-            if (value === 0) editor.chain().focus().setParagraph().run();
-            else editor.chain().focus().toggleHeading({ level: value as HeadingLevel }).run();
-          }}
-        >
-          <option value="0">Normal</option>
-          <option value="1">Heading 1</option>
-          <option value="2">Heading 2</option>
-          <option value="3">Heading 3</option>
-        </select>
-
-        <span className="toolbar-separator" />
-
-        <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive("bold") ? "active" : ""}><Bold size={18} /></button>
-        <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive("italic") ? "active" : ""}><Italic size={18} /></button>
-        <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive("underline") ? "active" : ""}><Underline size={18} /></button>
-        <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive("strike") ? "active" : ""}><Strikethrough size={18} /></button>
-        <button onClick={() => editor.chain().focus().toggleHighlight().run()} className={editor.isActive("highlight") ? "active" : ""}><Highlighter size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={18} /></button>
-        <button onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered size={18} /></button>
-        <button onClick={() => editor.chain().focus().toggleTaskList().run()}><ListTodo size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button onClick={() => editor.chain().focus().setTextAlign("left").run()}><AlignLeft size={18} /></button>
-        <button onClick={() => editor.chain().focus().setTextAlign("center").run()}><AlignCenter size={18} /></button>
-        <button onClick={() => editor.chain().focus().setTextAlign("right").run()}><AlignRight size={18} /></button>
-        <button onClick={() => editor.chain().focus().setTextAlign("justify").run()}><AlignJustify size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote size={18} /></button>
-        <button onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button
-          onClick={() => {
-            const url = prompt("Enter URL");
-            if (url) editor.chain().focus().setLink({ href: url }).run();
-          }}
-        ><LinkIcon size={18} /></button>
-        <button onClick={() => editor.chain().focus().unsetLink().run()}><Unlink size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button
-          onClick={() => {
-            const url = prompt("Enter image URL");
-            if (url) editor.chain().focus().setImage({ src: url }).run();
-          }}
-        ><ImageIcon size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button onClick={() => editor.chain().focus().toggleCode().run()}><Code size={18} /></button>
-        <button onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button onClick={() => editor.chain().focus().undo().run()}><Undo size={18} /></button>
-        <button onClick={() => editor.chain().focus().redo().run()}><Redo size={18} /></button>
-        <button onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><X size={18} /></button>
-
-        <span className="toolbar-separator" />
-        <button onClick={() => setFullscreen(!fullscreen)}>
-          {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-        </button>
-      </div>
-
       {/* ===== EDITOR ===== */}
       <div className={`editor-wrapper ${hasContent ? "has-content" : ""}`}>
         {!hasContent && <div className="fake-placeholder">Write your post content here...</div>}
+        <BubbleMenu // FIXED: Added BubbleMenu for Notion-like floating toolbar on selection
+          editor={editor}
+          options={{ placement: 'top', offset: 8, flip: true }} // Position above selection, with offset and flip
+          className="bubble-menu"
+        >
+          <div className="bubble-toolbar">
+            
+       {/* Custom Dropdown for Heading Selection */}
+          <div className="relative">
+            {/* Dropdown Header (matches category header) */}
+            <div
+              onClick={() => setHeadingDropdownOpen(!headingDropdownOpen)}
+              className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer transition hover:bg-white/20"
+              style={{ width: '120px' }}
+            >
+              {selectedHeading || "Normal"}
+              <span className="ml-2 text-xs opacity-70">▼</span>
+            </div>
+
+            {/* Dropdown Menu (matches category menu) */}
+            {headingDropdownOpen && (
+              <div
+                className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                style={{
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
+              >
+                {/* Hide scrollbar for Chrome, Safari, Edge */}
+                <style>
+                  {`
+                    div::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}
+                </style>
+
+                <div
+                  onClick={() => {
+                    setSelectedHeading("Normal");
+                    editor.chain().focus().setParagraph().run();
+                    // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
+                  }}
+                  className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                >
+                  Normal
+                </div>
+
+                {[1, 2, 3].map((level) => (
+                  <div
+                    key={level}
+                    onClick={() => {
+                      setSelectedHeading(`Heading ${level}`);
+                      editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
+                      // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
+                    }}
+                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                  >
+                    Heading {level}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+            <span className="bubble-toolbar-separator" />
+
+            <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive("bold") ? "active" : ""}><Bold size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive("italic") ? "active" : ""}><Italic size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive("underline") ? "active" : ""}><Underline size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive("strike") ? "active" : ""}><Strikethrough size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleHighlight().run()} className={editor.isActive("highlight") ? "active" : ""}><Highlighter size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleTaskList().run()}><ListTodo size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().setTextAlign("left").run()}><AlignLeft size={18} /></button>
+            <button onClick={() => editor.chain().focus().setTextAlign("center").run()}><AlignCenter size={18} /></button>
+            <button onClick={() => editor.chain().focus().setTextAlign("right").run()}><AlignRight size={18} /></button>
+            <button onClick={() => editor.chain().focus().setTextAlign("justify").run()}><AlignJustify size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote size={18} /></button>
+            <button onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button
+              onClick={() => {
+                const url = prompt("Enter URL");
+                if (url) editor.chain().focus().setLink({ href: url }).run();
+              }}
+            ><LinkIcon size={18} /></button>
+            <button onClick={() => editor.chain().focus().unsetLink().run()}><Unlink size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button
+              onClick={() => {
+                const url = prompt("Enter image URL");
+                if (url) editor.chain().focus().setImage({ src: url }).run();
+              }}
+            ><ImageIcon size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().toggleCode().run()}><Code size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().undo().run()}><Undo size={18} /></button>
+            <button onClick={() => editor.chain().focus().redo().run()}><Redo size={18} /></button>
+            <button onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><X size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => setFullscreen(!fullscreen)}>
+              {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+            </button>
+          </div>
+        </BubbleMenu>
         <EditorContent editor={editor} className="editor" />
       </div>
 
@@ -379,8 +430,6 @@ export default function CreateResearchEditor({
       {/* ===== ACTIONS BOX ===== */}
       <div className="action-box">
 
-
-        
        {/* ===== REFERENCES SECTION ===== */}
         <div style={{ marginTop: "16px" }}>
           <button
@@ -824,6 +873,7 @@ export default function CreateResearchEditor({
           top: 0;
           display: flex;
           flex-direction: column;
+          overflow: auto;
         }
         .post-title {
           width: 100%;
@@ -857,32 +907,29 @@ export default function CreateResearchEditor({
           min-height: calc(48px * 2); /* Adjust height accordingly */
           max-height: calc(48px * 2);
         }
-        .toolbar {
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 4px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 8px;
-          margin: 12px 0;
-          opacity: 0;
-          pointer-events: none;
-          transform: translateY(-10px);
-          transition: all 0.3s ease;
-        }
-        .fullscreen-mode .toolbar {
+       .bubble-toolbar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        background: #222121ff; /* Solid light gray (matches typical chat input boxes) */
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+      }
+        .fullscreen-mode .bubble-toolbar {
           max-width: 100%; /* Ensure toolbar doesn't overflow */
           overflow-x: auto; /* Horizontal scroll if too many buttons */
           padding: 12px;
         }
-        .toolbar.visible {
+        .bubble-toolbar.visible {
           opacity: 1;
           pointer-events: all;
           transform: translateY(0);
         }
-        .toolbar-select1 {
+        .bubble-toolbar-select1 {
           padding: 6px 8px;
           border: none;
           border-radius: 6px;
@@ -899,11 +946,11 @@ export default function CreateResearchEditor({
           background-position: right 6px center;
           padding-right: 22px;
         }
-        .toolbar-select1:hover {
+        .bubble-toolbar-select1:hover {
           background: rgba(255, 255, 255, 0.08);
           color: #5be49b;
         }
-        .toolbar button {
+        .bubble-toolbar button {
           display: flex;
           align-items: center;
           justify-content: center;
@@ -915,11 +962,11 @@ export default function CreateResearchEditor({
           color: #ddd;
           transition: background 0.2s, color 0.2s;
         }
-        .toolbar button:hover {
+        .bubble-toolbar button:hover {
           background: rgba(255, 255, 255, 0.08);
           color: #fff;
         }
-        .toolbar button.active {
+        .bubble-toolbar button.active {
           position: relative;
           width: 28px;
           height: 28px;
@@ -941,7 +988,7 @@ export default function CreateResearchEditor({
         }
 
         /* Bottom glow */
-        .toolbar button.active::after {
+        .bubble-toolbar button.active::after {
           content: "";
           position: absolute;
           bottom: 0; /* stick to the bottom */
@@ -954,7 +1001,7 @@ export default function CreateResearchEditor({
           z-index: 0; /* behind the content */
         }
 
-        .toolbar-separator {
+        .bubble-toolbar-separator {
           width: 1px;
           height: 20px;
           background: rgba(255, 255, 255, 0.15);
@@ -1074,11 +1121,13 @@ export default function CreateResearchEditor({
           gap: 24px;
         }
         .fullscreen-mode .action-box {
+          display: flex;
           margin-top: auto;
           margin-bottom: 20px;
           align-self: stretch; /* Full width in fullscreen */
-          flex-direction: row; /* Change to row for better space usage in fullscreen */
+          flex-direction: colum; /* Change to row for better space usage in fullscreen */
           justify-content: space-between;
+          margin-bottom: 150px;
         }
         .btn {
           display: flex;
@@ -1163,15 +1212,55 @@ export default function CreateResearchEditor({
         padding-right: 30px; /* Space for arrow */
     }
 
-    .toolbar-select:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: #5be49b; /* Accent color on hover */
-    }
+ 
+  // ... (your existing styles) ...
 
-    .toolbar-select:focus {
-        border-color: #5be49b; /* Focus border like editor */
-        box-shadow: 0 0 0 2px rgba(91, 228, 155, 0.2);
-    }
+  /* ===== FULLSCREEN DROPDOWN FIXES ===== */
+  .fullscreen-mode .bubble-toolbar {
+    /* Ensure dropdown isn't clipped by overflow */
+    overflow: visible; /* Override auto to allow dropdown to extend */
+  }
+
+  .fullscreen-mode .bubble-toolbar .relative > div:last-child {
+    /* Target the dropdown menu specifically */
+    position: fixed; /* Change to fixed for viewport-relative positioning in fullscreen */
+    z-index: 9999; /* Higher than fullscreen z-index (9999) to float above everything */
+    top: auto; /* Let it position naturally, but adjust if needed */
+    left: auto;
+    right: auto;
+    transform: translateY(0); /* Ensure no weird transforms */
+    max-height: 200px; /* Limit height to prevent overflow */
+    overflow-y: auto; /* Scroll if too many options */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Stronger shadow for visibility */
+    width:135px;
+  }
+
+  /* Adjust dropdown header in fullscreen for better interaction */
+  .fullscreen-mode .bubble-toolbar .relative > div:first-child {
+    /* The dropdown header button */
+    position: relative; /* Ensure it stays in flow */
+    z-index: 10000; /* Above dropdown */
+    width:135px;
+  }
+
+  /* Ensure options are fully visible and clickable */
+  .fullscreen-mode .bubble-toolbar .relative > div:last-child > div {
+    /* Individual dropdown options */
+    background: rgba(0, 0, 0, 0.9); /* Darker for contrast */
+    color: #fff;
+    padding: 10px; /* Slightly larger for touch */
+    cursor: pointer;
+    transition: background 0.2s;
+    width:135px;
+  }
+
+  .fullscreen-mode .bubble-toolbar .relative > div:last-child > div:hover {
+    background: rgba(46, 50, 48, 0.2); /* Green hover */
+  }
+
+  
+
+
 
     /* NEW: Persistent Selected Category Label - Under button; stays visible after selection */
     .category-button-wrapper {
@@ -1394,6 +1483,7 @@ export default function CreateResearchEditor({
   cursor: pointer;
   transition: all 0.2s ease;
 }
+  
 
 .add-reference-btn:hover:not(:disabled) {
   background: rgba(91, 228, 155, 0.2);
@@ -1502,8 +1592,6 @@ export default function CreateResearchEditor({
   background: rgba(255, 107, 107, 0.1);
   border-radius: 4px;
 }
-
-
 
       `}</style>
     </div>
