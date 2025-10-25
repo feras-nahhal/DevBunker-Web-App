@@ -257,10 +257,10 @@ export default function CreatePostEditor({
            <div className={`editor-wrapper ${hasContent ? "has-content" : ""}`}>
              {!hasContent && <div className="fake-placeholder">Write your post content here...</div>}
              <BubbleMenu // FIXED: Added BubbleMenu for Notion-like floating toolbar on selection
-               editor={editor}
-               options={{ placement: 'top', offset: 8, flip: true }} // Position above selection, with offset and flip
-               className="bubble-menu"
-             >
+                editor={editor}
+                options={{placement: 'top-start',flip: true,}} // Position above selection, with offset and flip
+                className="bubble-menu"
+              >
                <div className="bubble-toolbar">
                  
             {/* Custom Dropdown for Heading Selection */}
