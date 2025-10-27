@@ -25,7 +25,7 @@ const CreatePostEditor = dynamic(
 
 export default function CreatePostPageInner() {
   const router = useRouter();
-  const { user,token, loading, isAuthenticated } = useAuthContext();
+  const {token, loading } = useAuthContext();
 
   const [researchId, setResearchId] = useState<string | null>(null);
   const [title, setTitle] = useState("");

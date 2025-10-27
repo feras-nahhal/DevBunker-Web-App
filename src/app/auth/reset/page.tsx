@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { EyeIcon, EyeSlashIcon, SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,8 +14,8 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  const searchParams = useSearchParams();
-  const email = searchParams.get("email");
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get("email");
   const router = useRouter();
 
   // Load saved theme
