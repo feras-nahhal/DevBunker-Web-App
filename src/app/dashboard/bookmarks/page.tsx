@@ -18,6 +18,7 @@ export default function ExplorePage() {
   const { user, loading, isAuthenticated } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({
     status: "",
@@ -56,7 +57,11 @@ export default function ExplorePage() {
   if (loading || !user) {
     return (
       <div className="dashboard">
-        <Sidebar onToggle={setSidebarCollapsed} />
+        <Sidebar 
+                  onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                  isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                  onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <Header
             collapsed={sidebarCollapsed}
@@ -64,19 +69,21 @@ export default function ExplorePage() {
             onSearchChange={handleSearchChange}
             filters={filters}
             onFiltersChange={handleFiltersChange}
+            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
           />
 
           <div className="explore-container">
             <div className="flex items-center mb-4">
               <Image
-                src="/explore.svg"
+                src="/bookmark.svg"
                 alt="Explore Icon"
-                width={20}
-                height={20}
+                width={25}
+                height={25}
                 className="object-contain mr-1 relative top-[1px]"
               />
               <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
-                Menu / Explore
+                Discover / Bookmark
               </h2>
             </div>
 
@@ -96,7 +103,11 @@ export default function ExplorePage() {
   // Main content
   return (
     <div className="dashboard">
-      <Sidebar onToggle={setSidebarCollapsed} />
+      <Sidebar 
+                onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+              />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <Header
           collapsed={sidebarCollapsed}
@@ -104,19 +115,21 @@ export default function ExplorePage() {
           onSearchChange={handleSearchChange}
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
         />
 
         <div className="explore-container">
           <div className="flex items-center mb-4">
             <Image
-              src="/explore.svg"
+              src="/bookmark.svg"
               alt="Explore Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-1 relative top-[1px]"
             />
             <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
-              Menu / Explore
+              Discover / Bookmark
             </h2>
           </div>
 

@@ -822,325 +822,270 @@ const handleDraft = useCallback(async () => {
         </ReactFlow>
       </div>
 
-      {/* Save Modal */}
-      {isModalOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 999,
-          }}
+{/* Save Modal */}
+{isModalOpen && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 999,
+      padding: "16px", // Add padding for mobile edges
+    }}
+  >
+    <div
+      className="relative custom-scrollbar isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto w-full max-w-[711px] min-h-[400px] max-h-[90vh]" // Responsive: full width on mobile, max 711px on larger; auto height with max 90vh
+      style={{
+        padding: "20px", // Reduced on mobile via Tailwind
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+      }}
+    >
+      {/* Header with title + close button */}
+      <div
+        className="flex items-center justify-between mb-2 sm:mb-4" // Responsive margin
+      >
+        <h1 className="m-0 text-lg sm:text-xl text-left">Mind Map Create</h1> {/* Responsive font size */}
+        <button
+          onClick={() => setIsModalOpen(false)}
+         className="w-[24px] h-[24px] flex items-center justify-center rounded-full bg-white text-black font-bold text-sm hover:bg-gray-200 transition"
         >
+          ×
+        </button>
+      </div>
+
+      {/* Title label + input */}
+      <div className="flex flex-col items-start w-full gap-2">
+        <label className="text-sm sm:text-base font-medium text-left">Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter title"
+          className="w-full p-2 sm:p-3 border border-white/10 rounded-md bg-transparent text-white text-sm sm:text-base" // Full width, responsive padding
+        />
+      </div>
+
+      {/* Category Select */}
+      <div className="relative w-full flex flex-col items-start gap-2">
+        <label className="text-sm sm:text-base font-medium text-left text-white">Category</label>
+
+        {/* Dropdown header */}
+        <div
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="flex justify-between items-center p-2 sm:p-3 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer transition hover:bg-white/20 w-full" // Full width
+        >
+          {selectedCategoryId
+            ? categories.find((cat) => cat.id === selectedCategoryId)?.name
+            : loadingCategories
+            ? "Loading categories..."
+            : "Select a category"}
+          <span className="ml-2 text-xs opacity-70">▼</span>
+        </div>
+
+        {/* Dropdown menu */}
+        {dropdownOpen && (
           <div
-            className="relative custom-scrollbar isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto"
+            className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll" // Full width
             style={{
-              padding: "20px",
-              borderRadius: "8px",
-              width: "711px",
-              height: "570px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
+              scrollbarWidth: "none", // Firefox
+              msOverflowStyle: "none", // IE/Edge
             }}
           >
-            {/* Header with title + close button */}
+            {/* Hide scrollbar for Chrome, Safari, Edge */}
+            <style>
+              {`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}
+            </style>
+
+            {/* Default option */}
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "10px",
+              onClick={() => {
+                setSelectedCategoryId("");
+                setDropdownOpen(false);
               }}
+              className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
             >
-              <h1 style={{ margin: 0, fontSize: "18px", textAlign: "left" }}>Mind Map Create</h1>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="w-[24px] h-[24px] flex items-center justify-center rounded-full bg-white text-black font-bold text-sm hover:bg-gray-200 transition"
-              >
-                ×
-              </button>
+              Select a category
             </div>
 
-            {/* Title label + input */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", width: "100%", gap: "6px" }}>
-              <label style={{ fontSize: "16px", fontWeight: 500, textAlign: "left" }}>Title</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter title"
-                style={{
-                  padding: "8px",
-                  borderRadius: "6px",
-                  width: "663px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "white",
-                }}
-              />
-            </div>
-
-           {/* Category Select */}
-          <div className="relative w-full mt-2 mx-auto flex flex-col items-start gap-2">
-            <label className="text-base font-medium text-left text-white">Category</label>
-
-            {/* Dropdown header */}
-            <div
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer  transition hover:bg-white/20 w-[663px]"
-            >
-              {selectedCategoryId
-                ? categories.find((cat) => cat.id === selectedCategoryId)?.name
-                : loadingCategories
-                ? "Loading categories..."
-                : "Select a category"}
-              <span className="ml-2 text-xs opacity-70">▼</span>
-            </div>
-
-            {/* Dropdown menu */}
-            {dropdownOpen && (
+            {/* Category list */}
+            {categories.map((cat) => (
               <div
-                className="absolute top-full left-0 w-[663px] mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
-                style={{
-                  scrollbarWidth: "none", // Firefox
-                  msOverflowStyle: "none", // IE/Edge
+                key={cat.id}
+                onClick={() => {
+                  setSelectedCategoryId(cat.id);
+                  setDropdownOpen(false);
                 }}
+                className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
               >
-                {/* Hide scrollbar for Chrome, Safari, Edge */}
-                <style>
-                  {`
-                    div::-webkit-scrollbar {
-                      display: none;
-                    }
-                  `}
-                </style>
+                {cat.name}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-                {/* Default option */}
-                <div
-                  onClick={() => {
-                    setSelectedCategoryId("");
-                    setDropdownOpen(false);
+      {/* Tags label + input */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
+          <label style={{ fontSize: "16px", fontWeight: 500 }}>Tags</label>
+
+        {/* Unified tag input container (pills + input in same box) */}
+       <div style={{ 
+            position: "relative", 
+            width: "auto",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "6px",
+            background: "",
+            padding: "8px",
+            minHeight: "44px",
+            display: "flex",
+            flexDirection: "column",
+          }}> {/* Full width, responsive padding */}
+          {/* Pills + Input Row (flex wrap for multi-line if many pills) */}
+          <div style={{ 
+              display: "flex", 
+              flexWrap: "wrap", 
+              gap: "4px", 
+              alignItems: "center",
+              flex: 1,
+            }}>
+            {/* Selected tags as pills (inline with input) */}
+            {selectedTags.map(tag => (
+              <div
+                key={tag.id}
+               style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "4px 8px",
+                    borderRadius: "12px",
+                    background: "rgba(145, 158, 171, 0.08)",
+                    color: "white",
+                    fontSize: "12px",
+                    border: "",
+                    maxWidth: "150px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
-                  className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                >
-                  Select a category
-                </div>
-
-                {/* Category list */}
-                {categories.map((cat) => (
-                  <div
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategoryId(cat.id);
-                      setDropdownOpen(false);
+              >
+                <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {tag.name}
+                </span>
+                 <span
+                    style={{ 
+                      marginLeft: "6px", 
+                      cursor: "pointer", 
+                      fontWeight: "bold",
+                      flexShrink: 0,
+                      padding: "0 2px",
                     }}
-                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                    onClick={() => handleRemoveTag(tag.id)}
+                    title="Remove tag"
+                    className="w-[15px] h-[15px] flex items-center justify-center rounded-full bg-white text-black font-bold text-sm hover:bg-gray-200 transition"
                   >
-                    {cat.name}
-                  </div>
-                ))}
+                    ×
+                  </span>
               </div>
-            )}
-          </div>
+            ))}
 
-
-            {/* Tags label + input */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
-              <label style={{ fontSize: "16px", fontWeight: 500 }}>Tags</label>
-
-              {/* Unified tag input container (pills + input in same box) */}
-              <div style={{ 
-                position: "relative", 
-                width: "663px",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "6px",
-                background: "",
-                padding: "8px",
-                minHeight: "44px",
-                display: "flex",
-                flexDirection: "column",
-              }}>
-                {/* Pills + Input Row (flex wrap for multi-line if many pills) */}
-                <div style={{ 
-                  display: "flex", 
-                  flexWrap: "wrap", 
-                  gap: "4px", 
-                  alignItems: "center",
-                  flex: 1,
-                }}>
-                  {/* Selected tags as pills (inline with input) */}
-                  {selectedTags.map(tag => (
-                    <div
-                      key={tag.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "4px 8px",
-                        borderRadius: "12px",
-                        background: "rgba(145, 158, 171, 0.08)",
-                        color: "white",
-                        fontSize: "12px",
-                        border: "",
-                        maxWidth: "150px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {tag.name}
-                      </span>
-                      <span
-                        style={{ 
-                          marginLeft: "6px", 
-                          cursor: "pointer", 
-                          fontWeight: "bold",
-                          flexShrink: 0,
-                          padding: "0 2px",
-                        }}
-                        onClick={() => handleRemoveTag(tag.id)}
-                        title="Remove tag"
-                      >
-                        ×
-                      </span>
-                    </div>
-                  ))}
-
-                  {/* Input field (takes remaining space, shrinks if needed) */}
-                  <input
-                    type="text"
-                    value={tagQuery}
-                    onChange={handleTagInputChange}
-                    placeholder={selectedTags.length > 0 ? "" : "Search tags..."}
-                    style={{
-                      flex: 1,
-                      minWidth: "120px",
-                      border: "none",
-                      outline: "none",
-                      background: "transparent",
-                      color: "white",
-                      fontSize: "14px",
-                      padding: "4px 0",
-                      margin: "0 4px 4px 0",
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && tagQuery.trim()) {
-                        const matchedTag = searchResults.find(t => t.name.toLowerCase() === tagQuery.toLowerCase().trim());
-                        if (matchedTag) {
-                          handleAddTag(matchedTag);
-                        }
-                        e.preventDefault();
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Dropdown (positioned below the entire container) */}
-                {tagQuery && searchResults.length > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      background: "rgba(0,0,0,0.8)",
-                      color: "white",
-                      maxHeight: "150px",
-                      overflowY: "auto",
-                      borderRadius: "6px",
-                      zIndex: 1000,
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {searchResults.map(tag => (
-                      <div
-                        key={tag.id}
-                        style={{ 
-                          padding: "8px 12px", 
-                          cursor: "pointer",
-                          borderBottom: "1px solid rgba(255,255,255,0.05)",
-                        }}
-                        onClick={() => handleAddTag(tag)}
-                      >
-                        {tag.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Description label + textarea */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", width: "100%", gap: "6px" }}>
-              <label style={{ fontSize: "16px", fontWeight: "500", textAlign: "left" }}>Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter description"
-                rows={4}
-                style={{
-                  padding: "8px",
-                  borderRadius: "6px",
-                  height: "100px",
-                  width: "663px",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "white",
-                  resize: "none",
-                }}
-              />
-            </div>
-
-            {/* Buttons */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                width: "100%",
-                marginTop: "16px",
-                gap: "10px",
+            {/* Input field (takes remaining space, shrinks if needed) */}
+            <input
+              type="text"
+              value={tagQuery}
+              onChange={handleTagInputChange}
+              placeholder={selectedTags.length > 0 ? "" : "Search tags..."}
+              className="flex-1 min-w-[100px] sm:min-w-[120px] border-none outline-none bg-transparent text-white text-sm sm:text-base p-1 sm:p-2" // Responsive
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && tagQuery.trim()) {
+                  const matchedTag = searchResults.find(t => t.name.toLowerCase() === tagQuery.toLowerCase().trim());
+                  if (matchedTag) {
+                    handleAddTag(matchedTag);
+                  }
+                  e.preventDefault();
+                }
               }}
-            >
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="relative w-[78px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-              >
-                <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(90, 0, 0, 0.5)_0%,transparent_70%)] blur-md" />
-                <span className="relative z-10">{"Cancel"}</span>
-              </button>
-
-              <button
-                onClick={handleDraft}
-                disabled={saving}
-                className="relative w-[78px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-              >
-                <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(90, 0, 0, 0.5)_0%,transparent_70%)] blur-md" />
-                <span className="relative z-10">{"Draft"}</span>
-              </button>
-
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="relative w-[78px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-                style={{
-                  fontFamily: "Public Sans, sans-serif",
-                  fontStyle: "normal",
-                  fontWeight: 700,
-                  fontSize: "14px",
-                  lineHeight: "24px",
-                  color: "#5BE49B",
-                  textAlign: "center",
-                }}
-              >
-                <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
-                <span className="relative z-10">{saving ? "Saving..." : "Save"}</span>
-              </button>
-            </div>
+            />
           </div>
+
+          {/* Dropdown (positioned below the entire container) */}
+          {tagQuery && searchResults.length > 0 && (
+            <div
+              className="absolute top-full left-0 right-0 bg-black/80 text-white max-h-32 sm:max-h-40 overflow-y-auto rounded-md z-1000 border border-white/10 mt-1" // Responsive height
+            >
+              {searchResults.map(tag => (
+                <div
+                  key={tag.id}
+                  className="p-2 sm:p-3 cursor-pointer border-b border-white/5 last:border-b-0"
+                  onClick={() => handleAddTag(tag)}
+                >
+                  {tag.name}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* Description label + textarea */}
+      <div className="flex flex-col items-start w-full gap-2">
+        <label className="text-sm sm:text-base font-medium text-left">Description</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Enter description"
+          rows={3} // Reduced rows for mobile
+          className="w-full p-2 sm:p-3 border border-white/10 rounded-md bg-transparent text-white text-sm sm:text-base resize-none min-h-[80px] sm:min-h-[100px]" // Full width, responsive
+        />
+      </div>
+
+      {/* Buttons */}
+      <div className="flex justify-end w-full mt-4 gap-2 sm:gap-3"> {/* Responsive gap */}
+        <button
+          onClick={() => setIsModalOpen(false)}
+          className="relative w-16 sm:w-20 h-8 sm:h-9 rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs sm:text-sm flex items-center justify-center transition hover:scale-105 overflow-hidden" // Larger on mobile
+        >
+          <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(90, 0, 0, 0.5)_0%,transparent_70%)] blur-md" />
+          <span className="relative z-10">Cancel</span>
+        </button>
+
+        <button
+          onClick={handleDraft}
+          disabled={saving}
+          className="relative w-16 sm:w-20 h-8 sm:h-9 rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs sm:text-sm flex items-center justify-center transition hover:scale-105 overflow-hidden disabled:opacity-50" // Larger on mobile
+        >
+          <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(90, 0, 0, 0.5)_0%,transparent_70%)] blur-md" />
+          <span className="relative z-10">Draft</span>
+        </button>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="relative w-16 sm:w-20 h-8 sm:h-9 rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] flex items-center justify-center transition hover:scale-105 overflow-hidden disabled:opacity-50" // Larger on mobile
+          style={{
+            fontFamily: "Public Sans, sans-serif",
+            fontStyle: "normal",
+            fontWeight: 700,
+            fontSize: "12px", // Responsive via class
+            lineHeight: "20px",
+            color: "#5BE49B",
+            textAlign: "center",
+          }}
+        >
+          <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+          <span className="relative z-10">{saving ? "Saving..." : "Save"}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

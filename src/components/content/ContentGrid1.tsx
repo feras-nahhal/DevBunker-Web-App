@@ -328,6 +328,7 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
           comments={comments}
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
+          excalidraw_data={selectedContent.excalidraw_data}
         />
       )}
 

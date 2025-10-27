@@ -10,12 +10,30 @@ import Image from "next/image";
 import "./Header1.css";
 import { useAuthContext } from "@/hooks/AuthProvider";
 
-export default function HeaderOther({ collapsed = false }: { collapsed?: boolean }) {
+interface HeaderOtherProps {
+  isMobileOpen?: boolean; // NEW: For mobile sidebar state
+  onMobileToggle?: (open: boolean) => void; // NEW: For toggling mobile sidebar
+}
+
+export default function HeaderOther({
+  collapsed = false, // ✅ NEW PROP
+  isMobileOpen = false, // NEW: Default false
+  onMobileToggle, // NEW: Handler
+}: HeaderOtherProps & { collapsed?: boolean }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { logout } = useAuthContext();
+
+  // NEW: Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const { requestNewTag, loading: tagsLoading } = useTags();
   const { requestNewCategory, loading: categoriesRequestLoading } = useCategories();
@@ -112,7 +130,19 @@ export default function HeaderOther({ collapsed = false }: { collapsed?: boolean
 
   return (
     <>
-      <header className={`header ${collapsed ? "collapsed" : ""}`}>
+       <header className={`header ${!isMobile && collapsed ? "collapsed" : ""}`}>
+        {/* NEW: Hamburger Button (only on mobile) */}
+        {isMobile && (
+          <button
+            className="hamburger-btn"
+            onClick={() => onMobileToggle?.(!isMobileOpen)}
+            aria-label="Toggle sidebar"
+          >
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+          </button>
+        )}
         {/* Left: Logo */}
         <div className="header-left">
           <div className="dev">Dev</div>
@@ -133,12 +163,12 @@ export default function HeaderOther({ collapsed = false }: { collapsed?: boolean
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
-                padding: "1px",
-                gap: "1px",
+                justifyContent: "center", // centers vertically
+                alignItems: "center",     // centers horizontally
+                padding: "4px 4px",       // smaller padding all around
+                gap: "4px",
                 position: "absolute",
-                width: "194px",
-                height: "74px",
+                width: "196px",
                 top: "110%",
                 right: 0,
                 background: "rgba(255, 255, 255, 0.05)",
@@ -150,68 +180,83 @@ export default function HeaderOther({ collapsed = false }: { collapsed?: boolean
                 overflow: "hidden",
               }}
             >
-              <ul style={{ listStyle: "none", margin: 0, padding: 0, width: "100%" }}>
-                              <li
-                                onClick={handleOpenModal} // Existing: Opens request modal
-                                style={{
-                                  padding: "10px 16px",
-                                  cursor: "pointer",
-                                  fontSize: "14px",
-                                  color: "#fff",
-                                  transition: "background-color 0.2s",
-                                  width: "195px",
-                                  height: "37px",
-                                  textAlign: "left",
-                                  borderRadius: "12px",
-                                  flex: 1,
-                                  display: "flex",
-                                  alignItems: "left",
-                                  justifyContent: "left",
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(145, 158, 171, 0.08)")}
-                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                              >
-                                <Image
-                                  src="/requst-tag.png"
-                                  alt="Request Icon"
-                                  width={24}
-                                  height={24}
-                                  style={{ marginRight: "6px" }}
-                                />
-                                Requst Tag/Category
-                              </li>
-                              <li
-                                onClick={handleLogoutClick}
-                                style={{
-                                  padding: "10px 16px",
-                                  cursor: "pointer",
-                                  fontSize: "14px",
-                                  color: "#fff",
-                                  transition: "background-color 0.2s",
-                                  width: "195px",
-                                  height: "37px",
-                                  textAlign: "left",
-                                  borderRadius: "12px",
-                                  flex: 1,
-                                  display: "flex",
-                                  alignItems: "left",
-                                  justifyContent: "left",
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(145, 158, 171, 0.08)")}
-                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                              >
-                                <Image
-                                  src="/logout.png"
-                                  alt="Logout Icon"
-                                  width={24}
-                                  height={24}
-                                  style={{ marginRight: "6px" }}
-                                />
-                                Log Out
-                              </li>
-                            </ul>
-            </div>
-          )}
+              <ul
+                style={{
+                  listStyle: "none",
+                  margin: 0,
+                  padding: 0,
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center", // centers <li> horizontally
+                  gap: "2px",           // smaller gap between items
+                }}
+              >
+                <li
+                  onClick={handleOpenModal}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    width: "188px",     // slightly smaller than parent
+                    height: "32px",     // smaller height
+                    padding: "4px 8px", // tighter padding
+                    fontSize: "14px",
+                    color: "#fff",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "rgba(145, 158, 171, 0.08)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <Image
+                    src="/requst-tag.png"
+                    alt="Request Icon"
+                    width={20}
+                    height={20}
+                    style={{ marginRight: "6px" }}
+                  />
+                  Request Tag/Category
+                </li>
+
+                <li
+                  onClick={handleLogoutClick}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    width: "188px",
+                    height: "32px",
+                    padding: "4px 8px",
+                    fontSize: "14px",
+                    color: "#fff",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "rgba(145, 158, 171, 0.08)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <Image
+                    src="/logout.png"
+                    alt="Logout Icon"
+                    width={20}
+                    height={20}
+                    style={{ marginRight: "6px" }}
+                  />
+                  Log Out
+                </li>
+              </ul>
+            </div>)}
         </div>
       </header>
 

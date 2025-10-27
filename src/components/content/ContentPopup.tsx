@@ -79,7 +79,7 @@ export default function ContentPopup({
       >
         <div
           className="relative custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto"
-          style={{ width: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
+          style={{ width: "100%", maxWidth: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
         >
           {/* Close button */}
           <button
@@ -92,24 +92,24 @@ export default function ContentPopup({
           {/* Title */}
           <div className="flex justify-center items-center mb-4 w-full">
             <h2
-              className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center"
-              style={{
-                width: "853px",
-                height: "72px",
-                background:
-                  "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                fontWeight: 700,
-                fontSize: "24px",
-                lineHeight: "36px",
-                textAlign: "center",
-                fontFamily: "'Public Sans', sans-serif",
-              }}
-            >
-              {title}
-            </h2>
+            className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center text-center"
+            style={{
+              width: "100%",
+              maxWidth: "853px",
+              background:
+                "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontWeight: 700,
+              fontSize: "24px",
+              lineHeight: "36px",
+              fontFamily: "'Public Sans', sans-serif",
+            }}
+          >
+            {title}
+          </h2>
+
           </div>
 
         
@@ -117,7 +117,8 @@ export default function ContentPopup({
             {excalidraw_data && (
             <div
                 style={{
-                width: "855px",
+                width: "100%",
+                maxWidth: "855px",
                 height: "450px",
                 border: "1px solid rgba(80, 80, 80, 0.24)",
                 borderRadius: "16px",
@@ -269,7 +270,7 @@ export default function ContentPopup({
           {/* Content Body */}
           {content_body && (
             <div
-              style={{ maxWidth: "853px", width: "100%", maxHeight: "1500px" }}
+              style={{ maxWidth: "100%", width: "100%", maxHeight: "1500px" }}
               dangerouslySetInnerHTML={{ __html: content_body }}
             />
           )}
@@ -281,13 +282,13 @@ export default function ContentPopup({
 
           {/* Tags section */}
           {tags && tags.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
               <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>Tags</label>
 
               <div
                 style={{
                   position: "relative",
-                  width: "855px",
+                  width: "100%",
                   border: "1px solid rgba(80, 80, 80, 0.24)",
                   borderRadius: "16px",
                   background: "rgba(255, 255, 255, 0.05)",
@@ -349,7 +350,8 @@ export default function ContentPopup({
             display: "flex",
             flexDirection: "column",
             gap: "6px",
-            width: "855px",
+            width: "100%",
+            maxWidth: "855px",
             }}
         >
             <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>
@@ -359,7 +361,7 @@ export default function ContentPopup({
             <div
             style={{
                 position: "relative",
-                width: "855px",
+                width: "100%",
                 border: "1px solid rgba(80, 80, 80, 0.24)",
                 borderRadius: "16px",
                 background: "rgba(255, 255, 255, 0.05)",
@@ -443,13 +445,13 @@ export default function ContentPopup({
 
            {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
             {references.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
                 <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
 
                 <div
                   style={{
                     position: "relative",
-                    width: "855px",
+                    width: "100%",
                     border: "1px solid rgba(80, 80, 80, 0.24)",
                     borderRadius: "16px",
                     background: "rgba(255, 255, 255, 0.05)",
@@ -494,11 +496,7 @@ export default function ContentPopup({
               </div>
             )}
 
-            {refsLoading && <p style={{ color: "gray", fontSize: "12px" }}>Loading references...</p>}
-            {refsError && <p style={{ color: "red", fontSize: "12px" }}>{refsError}</p>}
-            {!refsLoading && references.length === 0 && (
-              <p style={{ color: "gray", fontSize: "12px" }}>No references found.</p>
-            )}
+       
 
 
         </div>

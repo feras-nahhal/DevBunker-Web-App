@@ -4,6 +4,18 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useReferences } from "@/hooks/useReferences";
 import { useContentTags } from "@/hooks/useContentTags";
+import ReactFlow, {
+  Handle,
+  Controls,
+  Background,
+  Position,
+  NodeProps,
+  StraightEdge,
+  StepEdge,
+  SmoothStepEdge,
+  BezierEdge
+} from "reactflow";
+import "reactflow/dist/style.css";
 
 
 type ApiComment = {
@@ -17,6 +29,7 @@ type ApiComment = {
   replies?: ApiComment[];
   author?: string | null;
   date?: string | null;
+ 
 };
 
 interface CommentsPopupProps {
@@ -24,7 +37,7 @@ interface CommentsPopupProps {
   title: string;
   content_body: string;
   comments: ApiComment[];
-  
+  excalidraw_data?: Record<string, unknown>;
   onClose: () => void;
   onAddComment: (text: string, parentId?: string) => Promise<void>;
 }
@@ -34,7 +47,7 @@ export default function CommentsPopup({
   title,
   content_body,
   comments = [],
-  
+  excalidraw_data,
   onClose,
   onAddComment,
 }: CommentsPopupProps) {
@@ -268,26 +281,181 @@ export default function CommentsPopup({
           </button>
 
           {/* Title */}
-          <div className="flex justify-center items-center mb-4 w-full">
+                   <div className="flex justify-center items-center mb-4 w-full">
             <h2
-              className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center"
-              style={{
-                width: "853px",
-                height: "72px",
-                background: "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                fontWeight: 700,
-                fontSize: "24px",
-                lineHeight: "36px",
-                textAlign: "center",
-                fontFamily: "'Public Sans', sans-serif",
-              }}
-            >
-              {title}
-            </h2>
+            className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center text-center"
+            style={{
+              width: "100%",
+              maxWidth: "853px",
+              background:
+                "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontWeight: 700,
+              fontSize: "24px",
+              lineHeight: "36px",
+              fontFamily: "'Public Sans', sans-serif",
+            }}
+          >
+            {title}
+          </h2>
+
           </div>
+
+          {/* 🧠 Mind Map Viewer */}
+            {excalidraw_data && (
+            <div
+                style={{
+                width: "100%",
+                maxWidth: "855px",
+                height: "450px",
+                border: "1px solid rgba(80, 80, 80, 0.24)",
+                borderRadius: "16px",
+                background: "rgba(255, 255, 255, 0.02)",
+                padding: "8px",
+                marginBottom: "8px",
+                }}
+            >
+                <label
+                style={{
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "white",
+                    display: "block",
+                    marginBottom: "6px",
+                }}
+                >
+                Mind Map
+                </label>
+
+                <div style={{ width: "100%", height: "400px" }}>
+                {(() => {
+                    try {
+                    const data =
+                        typeof excalidraw_data === "string"
+                        ? JSON.parse(excalidraw_data)
+                        : excalidraw_data;
+
+                    const nodes = Array.isArray(data?.nodes) ? data.nodes : [];
+                    const edges = Array.isArray(data?.edges) ? data.edges : [];
+
+                    // ✅ Node types (same as before)
+                    const nodeTypes = {
+                        circle: ({ data }: NodeProps<{ label: string; color?: string }>) => (
+                        <div
+                            style={{
+                            width: 60,
+                            height: 60,
+                            borderRadius: "50%",
+                            backgroundColor: data.color || "#fff",
+                            border: "2px solid #aaa",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#000",
+                            fontWeight: 500,
+                            position: "relative",
+                            }}
+                        >
+                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
+                            {data.label}
+                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
+                        </div>
+                        ),
+
+                        rect: ({ data }: NodeProps<{ label: string; color?: string }>) => (
+                        <div
+                            style={{
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            backgroundColor: data.color || "#fff",
+                            border: "2px solid #aaa",
+                            color: "#000",
+                            textAlign: "center",
+                            fontWeight: 500,
+                            position: "relative",
+                            }}
+                        >
+                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
+                            {data.label}
+                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
+                        </div>
+                        ),
+
+                        diamond: ({ data }: NodeProps<{ label: string; color?: string }>) => (
+                        <div
+                            style={{
+                            width: 70,
+                            height: 70,
+                            backgroundColor: data.color || "#fff",
+                            transform: "rotate(45deg)",
+                            border: "2px solid #aaa",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#000",
+                            position: "relative",
+                            }}
+                        >
+                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
+                            <span style={{ transform: "rotate(-45deg)" }}>{data.label}</span>
+                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
+                        </div>
+                        ),
+
+                        text: ({ data }: NodeProps<{ label: string; color?: string }>) => (
+                        <div
+                            style={{
+                            fontSize: "14px",
+                            color: data.color || "#fff",
+                            background: "transparent",
+                            position: "relative",
+                            }}
+                        >
+                            <Handle type="target" position={Position.Top} style={{ background: "#888" }} />
+                            {data.label}
+                            <Handle type="source" position={Position.Bottom} style={{ background: "#888" }} />
+                        </div>
+                        ),
+                    };
+
+                    // ✅ Register edge types
+                    const edgeTypes = {
+                        default: BezierEdge,
+                        straight: StraightEdge,
+                        step: StepEdge,
+                        smoothstep: SmoothStepEdge,
+                    };
+
+                    return (
+                        <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        nodeTypes={nodeTypes}
+                        edgeTypes={edgeTypes}
+                        fitView
+                        defaultEdgeOptions={{
+                            type: "default", // fallback
+                            style: { stroke: "#999", strokeWidth: 1.5 },
+                        }}
+                        >
+                        <Background />
+                        <Controls />
+                        </ReactFlow>
+                    );
+                    } catch (e) {
+                    console.error("Invalid excalidraw_data format:", e);
+                    return (
+                        <div className="text-red-400 text-sm">
+                        ⚠️ Invalid mindmap data format
+                        </div>
+                    );
+                    }
+                })()}
+                </div>
+            </div>
+            )}
 
           {/* Content Body */}
           {content_body && (
@@ -301,15 +469,15 @@ export default function CommentsPopup({
           <div className="w-full mb-4 flex flex-col items-center">
 
 
-            {/* ✅ Tags section (before comment input box, with label and pill container design) */}
-            {tags.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
-                <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>Tags</label>
+             {/* Tags section */}
+          {tags && tags.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
+              <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>Tags</label>
 
-                {/* Unified tag display container (pills in box, no input/dropdown since view-only) */}
-                <div style={{ 
-                  position: "relative", 
-                  width: "855px",
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
                   border: "1px solid rgba(80, 80, 80, 0.24)",
                   borderRadius: "16px",
                   background: "rgba(255, 255, 255, 0.05)",
@@ -319,52 +487,60 @@ export default function CommentsPopup({
                   display: "flex",
                   flexDirection: "column",
                   marginBottom: "8px",
-                }}>
-                  {/* Pills Row (flex wrap for multi-line if many pills) */}
-                  <div style={{ 
-                    display: "flex", 
-                    flexWrap: "wrap", 
-                    gap: "4px", 
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "4px",
                     alignItems: "center",
                     flex: 1,
-                  }}>
-                    {/* Display tags as pills (no remove ×, just design) */}
-                    {tags.map((tag) => (
-                      <div
-                        key={tag.id}
+                  }}
+                >
+                  {tags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "4px 8px",
+                        borderRadius: "99px",
+                        background: "rgba(145, 158, 171, 0.12)",
+                        color: "white",
+                        height: "32px",
+                        fontSize: "12px",
+                        maxWidth: "150px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      <span
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          padding: "4px 8px",
-                          borderRadius: "99px",
-                          background: "rgba(145, 158, 171, 0.12)",
-                          color: "white",
-                          height: "32px",
-                          fontSize: "12px",
-                          maxWidth: "150px",
+                          flex: 1,
+                          whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }}
                       >
-                        <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                         {tag.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                        {tag.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
                 {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
             {references.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
                 <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
 
                 <div
                   style={{
                     position: "relative",
-                    width: "855px",
+                    width: "100%",
                     border: "1px solid rgba(80, 80, 80, 0.24)",
                     borderRadius: "16px",
                     background: "rgba(255, 255, 255, 0.05)",
@@ -409,63 +585,52 @@ export default function CommentsPopup({
               </div>
             )}
 
-            {refsLoading && <p style={{ color: "gray", fontSize: "12px" }}>Loading references...</p>}
-            {refsError && <p style={{ color: "red", fontSize: "12px" }}>{refsError}</p>}
-            {!refsLoading && references.length === 0 && (
-              <p style={{ color: "gray", fontSize: "12px" }}>No references found.</p>
-            )}
-
-
-
-
-
-
-
+           
             {/* Label with superscript counter */}
-            <div className="w-[855px] flex justify-start items-center mb-2">
-              <label className="text-white font-bold text-[20px] leading-[22px] font-public-sans">
-                Comments
-                <sup className="text-gray-400 text-xs ml-1">{200 - newCommentText.length}</sup>
-              </label>
-            </div>
+<div className="w-full max-w-[855px] flex justify-start items-center mb-2 px-2 sm:px-0">
+  <label className="text-white font-bold text-[18px] sm:text-[20px] leading-[22px] font-public-sans">
+    Comments
+    <sup className="text-gray-400 text-xs ml-1">{200 - newCommentText.length}</sup>
+  </label>
+</div>
 
             
 
             {/* Textarea */}
             <textarea
               value={newCommentText}
-              onChange={(e) => setNewCommentText(e.target.value)}
-              placeholder="Write your comment..."
-              className="w-[855px] h-[120px] p-3 bg-transparent border border-[#918AAB26] rounded text-white text-sm resize-none focus:outline-none"
-              maxLength={220}
-              disabled={isSubmitting}
+  onChange={(e) => setNewCommentText(e.target.value)}
+  placeholder="Write your comment..."
+  className="w-full max-w-[855px] h-[120px] p-3 bg-transparent border border-[#918AAB26] rounded text-white text-sm resize-none focus:outline-none disabled:opacity-50"
+  maxLength={220}
+  disabled={isSubmitting}
             />
 
             {/* Submit button */}
-            <div className="flex justify-start mt-2 w-[855px]">
-              <button
-                onClick={handleSubmitComment}
-                disabled={isSubmitting || !newCommentText.trim()}
-                className="relative w-[120px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-              >
+           <div className="flex justify-start mt-2 w-full max-w-[855px] px-2 sm:px-0">
+            <button
+              onClick={handleSubmitComment}
+              disabled={isSubmitting || !newCommentText.trim()}
+              className="relative w-[120px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden disabled:opacity-50"
+                        >
                 <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
                 <span className="relative z-10">{isSubmitting ? "..." : "Post Comment"}</span>
               </button>
             </div>
           </div>
 
-          {/* Comments List */}
-          <div className="flex flex-col items-center w-full">
-            {comments.length > 0 ? (
-              comments.map((c) => (
-                <div key={c.id} className="w-full max-w-[853px]">
-                  <CommentItem comment={c} />
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-400">No comments yet.</p>
-            )}
-          </div>
+         {/* Comments List */}
+            <div className="flex flex-col items-center w-full px-2 sm:px-0">
+              {comments.length > 0 ? (
+                comments.map((c) => (
+                  <div key={c.id} className="w-full max-w-[853px]">
+                    <CommentItem comment={c} />
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400">No comments yet.</p>
+              )}
+            </div>
         </div>
       </div>
 

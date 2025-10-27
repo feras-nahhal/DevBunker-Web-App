@@ -16,6 +16,7 @@ export default function ResearchPage() {
   const { user,token, loading, isAuthenticated } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
 
   // ✅ Define all hooks BEFORE conditional rendering
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +53,11 @@ export default function ResearchPage() {
   if (loading || !token) {
     return (
       <div className="dashboard">
-        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <Sidebar 
+                  onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                  isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                  onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <Header
             collapsed={sidebarCollapsed}
@@ -60,14 +65,16 @@ export default function ResearchPage() {
             onSearchChange={handleSearchChange}
             filters={filters}
             onFiltersChange={handleFiltersChange}
+            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
           />
           <div className="explore-container">
             <div className="flex items-center mb-4">
               <Image
                 src="/Research.svg"
                 alt="Menu Icon"
-                width={20}
-                height={20}
+                width={25}
+                height={25}
                 className="object-contain mr-[4px] relative top-[1px]"
               />
               <h2
@@ -98,7 +105,11 @@ export default function ResearchPage() {
   // ✅ Main Page Content
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+                onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+              />
          <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
            <Header
               collapsed={sidebarCollapsed}
@@ -106,6 +117,8 @@ export default function ResearchPage() {
               onSearchChange={handleSearchChange}
               filters={filters}
               onFiltersChange={handleFiltersChange}
+              isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+              onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
             />
 
         <div className="Research-container">
@@ -114,8 +127,8 @@ export default function ResearchPage() {
             <Image
               src="/Research.svg"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2

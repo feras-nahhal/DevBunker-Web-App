@@ -35,6 +35,7 @@ export default function PostPage() {
   const [saving, setSaving] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -100,16 +101,23 @@ export default function PostPage() {
   if (!ready || contentLoading) {
     return (
       <div className="dashboard">
-        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <Sidebar 
+                              onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                              isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                              onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                            />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <CreateMinemapHeader
            onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
           onCancel={handleCancel} // ✅ Unchanged: Still redirects
             saving={isLoading}
-            collapsed={sidebarCollapsed} />
+            collapsed={sidebarCollapsed}
+            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+          />
           <div className="post-container">
             <div className="flex items-center mb-4">
-              <Image src="/pen.svg" alt="Menu Icon" width={20} height={20} className="object-contain mr-[4px]" />
+              <Image src="/pen.svg" alt="Menu Icon" width={25} height={25} className="object-contain mr-[4px]" />
               <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
                 Mindmap / {mindmapId ? "Edit Mindmap" : "Create Mindmap"}
               </h2>
@@ -123,17 +131,23 @@ export default function PostPage() {
 
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+                            onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                          />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <CreateMinemapHeader
-         onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
+           onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
           onCancel={handleCancel} // ✅ Unchanged: Still redirects
             saving={isLoading}
             collapsed={sidebarCollapsed}
-         />
+            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+          />
         <div className="post-container">
           <div className="flex items-center mb-4">
-            <Image src="/pen.svg" alt="Menu Icon" width={20} height={20} className="object-contain mr-[4px]" />
+            <Image src="/pen.svg" alt="Menu Icon" width={25} height={25} className="object-contain mr-[4px]" />
             <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
               Mindmap / {mindmapId ? "Edit Mindmap" : "Create Mindmap"}
             </h2>

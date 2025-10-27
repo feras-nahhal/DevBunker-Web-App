@@ -66,9 +66,12 @@ export default function DraftCategoryCard({
               <div className="title">{"Request tag or Category"}</div>
               <div className="subtitle" style={{ display: "none" }}>Subtitle here</div>
             </div>
-            <div className="close-icon" onClick={onClose} role="button" tabIndex={0}>
-              <Image src="/x button.png" alt="Close" width={20} height={20} />
-            </div>
+            <button
+            onClick={onClose}
+            className="absolute top-4 right-1 w-[20px] h-[20px] flex items-center justify-center rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition"
+          >
+            ×
+          </button>
           </div>
         </div>
 
@@ -96,6 +99,19 @@ export default function DraftCategoryCard({
                       disabled={disabled}
                     />
                   </div>
+                  <button
+                className="relative w-[170px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
+                onClick={() =>{
+                  if (disabled) return;
+                   onDraftChange?.(draftInput);
+                  setDraftInput(""); // ✅ clear input after click
+                }}
+                disabled={disabled} 
+              >
+                <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10">Submit Tag</span>
+                
+              </button>
                 </div>
               </div>
             </div>
@@ -121,6 +137,20 @@ export default function DraftCategoryCard({
                       disabled={disabled}
                     />
                   </div>
+
+                  <button
+                className="relative w-[170px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
+                onClick={() => {
+                  if (disabled) return;
+                  onCategoryChange?.(categoryInput);
+                  setCategoryInput(""); // ✅ clear input after click
+                }}
+                disabled={disabled}
+              >
+                <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10">Submit Category</span>
+                
+              </button>
                 </div>
               </div>
             </div>
@@ -306,7 +336,7 @@ export default function DraftCategoryCard({
     padding: 16px;
     gap: 14px;
     width: 290px;
-    height: 176px;
+    height: 185px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(80, 80, 80, 0.24);
     border-radius: 16px;
@@ -440,11 +470,12 @@ export default function DraftCategoryCard({
   .textfield-section {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center; 
     padding: 0px;
     margin: 0 auto;
     width: 258px;
-    height: 40px;
+    height: 100px;
+    gap:7.5px;
     flex: none;
     order: 1;
     align-self: stretch;

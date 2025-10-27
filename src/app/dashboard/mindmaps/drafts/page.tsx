@@ -14,6 +14,7 @@ export default function MindmapDraftPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuthContext(); // ✅ check auth state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
 
   // 🔐 Redirect if not authenticated
   // 🔐 Redirect if not authenticated
@@ -56,7 +57,11 @@ export default function MindmapDraftPage() {
   if (loading || !user) 
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+                      onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                      isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                      onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                    />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <HeaderDraft
           searchQuery={searchQuery}
@@ -64,6 +69,8 @@ export default function MindmapDraftPage() {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           collapsed={sidebarCollapsed}
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
         />
 
         {/* Mindmap / Draft header */}
@@ -72,8 +79,8 @@ export default function MindmapDraftPage() {
             <Image
               src="/draft.svg"
               alt="Mindmap Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
@@ -123,7 +130,11 @@ export default function MindmapDraftPage() {
 
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+                      onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                      isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                      onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                    />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <HeaderDraft
           searchQuery={searchQuery}
@@ -131,6 +142,8 @@ export default function MindmapDraftPage() {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           collapsed={sidebarCollapsed}
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
         />
 
         <div className="mindmap-container">
@@ -139,8 +152,8 @@ export default function MindmapDraftPage() {
             <Image
               src="/draft.svg" // ✅ you can use SVG here just like PNG
               alt="Mindmap Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2

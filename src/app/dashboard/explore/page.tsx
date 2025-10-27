@@ -15,9 +15,10 @@ import "./ExplorePage.css";
 
 export default function ExplorePage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated,ready } = useAuthContext();
+  const { user, loading, isAuthenticated, ready } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({
     status: "",
@@ -42,18 +43,14 @@ export default function ExplorePage() {
     }));
   };
 
-
-
-useEffect(() => {
-  if (!ready) return; // wait until auth check finishes
-  if (!isAuthenticated) router.push("/auth/login");
-}, [ready, isAuthenticated, router]);
-
-
+  useEffect(() => {
+    if (!ready) return; // wait until auth check finishes
+    if (!isAuthenticated) router.push("/auth/login");
+  }, [ready, isAuthenticated, router]);
 
   // Read "id" query parameter for opening content popup
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") {  // Fixed: was `!== ""`, should be `!== "undefined"`
       const params = new URLSearchParams(window.location.search);
       setSelectedContentId(params.get("id"));
     }
@@ -62,7 +59,11 @@ useEffect(() => {
   if (loading || !user) {
     return (
       <div className="dashboard">
-        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <Sidebar 
+          onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <Header
             collapsed={sidebarCollapsed}
@@ -70,6 +71,8 @@ useEffect(() => {
             onSearchChange={handleSearchChange}
             filters={filters}
             onFiltersChange={handleFiltersChange}
+            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
           />
 
           <div className="explore-container">
@@ -77,8 +80,8 @@ useEffect(() => {
               <Image
                 src="/explore.svg"
                 alt="Menu Icon"
-                width={20}
-                height={20}
+                width={25}
+                height={25}
                 className="object-contain mr-[4px] relative top-[1px]"
               />
               <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
@@ -104,7 +107,11 @@ useEffect(() => {
 
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+        onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+      />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <Header
           collapsed={sidebarCollapsed}
@@ -112,6 +119,8 @@ useEffect(() => {
           onSearchChange={handleSearchChange}
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
         />
 
         <div className="explore-container">
@@ -119,8 +128,8 @@ useEffect(() => {
             <Image
               src="/explore.svg"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">

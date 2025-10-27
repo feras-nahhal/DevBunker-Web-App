@@ -39,4 +39,17 @@
   flex-direction: column;
   height: 100%;
 }
-
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0; /* No margin on mobile */
+    width: 100%;
+  }
+  .main-content.collapsed {
+    margin-left: 0; /* Ensure no margin when collapsed on mobile */
+  }
+  .explore-container {
+    padding: 16px; /* Reduce padding on mobile */
+    margin-top: 80px; /* Adjust top margin if header height changes */
+  }
+}

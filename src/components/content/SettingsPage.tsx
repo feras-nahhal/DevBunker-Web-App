@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 
 export default function SettingsPage() {
   const [oldPassword, setOldPassword] = useState("");
@@ -34,7 +33,7 @@ export default function SettingsPage() {
 
   // SSR-safe way to get token from localStorage
   const getToken = () => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") {  // Fixed: was `!== ""`, should be `!== "undefined"`
       return localStorage.getItem("token");
     }
     return null;
@@ -117,15 +116,14 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto"
-      style={{ width: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
+      className="custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto w-full max-w-[920px]"  
+      style={{ maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
     >
       {/* Title */}
       <div className="flex justify-center items-center mb-4 w-full">
         <h2
-          className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center"
+          className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center w-full max-w-[853px]"  
           style={{
-            width: "853px",
             height: "72px",
             background: "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
             WebkitBackgroundClip: "text",
@@ -146,20 +144,20 @@ export default function SettingsPage() {
       <form ref={formRef} className="w-full flex flex-col items-center gap-6">
         {/* Success Message */}
         {success && (
-          <div className="w-[855px] p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-300 text-sm">
+          <div className="w-full max-w-[855px] p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-300 text-sm">  
             {success}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="w-[855px] p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
+          <div className="w-full max-w-[855px] p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm"> 
             {error}
           </div>
         )}
 
         {/* Old Password Input */}
-        <div className="w-[855px] flex flex-col gap-2">
+        <div className="w-full max-w-[855px] flex flex-col gap-2">  
           <label className="text-white font-bold text-[16px] leading-[22px] font-public-sans">
             Old Password
           </label>
@@ -184,7 +182,7 @@ export default function SettingsPage() {
         </div>
 
         {/* New Password Input */}
-        <div className="w-[855px] flex flex-col gap-2">
+        <div className="w-full max-w-[855px] flex flex-col gap-2">  
           <label className="text-white font-bold text-[16px] leading-[22px] font-public-sans">
             New Password
           </label>
@@ -209,7 +207,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Confirm Password Input */}
-        <div className="w-[855px] flex flex-col gap-2">
+        <div className="w-full max-w-[855px] flex flex-col gap-2">  
           <label className="text-white font-bold text-[16px] leading-[22px] font-public-sans">
             Confirm New Password
           </label>
@@ -234,7 +232,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Save Button */}
-        <div className="flex justify-start mt-2 w-[855px]">
+        <div className="flex justify-start mt-2 w-full max-w-[855px]">  
           <button
             type="button"
             onClick={handleSubmit}

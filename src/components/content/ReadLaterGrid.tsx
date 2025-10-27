@@ -368,6 +368,7 @@ const isLoading = loading || !allContent.length;
           comments={comments}
           onClose={() => setIsPopupOpen(false)}
           onAddComment={handleAddComment}
+          excalidraw_data={selectedContent.excalidraw_data}
         />
       )}
 

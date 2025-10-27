@@ -14,6 +14,7 @@ export default function ResearchDraftPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuthContext();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
 
   // -----------------------------
   // States
@@ -55,7 +56,11 @@ export default function ResearchDraftPage() {
   // -----------------------------
   if (loading || (!user && !loading)) return (
         <div className="dashboard">
-          <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+          <Sidebar 
+                                onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                                isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                                onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                              />
           <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
             <HeaderDraft
               searchQuery={searchQuery}
@@ -63,6 +68,8 @@ export default function ResearchDraftPage() {
               filters={filters}
               onFiltersChange={handleFiltersChange}
               collapsed={sidebarCollapsed}
+              isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+              onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
             />
     
             {/* Mindmap / Draft header */}
@@ -71,8 +78,8 @@ export default function ResearchDraftPage() {
                 <Image
                   src="/draft.svg"
                   alt="Mindmap Icon"
-                  width={20}
-                  height={20}
+                  width={25}
+                  height={25}
                   className="object-contain mr-[4px] relative top-[1px]"
                 />
                 <h2
@@ -123,7 +130,11 @@ export default function ResearchDraftPage() {
   // -----------------------------
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+                            onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                          />
                   <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
                     <HeaderDraft
                       searchQuery={searchQuery}
@@ -131,6 +142,8 @@ export default function ResearchDraftPage() {
                       filters={filters}
                       onFiltersChange={handleFiltersChange}
                       collapsed={sidebarCollapsed}
+                      isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                      onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
                     />
 
         <div className="research-container">
@@ -139,8 +152,8 @@ export default function ResearchDraftPage() {
             <Image
               src="/draft.svg"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2

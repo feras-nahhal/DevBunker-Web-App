@@ -15,6 +15,7 @@ export default function PostPage() {
   const { user, loading, isAuthenticated } = useAuthContext(); // ✅ check authentication state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
 
   // 🔐 Redirect if not authenticated
   useEffect(() => {
@@ -51,7 +52,11 @@ export default function PostPage() {
  if (loading || !user) {
      return (
        <div className="dashboard">
-         <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+         <Sidebar 
+                   onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                   isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                   onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                 />
          <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
            <Header
              collapsed={sidebarCollapsed}
@@ -59,14 +64,16 @@ export default function PostPage() {
              onSearchChange={handleSearchChange}
              filters={filters}
              onFiltersChange={handleFiltersChange}
+            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
            />
            <div className="explore-container">
              <div className="flex items-center mb-4">
                <Image
                  src="/post.svg"
                  alt="Menu Icon"
-                 width={20}
-                 height={20}
+                 width={25}
+                 height={25}
                  className="object-contain mr-[4px] relative top-[1px]"
                />
                <h2
@@ -96,7 +103,11 @@ export default function PostPage() {
 
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+                onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+              />
               <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
               <Header
                         collapsed={sidebarCollapsed}
@@ -104,6 +115,8 @@ export default function PostPage() {
                         onSearchChange={handleSearchChange}
                         filters={filters}
                         onFiltersChange={handleFiltersChange}
+                        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
                       />
 
         <div className="post-container">
@@ -112,8 +125,8 @@ export default function PostPage() {
             <Image
               src="/post.svg"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2

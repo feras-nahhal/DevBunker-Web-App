@@ -16,7 +16,7 @@ export default function ReadLaterPage() {
   const { token, loading, isAuthenticated } = useAuthContext(); // ✅ check authentication state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   // ✅ All hooks must always run before any conditional return
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -51,7 +51,11 @@ export default function ReadLaterPage() {
   if (loading || !token) {
     return (
       <div className="dashboard">
-        <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+        <Sidebar 
+                  onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                  isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                  onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <Header
             collapsed={sidebarCollapsed}
@@ -59,14 +63,16 @@ export default function ReadLaterPage() {
             onSearchChange={handleSearchChange}
             filters={filters}
             onFiltersChange={handleFiltersChange}
+            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
           />
           <div className="explore-container">
             <div className="flex items-center mb-4">
               <Image
                 src="/readlater.svg"
                 alt="Menu Icon"
-                width={20}
-                height={20}
+                width={25}
+                height={25}
                 className="object-contain mr-[4px] relative top-[1px]"
               />
               <h2
@@ -96,7 +102,11 @@ export default function ReadLaterPage() {
 
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+                onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+              />
                   <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
                     <Header
                       collapsed={sidebarCollapsed}
@@ -104,6 +114,8 @@ export default function ReadLaterPage() {
                       onSearchChange={handleSearchChange}
                       filters={filters}
                       onFiltersChange={handleFiltersChange}
+                      isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                      onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
                     />
 
         <div className="explore-container">
@@ -112,8 +124,8 @@ export default function ReadLaterPage() {
             <Image
               src="/readlater.svg"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2

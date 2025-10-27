@@ -47,6 +47,7 @@
     "react-loading-skeleton": "^3.5.0",
     "react-share": "^5.2.2",
     "reactflow": "^11.11.4",
+    "resend": "^6.2.2",
     "tippy.js": "^6.3.7",
     "tsconfig-paths": "^4.2.0",
     "zod": "^4.1.11"

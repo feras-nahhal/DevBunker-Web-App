@@ -36,6 +36,7 @@ export default function CreateResearchPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [ready, setReady] = useState(false);
 
   const {
@@ -158,7 +159,11 @@ export default function CreateResearchPage() {
   if (!ready || contentLoading) {
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+        onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+      />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         {/* 🔹 Header */}
         <CreateReserchHeader
@@ -167,6 +172,8 @@ export default function CreateResearchPage() {
           onCancel={handleCancel}
           saving={isLoading}
           collapsed={sidebarCollapsed}
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
         />
 
         {/* 🔹 Page Title Row */}
@@ -175,8 +182,8 @@ export default function CreateResearchPage() {
             <Image
               src="/plus.svg"
               alt="Research Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
@@ -198,7 +205,11 @@ export default function CreateResearchPage() {
 
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar 
+        onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+      />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <CreateReserchHeader
           onSave={handleSavePublish}
@@ -206,6 +217,8 @@ export default function CreateResearchPage() {
           onCancel={handleCancel}
           saving={isLoading}
           collapsed={sidebarCollapsed}
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
         />
 
         <div className="post-container">
@@ -213,8 +226,8 @@ export default function CreateResearchPage() {
             <Image
               src="/plus.svg"
               alt="Research Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2

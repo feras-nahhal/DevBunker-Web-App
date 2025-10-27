@@ -10,7 +10,6 @@ import NotificationsCardSkeleton from "../content/NotificationsCardSkeleton";
 export default function NotificationsGrid() {
   const { notifications, loading, error, markAsRead, markAllAsRead, refetch } = useNotifications();
 
-
   // Filters: Only read/unread (top clickable labels – no search/multi-select)
   const [selectedReadStatus, setSelectedReadStatus] = useState<string>(""); // "" = All, "read" = read only, "unread" = unread only
 
@@ -55,10 +54,10 @@ export default function NotificationsGrid() {
 
   /** Popup handlers (card click opens modal) */
   // ✅ FIXED
-const handleOpenPopup = (notification: Notification) => {
-  setSelectedNotification(notification);
-  setIsPopupOpen(true);
-};
+  const handleOpenPopup = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setIsPopupOpen(true);
+  };
 
   const handleMarkAsReadInPopup = async () => {
     if (!selectedNotification?.id) return;
@@ -66,7 +65,7 @@ const handleOpenPopup = (notification: Notification) => {
       await markAsRead(selectedNotification.id);
       setIsPopupOpen(false); // Close popup after mark
       refetch(); // Refresh grid
-      } catch (err: unknown) {
+    } catch (err: unknown) {
       if (err instanceof Error) console.error("Mark as read failed:", err.message);
       else console.error("Mark as read failed:", err);
     }
@@ -93,10 +92,9 @@ const handleOpenPopup = (notification: Notification) => {
       await markAllAsRead();
       refetch(); // Refresh grid
     } catch (err: unknown) {
-    if (err instanceof Error) console.error("Mark all failed:", err.message);
-    else console.error("Mark all failed:", err);
+      if (err instanceof Error) console.error("Mark all failed:", err.message);
+      else console.error("Mark all failed:", err);
     }
-
   };
 
   /** Pagination Controls */
@@ -109,39 +107,37 @@ const handleOpenPopup = (notification: Notification) => {
 
   /** Loading/Error States */
   if (loading)
-  return (
-    <div
-      className="flex flex-col items-center justify-start mx-auto"
-      style={{
-        width: "1200px",
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderRadius: "10px",
-        border: "1px solid rgba(80,80,80,0.24)",
-        boxShadow: "inset 0 0 7px rgba(255,255,255,0.16)",
-        backdropFilter: "blur(12px)",
-        overflow: "hidden",
-      }}
-    >
-      <div className="w-[1190px] h-[56px] bg-white/[0.05] border border-[rgba(145,158,171,0.2)] rounded-xl flex items-center justify-between px-2 mb-1 mt-1 gap-2">
-        {[{ label: "All" }, { label: "Unread" }, { label: "Archived" }].map(
-          (item) => (
-            <div
-              key={item.label}
-              className="flex-1 h-[40px] rounded-xl bg-white/[0.08] animate-pulse"
-            />
-          )
-        )}
-      </div>
+    return (
+      <div
+        className="flex flex-col items-center justify-start mx-auto w-full max-w-[75rem] px-4 sm:px-0" // Responsive: full width on mobile, max 1200px on larger screens
+        style={{
+          backgroundColor: "rgba(255,255,255,0.05)",
+          borderRadius: "10px",
+          border: "1px solid rgba(80,80,80,0.24)",
+          boxShadow: "inset 0 0 7px rgba(255,255,255,0.16)",
+          backdropFilter: "blur(12px)",
+          overflow: "hidden",
+        }}
+      >
+        <div className="w-full max-w-[74rem] h-[56px] bg-white/[0.05] border border-[rgba(145,158,171,0.2)] rounded-xl flex items-center justify-between px-2 mb-1 mt-1 gap-2"> {/* Responsive inner width */}
+          {[{ label: "All" }, { label: "Unread" }, { label: "Archived" }].map(
+            (item) => (
+              <div
+                key={item.label}
+                className="flex-1 h-[40px] rounded-xl bg-white/[0.08] animate-pulse"
+              />
+            )
+          )}
+        </div>
 
-      {/* Skeleton notification cards */}
-      <div className="flex flex-col w-full items-center">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <NotificationsCardSkeleton key={i} />
-        ))}
+        {/* Skeleton notification cards */}
+        <div className="flex flex-col w-full items-center">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <NotificationsCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
-    </div>
-  );
-
+    );
 
   if (error)
     return (
@@ -161,9 +157,8 @@ const handleOpenPopup = (notification: Notification) => {
   return (
     <>
       <div
-        className="flex flex-col items-center justify-start mx-auto"
+        className="flex flex-col items-center justify-start mx-auto w-full max-w-[75rem] px-4 sm:px-0" // Responsive: full width on mobile with padding, max 1200px on larger screens
         style={{
-          width: "1200px",
           backgroundColor: "rgba(255,255,255,0.05)",
           borderRadius: "10px",
           border: "1px solid rgba(80,80,80,0.24)",
@@ -172,109 +167,99 @@ const handleOpenPopup = (notification: Notification) => {
           overflow: "hidden",
         }}
       >
-{/* 🧠 Stats Summary Box */}
-<div className="w-[1190px] h-[56px] bg-white/[0.05] border border-[rgba(145,158,171,0.2)] rounded-xl flex items-center justify-between px-2 mb-1 mt-1 gap-2">
-  {[
-    { label: "All", status: "", color: "#9CA3AF", count: totalCount },
-      {
-      label: "Unread",
-      status: "unread",
-      color: "rgba(0, 184, 217, 0.16)", // Red for unread
-      count: unreadCount,
-    },
-    {
-      label: "Archived",
-      status: "read",
-      color: "rgba(34, 197, 94, 0.16)", // Green for read
-      count: readCount,
-    },
-  
-  ].map((item) => (
-    <button
-      key={item.label}
-      onClick={() => setSelectedReadStatus(item.status)}
-      className={`flex-1 h-[40px] flex items-center justify-center gap-2 rounded-xl transition-all duration-200
-        ${selectedReadStatus === item.status
-          ? "bg-white/[0.15] border border-white/20 text-white scale-[1.02]"
-          : "bg-transparent  text-white/70 hover:bg-white/[0.05] hover:text-white"
-        }`}
-    >
-      <span className="text-sm font-medium">{item.label}</span>
-      <div
-        className="w-6 h-6 flex items-center justify-center rounded-md text-white text-xs font-semibold shadow-sm"
-        style={{
-          backgroundColor: item.color,
-          boxShadow: `0 0 6px ${item.color}80`,
-        }}
-      >
-        {item.count}
-      </div>
-    </button>
-  ))}
-</div>
+        {/* 🧠 Stats Summary Box */}
+        <div className="w-full max-w-[74rem] h-[56px] bg-white/[0.05] border border-[rgba(145,158,171,0.2)] rounded-xl flex items-center justify-between px-2 mb-1 mt-1 gap-2"> {/* Responsive inner width */}
+          {[
+            { label: "All", status: "", color: "#9CA3AF", count: totalCount },
+            {
+              label: "Unread",
+              status: "unread",
+              color: "rgba(0, 184, 217, 0.16)", // Red for unread
+              count: unreadCount,
+            },
+            {
+              label: "Archived",
+              status: "read",
+              color: "rgba(34, 197, 94, 0.16)", // Green for read
+              count: readCount,
+            },
+          ].map((item) => (
+            <button
+              key={item.label}
+              onClick={() => setSelectedReadStatus(item.status)}
+              className={`flex-1 h-[40px] flex items-center justify-center gap-2 rounded-xl transition-all duration-200
+                ${selectedReadStatus === item.status
+                  ? "bg-white/[0.15] border border-white/20 text-white scale-[1.02]"
+                  : "bg-transparent  text-white/70 hover:bg-white/[0.05] hover:text-white"
+                }`}
+            >
+              <span className="text-sm font-medium">{item.label}</span>
+              <div
+                className="w-6 h-6 flex items-center justify-center rounded-md text-white text-xs font-semibold shadow-sm"
+                style={{
+                  backgroundColor: item.color,
+                  boxShadow: `0 0 6px ${item.color}80`,
+                }}
+              >
+                {item.count}
+              </div>
+            </button>
+          ))}
+        </div>
 
+        {/* Cards Container (max 6 visible + frosted scrollbar) */}
+        <div className="notifications-scroll flex flex-col w-full items-center overflow-y-auto custom-scrollbar">
+          {filteredData.length === 0 ? (
+            <p className="text-gray-400 py-10 text-center text-sm">
+              No notifications found for &quot;{selectedReadStatus || "All"}&quot; status.
+            </p>
+          ) : (
+            filteredData.map((notification) => (
+              <NotificationsCard
+                key={notification.id}
+                type={notification.type}
+                id={notification.id}
+                title={notification.title}
+                message={notification.message}
+                read={notification.read}
+                created_at={notification.created_at}
+                user_id={notification.user_id}
+                onOpenPopup={() => handleOpenPopup(notification)}
+              />
+            ))
+          )}
+        </div>
 
-
-
-     
-
-{/* Cards Container (max 6 visible + frosted scrollbar) */}
-<div className="notifications-scroll flex flex-col w-full items-center overflow-y-auto custom-scrollbar">
-  {filteredData.length === 0 ? (
-    <p className="text-gray-400 py-10 text-center text-sm">
-      No notifications found for &quot;{selectedReadStatus || "All"}&quot; status.
-    </p>
-  ) : (
-    filteredData.map((notification) => (
-      <NotificationsCard
-        key={notification.id}
-        type={notification.type}
-        id={notification.id}
-        title={notification.title}
-        message={notification.message}
-        read={notification.read}
-        created_at={notification.created_at}
-        user_id={notification.user_id}
-        onOpenPopup={() => handleOpenPopup(notification)}
-      />
-    ))
-  )}
-</div>
-
-<style jsx>{`
-  .notifications-scroll {
-    max-height: calc(6 * 76px);
-    padding-right: 6px;
-    scroll-behavior: smooth;
-  }
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.25);
-    border-radius: 16px;
-    transition: background 0.3s ease;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-  }
-`}</style>
-
-
-      
+        <style jsx>{`
+          .notifications-scroll {
+            max-height: calc(6 * 76px);
+            padding-right: 6px;
+            scroll-behavior: smooth;
+          }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            transition: background 0.3s ease;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+          }
+        `}</style>
       </div>
 
-            {/* NEW: Popup Modal (styled like CreateCategoryPopup example) */}
+      {/* NEW: Popup Modal (styled like CreateCategoryPopup example) */}
       {isPopupOpen && selectedNotification && typeof window !== "undefined" && createPortal( // FIXED: SSR check (was !== "" – invalid)
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"> {/* Added padding for mobile */}
           <div
             className="relative flex flex-col items-start p-[0_0_24px] gap-1.5 bg-white/5 border border-[rgba(80,80,80,0.24)]
-                       shadow-[inset_0_0_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto" // FIXED: Added overflow-y-auto for long messages
-            style={{ width: "465px", height: "320px" }} // FIXED: Matches example dimensions
+                       shadow-[inset_0_0_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto w-full max-w-[29rem] h-auto max-h-[20rem]" // Responsive: full width on mobile, max 465px on larger; height auto with max
           >
             {/* Close button (styled like example) */}
             <button

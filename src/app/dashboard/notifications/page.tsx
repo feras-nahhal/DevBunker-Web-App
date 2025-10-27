@@ -15,6 +15,7 @@ export default function ExplorePage() {
       const router = useRouter();
       const { token, loading, isAuthenticated } = useAuthContext();
       const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+      const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
     
       useEffect(() => {
         if (!loading && !token) {
@@ -26,17 +27,25 @@ export default function ExplorePage() {
       if (loading || !token) {
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+       <Sidebar 
+                                 onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                                 isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                                 onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                               />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <HeaderOther collapsed={sidebarCollapsed} />
+        <HeaderOther 
+                collapsed={sidebarCollapsed}
+                isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                 />
         <div className="explore-container">
           {/* 🔹 Page Title Row */}
           <div className="flex items-center mb-4">
             <Image
               src="/notfication.svg"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]"
             />
             <h2
@@ -83,18 +92,25 @@ export default function ExplorePage() {
       if (!token) return null; // ✅ Prevents unauthorized API call before redirect
   return (
     <div className="dashboard">
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+       <Sidebar 
+                                 onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                                 isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                                 onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                               />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <HeaderOther collapsed={sidebarCollapsed} />
-
+          <HeaderOther 
+                  collapsed={sidebarCollapsed}
+                  isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                  onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                   />
         <div className="explore-container">
           {/* 🔹 Menu / Explore Title Row */}
           <div className="flex items-center mb-4">
             <Image
               src="/notfication.svg" // ✅ make sure image path is correct
               alt="Menu Icon"
-              width={20} // Figma-like size (clean & aligned)
-              height={20}
+              width={25} // Figma-like size (clean & aligned)
+              height={25}
               className="object-contain mr-[4px] relative top-[1px]" // 👈 tight spacing & perfect vertical alignment
             />
             <h2
