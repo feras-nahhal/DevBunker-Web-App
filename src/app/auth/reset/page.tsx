@@ -14,8 +14,15 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  const params = new URLSearchParams(window.location.search);
-  const email = params.get("email");
+  const [email, setEmail] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        setEmail(params.get("email"));
+      }
+    }, []);
+
   const router = useRouter();
 
   // Load saved theme
