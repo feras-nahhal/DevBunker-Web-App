@@ -29,10 +29,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true, result });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in reset API:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to send email" },
+      { success: false, error: "Unknown error occurred" },
       { status: 500 }
     );
   }
