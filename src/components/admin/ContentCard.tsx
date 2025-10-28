@@ -20,6 +20,7 @@ interface ContentCardProps {
   onSelect?: (id: string, checked: boolean) => void;
   onDelete?: () => void;
   onOpenComments?: () => void;
+  commentCount?: number;
 }
 
 export default function ContentCard({
@@ -36,12 +37,13 @@ export default function ContentCard({
   onSelect,
   onDelete,
   onOpenComments,
+  commentCount = 0,
 }: ContentCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { addBookmark, addReadLater } = useBookmarksAndReadLater();
-  const { comments: commentsData, loading: commentsLoading } = useComments(id);
+ 
 
   const authorName = authorEmail ? authorEmail.split("@")[0] : "Unknown";
 
@@ -67,7 +69,7 @@ export default function ContentCard({
 
   const menuItems = [
         {
-      name: `View Research ${commentsLoading ? "..." : `(${commentsData.length || 0})`}`, // FIXED: Fallback to 0 if no comments
+      name: `View Research  ${commentCount}`, // FIXED: Fallback to 0 if no comments
       icon: "/reserchlogo.png",
       action: () => {
         console.log('Comments clicked for ID:', id); // FIXED: Debug log

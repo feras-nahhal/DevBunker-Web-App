@@ -49,6 +49,26 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
       ? localStorage.getItem("token") || undefined
       : undefined;
 
+  //new part 
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+ 
+  useEffect(() => {
+  if (data.length === 0) return;
+
+  const contentIds = data.map((c) => c.id).join(",");
+
+  fetch(`/api/comments/counts?content_ids=${contentIds}`)
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) setCommentCounts(json.counts);
+      else setCommentCounts({});
+    })
+    .catch((err) => {
+      console.error("Failed to fetch comment counts:", err);
+      setCommentCounts({});
+    });
+  }, [data]);
+
   /** 🧠 Client-side filtering */
   const filteredData = useMemo(() => {
     let filtered = [...data];
@@ -530,6 +550,7 @@ const clearAllFilters = () => {
                 onSelect={handleSelect}
                 onDelete={() => handleDelete(card.id, card.content_type)}
                 onOpenComments={() => handleOpenComments(card)}
+                commentCount={commentCounts[card.id] || 0}// ✅ pass count
               />
             ))
           )}
