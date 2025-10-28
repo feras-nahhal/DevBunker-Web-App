@@ -8,6 +8,7 @@ import { useContent } from "@/hooks/useContent";
 import { CONTENT_STATUS, CONTENT_TYPES } from "@/lib/enums";
 import { AnyContent, Comment } from "@/types/content";
 import Image from "next/image";
+import CategoryGridSkeleton from "./CategoryGridSkeleton";
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
 }
@@ -232,8 +233,8 @@ const clearAllFilters = () => {
   /** 🌀 Render */
   if (loading)
     return (
-      <div className="flex justify-center py-10 text-gray-400 text-lg">
-        Loading...
+      <div className="flex justify-center  text-gray-400 text-lg">
+        <CategoryGridSkeleton/>
       </div>
     );
 
@@ -281,77 +282,77 @@ const clearAllFilters = () => {
           ))}
         </div>
 
-       {/* 🔍 Search & Filters */}
-        <div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
-          {/* Search Input */}
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder=" Search..."
-            className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400 mb-3"
-          />
+{/* 🔍 Search & Filters */}
+<div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
 
-          <div className="flex items-center gap-3">
-            {/* Status Multi-Select */}
-            <div className="w-[220px] relative">
-              <label className="block text-white text-[12px] mb-1">Statuses</label>
-              <div className="relative bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
-                <div className="flex flex-wrap gap-1 mb-1">
-                  {selectedStatuses.map((status) => (
-                    <div key={status} className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all">
-                      {status}
-                      <button onClick={() => removeFromArray(selectedStatuses, setSelectedStatuses, status)} className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]">×</button>
-                    </div>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  value={statusSearch}
-                  onChange={(e) => { setStatusSearch(e.target.value); setStatusDropdownOpen(true); }}
-                  onFocus={() => setStatusDropdownOpen(true)}
-                  placeholder="Type to search..."
-                  className="w-full bg-transparent text-white text-sm border-none outline-none placeholder:text-gray-400"
-                />
-                {statusDropdownOpen && (
-                  <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 ">
-                    {Object.values(CONTENT_STATUS)
-                      .filter((s) => s.toLowerCase().includes(statusSearch.toLowerCase()))
-                      .map((s) => (
-                        <div
-                          key={s}
-                          onClick={() => { addToArray(selectedStatuses, setSelectedStatuses, s, Object.values(CONTENT_STATUS)); setStatusSearch(""); setStatusDropdownOpen(false); }}
-                          className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md"
-                        >
-                          {s.replace("_", " ").toUpperCase()}
-                        </div>
-                      ))}
-                  </div>
-                )}
+  {/* Top Row: Search + Filters (Fixed layout) */}
+  <div className="flex flex-wrap items-end gap-3 mb-3">
+    {/* 🔍 Main Search */}
+    <div className="flex-1 min-w-[200px]">
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search..."
+        className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+      />
+    </div>
+
+    {/* 🚦 Statuses Dropdown */}
+    <div className="w-[220px] relative">
+      <label className="block text-white text-[12px] mb-1">Statuses</label>
+      <input
+        type="text"
+        value={statusSearch}
+        onChange={(e) => {
+          setStatusSearch(e.target.value);
+          setStatusDropdownOpen(true);
+        }}
+        onFocus={() => setStatusDropdownOpen(true)}
+        placeholder="Type to search..."
+        className="w-full px-2 py-1 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+      />
+      {statusDropdownOpen && (
+        <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
+          {Object.values(CONTENT_STATUS)
+            .filter((s) => s.toLowerCase().includes(statusSearch.toLowerCase()))
+            .map((s) => (
+              <div
+                key={s}
+                onClick={() => {
+                  addToArray(selectedStatuses, setSelectedStatuses, s, Object.values(CONTENT_STATUS));
+                  setStatusSearch("");
+                  setStatusDropdownOpen(false);
+                }}
+                className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
+              >
+                {s.replace("_", " ").toUpperCase()}
               </div>
-            </div>
+            ))}
+          {Object.values(CONTENT_STATUS).filter((s) =>
+            s.toLowerCase().includes(statusSearch.toLowerCase())
+          ).length === 0 && (
+            <div className="p-2 text-gray-400 text-sm italic">No statuses found</div>
+          )}
+        </div>
+      )}
+    </div>
 
-          {/* Category Multi-Select */}
-        <div className="w-[220px] relative">
-          <label className="block text-white text-[12px] mb-1">Categories</label>
-          <div className="relative bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
-            <div className="flex flex-wrap gap-1 mb-1">
-              {selectedCategories.map((cat) => (
-                <div key={cat} className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all">
-                  {cat}
-                  <button onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)} className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]">×</button>
-                </div>
-              ))}
-            </div>
-            <input
-              type="text"
-              value={categorySearch}
-              onChange={(e) => { setCategorySearch(e.target.value); setCategoryDropdownOpen(true); }}
-              onFocus={() => setCategoryDropdownOpen(true)}
-              placeholder="Type to search..."
-              className="w-full bg-transparent text-white text-sm border-none outline-none placeholder:text-gray-400"
-            />
-            {categoryDropdownOpen && (
+    {/* 🏷️ Categories Dropdown */}
+    <div className="w-[220px] relative">
+      <label className="block text-white text-[12px] mb-1">Categories</label>
+      <input
+        type="text"
+        value={categorySearch}
+        onChange={(e) => {
+          setCategorySearch(e.target.value);
+          setCategoryDropdownOpen(true);
+        }}
+        onFocus={() => setCategoryDropdownOpen(true)}
+        placeholder="Type to search..."
+        className="w-full px-2 py-1 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+      />
+       {categoryDropdownOpen && (
               <div
                 className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
                 style={{
@@ -380,30 +381,73 @@ const clearAllFilters = () => {
                   ))}
               </div>
             )}
+    </div>
+  </div>
+
+  {/* Bottom Row: Pills + Clear Button */}
+  {(selectedStatuses.length > 0 || selectedCategories.length > 0) && (
+    <div className="flex gap-3">
+      {/* Selected Statuses */}
+      {selectedStatuses.length > 0 && (
+        <div className="w-[220px] flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+          <div className="flex flex-wrap gap-1">
+            {selectedStatuses.map((status) => (
+              <div
+                key={status}
+                className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all"
+              >
+                <span className="truncate max-w-[60px]">{status}</span>
+                <button
+                  onClick={() => removeFromArray(selectedStatuses, setSelectedStatuses, status)}
+                  className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         </div>
+      )}
 
-
-            {(selectedStatuses.length > 0 || selectedCategories.length > 0) && (
-                        <button
-                      onClick={clearAllFilters}
-                      className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium transition-all self-start mt-[22px]"
-                    >
-                      <Image
-                                          src="/redtrash.svg"
-                                          alt="Logout Icon"
-                                          width={20}
-                                          height={20}
-                                          style={{ marginRight: "6px" }}
-                                        />
-                      <span>Clear</span>
-                    </button>
-            
-                      )}
-
-            
+      {/* Selected Categories */}
+      {selectedCategories.length > 0 && (
+        <div className="w-[220px] flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+          <div className="flex flex-wrap gap-1">
+            {selectedCategories.map((cat) => (
+              <div
+                key={cat}
+                className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all"
+              >
+                <span className="truncate max-w-[60px]">{cat}</span>
+                <button
+                  onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)}
+                  className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* Clear Button */}
+      <button
+        onClick={clearAllFilters}
+        className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium transition-all self-start"
+      >
+        <Image
+          src="/redtrash.svg"
+          alt="Clear Filters"
+          width={20}
+          height={20}
+          style={{ marginRight: "6px" }}
+        />
+        <span>Clear</span>
+      </button>
+    </div>
+  )}
+</div>
 
 
         {/* Header Row (checkbox + labels) */}
@@ -439,16 +483,15 @@ const clearAllFilters = () => {
         {/* Labels */}
           <div className="flex flex-row items-center flex-1 gap-12 min-w-0">
             {/* Avatar Placeholder */}
-            <div className="w-10 h-10 bg-transparent" />
+            <div className="w-15 h-10 bg-transparent" />
 
             {/* Email / User ID Labels */}
-            <div className="flex w-[370px] flex-col items-start gap-2 shrink-0">
+            <div className="flex w-[355px] flex-col items-start gap-2 shrink-0">
               <div className="text-left w-full">
                 <span className="text-white text-[12px] font-semibold">
-                  Research Name
+                  Research 
                 </span>
                 <span className="text-[10px] text-[rgba(204,204,204,0.5)]">
-                  Content
                 </span>
               </div>
             </div>

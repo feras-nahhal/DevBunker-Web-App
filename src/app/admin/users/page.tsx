@@ -8,6 +8,7 @@ import Sidebar from "@/components/admin/Sidebar";
 import UserGrid from "@/components/admin/UserGrid";
 import "./ExplorePage.css";
 import { useAuthContext } from "@/hooks/AuthProvider";
+import CategoryGridSkeleton from "@/components/admin/CategoryGridSkeleton";
 
 export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
@@ -33,11 +34,29 @@ export default function ExplorePage() {
   if (loading || !token) {
     return (
       <div className="dashboard">
-        <Sidebar onToggle={setSidebarCollapsed} />
-        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <p className="text-center text-gray-400 mt-10">Loading...</p>
+      <Sidebar onToggle={setSidebarCollapsed} />
+      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+        <Header collapsed={sidebarCollapsed}/>
+
+        <div className="explore-container">
+          {/* 🔹 Breadcrumb / Title */}
+          <div className="flex items-center mb-4">
+            <Image
+              src="/user.svg"
+              alt="Menu Icon"
+              width={25}
+              height={25}
+            />
+            <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
+              Mangagement/ User
+            </h2>
+          </div>
+
+          {/* 🔹 Category Grid */}
+          <CategoryGridSkeleton/>
         </div>
       </div>
+    </div>
     );
   }
 
@@ -54,8 +73,8 @@ export default function ExplorePage() {
             <Image
               src="/user.svg"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
             />
             <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
               Mangagement/ User

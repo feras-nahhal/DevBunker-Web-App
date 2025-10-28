@@ -55,8 +55,8 @@ export default function ExplorePage() {
             <Image
               src="/pillicon.png"
               alt="Menu Icon"
-              width={20}
-              height={20}
+              width={25}
+              height={25}
             />
             <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
               Update/ Notifications
