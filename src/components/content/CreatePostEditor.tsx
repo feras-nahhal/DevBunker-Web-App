@@ -1,45 +1,36 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react/menus"; // FIXED: Import from the correct path as per TipTap docs
+import React, { useMemo, useState, useEffect } from "react";
+import { useEditor, EditorContent} from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
-import Link1 from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
+import Heading, { Level } from "@tiptap/extension-heading";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
+import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
-import Underline1 from "@tiptap/extension-underline";
 import Highlight from "@tiptap/extension-highlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import Image from "@tiptap/extension-image";
+import Code from "@tiptap/extension-code";
+import CodeBlock from "@tiptap/extension-code-block";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
 import Image1 from "next/image";
 import { useCategories } from "@/hooks/useCategories";
 import { useTags } from "@/hooks/useTags";
 import { useContentTags } from "@/hooks/useContentTags";
-import { useReferences } from "@/hooks/useReferences";
+
+// Icons
 import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Highlighter,
-  List,
-  ListOrdered,
-  ListTodo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Quote,
-  Minus,
-  Link as LinkIcon,
-  Unlink,
-  Image as ImageIcon,
-  Code,
-  SquareCode,
-  Undo,
-  Redo,
-  X,
-  Maximize,
-  Minimize,
+  Bold, Italic, Underline as UnderlineIcon, Strikethrough, Highlighter,
+  List, ListOrdered, ListTodo,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Quote, Minus, Link as LinkIcon, Unlink, Image as ImageIcon,
+  Code as CodeIcon, SquareCode, Undo, Redo, X,  Maximize,
+  Minimize
 } from "lucide-react";
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
@@ -105,6 +96,12 @@ export default function CreatePostEditor({
     const [tagIds, setTagIds] = useState<string[]>([]);
     const [showTagSelector, setShowTagSelector] = useState(false); 
     const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // ===== Url======================
+        const [showPopup, setShowPopup] = useState(false);
+        const [showPopup1, setShowPopup1] = useState(false);
+        const [url, setUrl] = useState("");
+        const [imageUrl, setImageUrl] = useState("");
   
 
 // ===== REFERENCE STATE (NEW) =====
@@ -113,9 +110,11 @@ export default function CreatePostEditor({
   const [referenceInput, setReferenceInput] = useState(""); // Temp input for popup
   const [referenceError, setReferenceError] = useState<string | null>(null); // Optional: For validation errors
 
+  
+
 
   const { tags: fetchedTags, fetchTags } = useContentTags();
-  const { references: fetchedReferences, refresh: refreshReferences } = useReferences(researchId || "");
+
 
 
 
@@ -194,17 +193,38 @@ export default function CreatePostEditor({
   
 
   // ===== TIPTAP EDITOR =====
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
-      Link1,
-      Image,
-      Underline1,
-      Highlight,
+  const extensions = useMemo(
+    () => [
+      StarterKit.configure({
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+      }),
+       TextStyle,
+    Color.configure({ types: ["textStyle"] }),
+      Heading.configure({ levels: [1, 2, 3] }),
+      BulletList,
+      OrderedList,
+      ListItem,
       TaskList,
       TaskItem,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Underline,
+      Link.configure({ openOnClick: true }),
+      Highlight,
+      Image,
+      Code,
+      CodeBlock,
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
     ],
+    []
+  );
+
+  const editor = useEditor({
+    extensions,
+    editable: true,
     content: body,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
@@ -215,6 +235,50 @@ export default function CreatePostEditor({
   if (!mounted || !editor) return null;
 
   const hasContent = editor.getText().trim().length > 0;
+
+   //==========Link==================
+
+
+     const applyLink = () => {
+       const { from, to } = editor.state.selection;
+       const selectedText = editor.state.doc.textBetween(from, to).trim();
+       
+       if (from === to || selectedText === "") {
+         alert("Please select some text to link.");
+         return;
+       }
+       
+       // Check if selection is the entire line/paragraph (optional, but helpful)
+       const lineText = editor.state.doc.textBetween(
+         editor.state.doc.resolve(from).start(),
+         editor.state.doc.resolve(from).end()
+       ).trim();
+       if (selectedText === lineText) {
+         alert("Please select only part of the text, not the entire line.");
+         return;
+       }
+
+       let finalUrl = url.trim();
+       if (finalUrl && !/^https?:\/\//i.test(finalUrl)) {
+         finalUrl = `https://${finalUrl}`;
+       }
+
+       editor.chain().focus().setLink({ href: finalUrl }).run();
+       editor.commands.setTextSelection(to);
+
+       setShowPopup(false);
+       setUrl("");
+     };
+     
+
+
+  const applyImage = () => {
+    if (imageUrl.trim()) {
+      editor.chain().focus().setImage({ src: imageUrl.trim() }).run();
+      setImageUrl("");
+      setShowPopup(false);
+    }
+  };
 
 
 
@@ -254,1151 +318,1383 @@ export default function CreatePostEditor({
       />
 
      {/* ===== EDITOR ===== */}
-           <div className={`editor-wrapper ${hasContent ? "has-content" : ""}`}>
-             {!hasContent && <div className="fake-placeholder">Write your post content here...</div>}
-             <BubbleMenu // FIXED: Added BubbleMenu for Notion-like floating toolbar on selection
-                editor={editor}
-                options={{placement: 'top-start',flip: true,}} // Position above selection, with offset and flip
-                className="bubble-menu"
+<div className={`editor-wrapper ${hasContent ? "has-content" : ""}`}>
+        {!hasContent && <div className="fake-placeholder">Write your post content here...</div>}
+        <BubbleMenu // FIXED: Added BubbleMenu for Notion-like floating toolbar on selection
+          editor={editor}
+          options={{placement: 'top-start',flip: true,}} // Position above selection, with offset and flip
+          className="bubble-menu"
+        >
+          <div className="bubble-toolbar">
+            
+       {/* Custom Dropdown for Heading Selection */}
+          <div className="relative">
+            {/* Dropdown Header (matches category header) */}
+            <div
+              onClick={() => setHeadingDropdownOpen(!headingDropdownOpen)}
+              className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer transition hover:bg-white/20"
+              style={{ width: '120px' }}
+            >
+              {selectedHeading || "Normal"}
+              <span className="ml-2 text-xs opacity-70">▼</span>
+            </div>
+
+            {/* Dropdown Menu (matches category menu) */}
+            {headingDropdownOpen && (
+              <div
+                className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                style={{
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
               >
-               <div className="bubble-toolbar">
-                 
-            {/* Custom Dropdown for Heading Selection */}
-               <div className="relative">
-                 {/* Dropdown Header (matches category header) */}
-                 <div
-                   onClick={() => setHeadingDropdownOpen(!headingDropdownOpen)}
-                   className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer transition hover:bg-white/20"
-                   style={{ width: '120px' }}
+                {/* Hide scrollbar for Chrome, Safari, Edge */}
+                <style>
+                  {`
+                    div::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}
+                </style>
+
+                <div
+                  onClick={() => {
+                    setSelectedHeading("Normal");
+                    editor.chain().focus().setParagraph().run();
+                    // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
+                  }}
+                  className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                >
+                  Normal
+                </div>
+
+                {[1, 2, 3].map((level) => (
+                  <div
+                    key={level}
+                    onClick={() => {
+                      setSelectedHeading(`Heading ${level}`);
+                      editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
+                      // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
+                    }}
+                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                  >
+                    Heading {level}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+            <span className="bubble-toolbar-separator" />
+
+            <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive("bold") ? "active" : ""}><Bold size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive("italic") ? "active" : ""}><Italic size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive("underline") ? "active" : ""}><UnderlineIcon size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive("strike") ? "active" : ""}><Strikethrough size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleHighlight().run()} className={editor.isActive("highlight") ? "active" : ""}><Highlighter size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleTaskList().run()}><ListTodo size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().setTextAlign("left").run()}><AlignLeft size={18} /></button>
+            <button onClick={() => editor.chain().focus().setTextAlign("center").run()}><AlignCenter size={18} /></button>
+            <button onClick={() => editor.chain().focus().setTextAlign("right").run()}><AlignRight size={18} /></button>
+            <button onClick={() => editor.chain().focus().setTextAlign("justify").run()}><AlignJustify size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote size={18} /></button>
+            <button onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+           {/* Link button */}
+            <button onClick={() => setShowPopup(true)}>
+              <LinkIcon size={18} />
+            </button>
+
+             {/* Unlink button */}
+            <button
+              onClick={() => {
+                editor
+                  .chain()
+                  .focus()
+                  .unsetLink()
+                  .setColor("inherit")
+                  .unsetMark("underline")
+                  .run();
+              }}
+            >
+              <Unlink size={18} />
+            </button>
+
+            <span className="bubble-toolbar-separator" />
+             <button onClick={() => setShowPopup1(true)}><ImageIcon size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().toggleCode().run()}><CodeIcon size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => editor.chain().focus().undo().run()}><Undo size={18} /></button>
+            <button onClick={() => editor.chain().focus().redo().run()}><Redo size={18} /></button>
+            <button onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><X size={18} /></button>
+
+            <span className="bubble-toolbar-separator" />
+            <button onClick={() => setFullscreen(!fullscreen)}>
+              {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+            </button>
+          </div>
+        </BubbleMenu>
+        <EditorContent editor={editor} className="editor" />
+      </div>
+  {/* Popup */}
+           {showPopup && (
+             <div
+               style={{
+                 marginTop: "12px",
+                 background: "rgba(255, 255, 255, 0.05)",
+                 border: "1px solid rgba(80, 80, 80, 0.24)",
+                 borderRadius: "16px",
+                 padding: "16px",
+                 width: "calc(100vw - 40px)", // CHANGED: Responsive width (full viewport minus padding)
+                 maxWidth: "855px", // CHANGED: Cap at desktop width
+                 display: "flex",
+                 flexDirection: "column",
+                 gap: "12px",
+               }}
+             >
+               <label
+                 style={{
+                   fontSize: "16px",
+                   fontWeight: 500,
+                   color: "rgba(255,255,255,0.9)",
+                 }}
+               >
+                 🔗 Enter Link URL
+               </label>
+ 
+               <input
+                 type="text"
+                 placeholder="https://example.com"
+                 value={url}
+                 onChange={(e) => setUrl(e.target.value)}
+                 style={{
+                   width: "100%",
+                   background: "rgba(0, 0, 0, 0.25)",
+                   border: "1px solid rgba(255, 255, 255, 0.1)",
+                   borderRadius: "8px",
+                   color: "white",
+                   padding: "8px 10px",
+                   fontSize: "14px",
+                 }}
+               />
+ 
+               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                 <button
+                   onClick={() => setShowPopup(false)}
+                   style={{
+                     background: "rgba(255, 255, 255, 0.1)",
+                     border: "1px solid rgba(255, 255, 255, 0.15)",
+                     borderRadius: "99px",
+                     color: "white",
+                     padding: "6px 12px",
+                     cursor: "pointer",
+                   }}
                  >
-                   {selectedHeading || "Normal"}
-                   <span className="ml-2 text-xs opacity-70">▼</span>
-                 </div>
-     
-                 {/* Dropdown Menu (matches category menu) */}
-                 {headingDropdownOpen && (
-                   <div
-                     className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                   Cancel
+                 </button>
+ 
+                 <button
+             onClick={applyLink}
+             disabled={!url.trim()}
+             className="save-btn"
+           >
+             <span className="glow-bg"></span>
+             <span className="text">Add Link</span>
+           </button>
+ 
+               </div>
+             </div>
+           )}
+ 
+        {showPopup1 && (
+         <div
+            style={{
+               marginTop: "12px",
+               background: "rgba(255, 255, 255, 0.05)",
+               border: "1px solid rgba(80, 80, 80, 0.24)",
+               borderRadius: "16px",
+               padding: "16px",
+               width: "calc(100vw - 40px)", // CHANGED: Responsive width
+               maxWidth: "855px", // CHANGED: Cap at desktop width
+               display: "flex",
+               flexDirection: "column",
+               gap: "12px",
+             }}
+         >
+           <label
+             style={{
+               fontSize: "16px",
+               fontWeight: 500,
+               color: "rgba(255,255,255,0.9)",
+             }}
+           >
+             🖼️ Enter Image URL
+           </label>
+ 
+           <input
+             type="text"
+             placeholder="https://example.com/image.png"
+             value={imageUrl}
+             onChange={(e) => setImageUrl(e.target.value)}
+             style={{
+               width: "100%",
+               background: "rgba(0, 0, 0, 0.25)",
+               border: "1px solid rgba(255, 255, 255, 0.1)",
+               borderRadius: "8px",
+               color: "white",
+               padding: "8px 10px",
+               fontSize: "14px",
+             }}
+           />
+ 
+           <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+             <button
+               onClick={() => setShowPopup1(false)}
+               style={{
+                 background: "rgba(255, 255, 255, 0.1)",
+                 border: "1px solid rgba(255, 255, 255, 0.15)",
+                 borderRadius: "99px",
+                 color: "white",
+                 padding: "6px 12px",
+                 cursor: "pointer",
+               }}
+             >
+               Cancel
+             </button>
+ 
+             <button
+               onClick={applyImage}
+               disabled={!imageUrl.trim()}
+               className="save-btn"
+             >
+               <span className="glow-bg"></span>
+               <span className="text">Add Image</span>
+             </button>
+           </div>
+         </div>
+       )}
+ 
+ 
+ 
+       {/* ===== ACTIONS BOX ===== */}
+       <div className="action-box">
+ 
+         {/* TAGS */}
+         <div className="tag-button-wrapper">
+           <button
+             className="btn publish"
+             onClick={() => setShowTagSelector(!showTagSelector)}
+           >
+             <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Tag
+           </button>
+ 
+           {showTagSelector && (
+             <div
+               style={{
+                 display: "flex",
+                 flexDirection: "column",
+                 gap: "6px",
+                 width: "100%",
+                 marginTop: "8px",
+               }}
+             >
+               <label style={{ fontSize: "16px", fontWeight: 500 }}>Tags</label>
+ 
+               <div
+                 style={{
+                   position: "relative",
+                   width: "calc(100vw - 40px)", // CHANGED: Responsive width
+                   maxWidth: "663px", // CHANGED: Cap at desktop width
+                   background: "rgba(255, 255, 255, 0.05)",
+                   border: "1px solid rgba(80, 80, 80, 0.24)",
+                   borderRadius: "16px",
+                   padding: "8px",
+                   minHeight: "44px",
+                   display: "flex",
+                   flexDirection: "column",
+                 }}
+               >
+                 {/* Pills + Input */}
+                 <div
+                   style={{
+                     display: "flex",
+                     flexWrap: "wrap",
+                     gap: "8px",
+                     alignItems: "center",
+                     flex: 1,
+                   }}
+                 >
+                   {/* Selected tags */}
+                   {selectedTags.map((tag) => (
+                     <div
+                       key={tag.id}
+                       style={{
+                         background: "rgba(255, 255, 255, 0.1)",
+                         border: "1px solid rgba(255, 255, 255, 0.15)",
+                         borderRadius: "20px",
+                         height: "32px",
+                         padding: "4px 8px",
+                         display: "flex",
+                         alignItems: "center",
+                         gap: "4px",
+                         fontSize: "12px",
+                         color: "rgba(255, 255, 255, 0.9)",
+                         maxWidth: "200px",
+                         whiteSpace: "nowrap",
+                         overflow: "hidden",
+                         textOverflow: "ellipsis",
+                       }}
+                     >
+                       <span style={{ fontWeight: 500, flex: 1 }}>{tag.name}</span>
+                       <button
+                         style={{
+                           background: "white",
+                           border: "none",
+                           fontSize: "16px",
+                           cursor: "pointer",
+                           padding: "0",
+                           borderRadius: "50%",
+                           width: "15px",
+                           height: "15px",
+                           display: "flex",
+                           alignItems: "center",
+                           justifyContent: "center",
+                           color: "black",
+                         }}
+                         onClick={() => removeTag(tag.id)}
+                         title="Remove tag"
+                       >
+                         ×
+                       </button>
+                     </div>
+                   ))}
+ 
+                   {/* Search input */}
+                   <input
+                     type="text"
+                     value={tagQuery}
+                     onChange={handleTagInputChange}
+                     placeholder={selectedTags.length > 0 ? "" : "Search tags..."}
                      style={{
-                       scrollbarWidth: "none", // Firefox
-                       msOverflowStyle: "none", // IE/Edge
+                       flex: 1,
+                       minWidth: "120px",
+                       border: "none",
+                       outline: "none",
+                       background: "transparent",
+                       color: "white",
+                       fontSize: "14px",
+                       padding: "4px 0",
+                       margin: "0 4px 4px 0",
+                     }}
+                     onKeyDown={(e) => {
+                       if (e.key === "Enter" && tagQuery.trim()) {
+                         const matchedTag = searchResults.find(
+                           (t) =>
+                             t.name.toLowerCase() ===
+                             tagQuery.toLowerCase().trim()
+                         );
+                         if (matchedTag) addTag(matchedTag.id);
+                         e.preventDefault();
+                       }
+                     }}
+                   />
+                 </div>
+ 
+                 {/* Dropdown */}
+                 {tagQuery && searchResults.length > 0 && (
+                   <div
+                     style={{
+                       position: "absolute",
+                       top: "100%",
+                       left: 0,
+                       right: 0,
+                       background: "rgba(0,0,0,0.8)",
+                       color: "white",
+                       maxHeight: "150px",
+                       overflowY: "auto",
+                       borderRadius: "6px",
+                       zIndex: 1000,
+                       border: "1px solid rgba(255,255,255,0.1)",
+                       marginTop: "4px",
                      }}
                    >
-                     {/* Hide scrollbar for Chrome, Safari, Edge */}
-                     <style>
-                       {`
-                         div::-webkit-scrollbar {
-                           display: none;
-                         }
-                       `}
-                     </style>
-     
-                     <div
-                       onClick={() => {
-                         setSelectedHeading("Normal");
-                         editor.chain().focus().setParagraph().run();
-                         // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
-                       }}
-                       className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                     >
-                       Normal
-                     </div>
-     
-                     {[1, 2, 3].map((level) => (
+                     {searchResults.map((tag) => (
                        <div
-                         key={level}
-                         onClick={() => {
-                           setSelectedHeading(`Heading ${level}`);
-                           editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
-                           // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
+                         key={tag.id}
+                         style={{
+                           padding: "8px 12px",
+                           cursor: "pointer",
+                           borderBottom: "1px solid rgba(255,255,255,0.05)",
                          }}
-                         className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                         onClick={() => addTag(tag.id)}
                        >
-                         Heading {level}
+                         {tag.name}
                        </div>
                      ))}
                    </div>
                  )}
                </div>
-     
-                 <span className="bubble-toolbar-separator" />
-     
-                 <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive("bold") ? "active" : ""}><Bold size={18} /></button>
-                 <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive("italic") ? "active" : ""}><Italic size={18} /></button>
-                 <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive("underline") ? "active" : ""}><Underline size={18} /></button>
-                 <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive("strike") ? "active" : ""}><Strikethrough size={18} /></button>
-                 <button onClick={() => editor.chain().focus().toggleHighlight().run()} className={editor.isActive("highlight") ? "active" : ""}><Highlighter size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={18} /></button>
-                 <button onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered size={18} /></button>
-                 <button onClick={() => editor.chain().focus().toggleTaskList().run()}><ListTodo size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button onClick={() => editor.chain().focus().setTextAlign("left").run()}><AlignLeft size={18} /></button>
-                 <button onClick={() => editor.chain().focus().setTextAlign("center").run()}><AlignCenter size={18} /></button>
-                 <button onClick={() => editor.chain().focus().setTextAlign("right").run()}><AlignRight size={18} /></button>
-                 <button onClick={() => editor.chain().focus().setTextAlign("justify").run()}><AlignJustify size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote size={18} /></button>
-                 <button onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button
-                   onClick={() => {
-                     const url = prompt("Enter URL");
-                     if (url) editor.chain().focus().setLink({ href: url }).run();
-                   }}
-                 ><LinkIcon size={18} /></button>
-                 <button onClick={() => editor.chain().focus().unsetLink().run()}><Unlink size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button
-                   onClick={() => {
-                     const url = prompt("Enter image URL");
-                     if (url) editor.chain().focus().setImage({ src: url }).run();
-                   }}
-                 ><ImageIcon size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button onClick={() => editor.chain().focus().toggleCode().run()}><Code size={18} /></button>
-                 <button onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button onClick={() => editor.chain().focus().undo().run()}><Undo size={18} /></button>
-                 <button onClick={() => editor.chain().focus().redo().run()}><Redo size={18} /></button>
-                 <button onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}><X size={18} /></button>
-     
-                 <span className="bubble-toolbar-separator" />
-                 <button onClick={() => setFullscreen(!fullscreen)}>
-                   {fullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-                 </button>
-               </div>
-             </BubbleMenu>
-             <EditorContent editor={editor} className="editor" />
-           </div>
-     
-
-      {/* ===== ACTIONS BOX ===== */}
-      <div className="action-box">
-
-
-        
-       
-
-
-        {/* TAGS */}
-        <div className="tag-button-wrapper">
-          <button
-            className="btn publish"
-            onClick={() => setShowTagSelector(!showTagSelector)}
-          >
-            <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Tag
-          </button>
-
-          {showTagSelector && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                width: "100%",
-                marginTop: "8px",
-              }}
-            >
-              <label style={{ fontSize: "16px", fontWeight: 500 }}>Tags</label>
-
-              <div
-                style={{
-                  position: "relative",
-                  width: "663px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(80, 80, 80, 0.24)",
-                  borderRadius: "16px",
-                  padding: "8px",
-                  minHeight: "44px",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                {/* Pills + Input */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "8px",
-                    alignItems: "center",
-                    flex: 1,
-                  }}
-                >
-                  {/* Selected tags */}
-                  {selectedTags.map((tag) => (
-                    <div
-                      key={tag.id}
-                      style={{
-                        background: "rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        borderRadius: "20px",
-                        height: "32px",
-                        padding: "4px 8px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        fontSize: "12px",
-                        color: "rgba(255, 255, 255, 0.9)",
-                        maxWidth: "200px",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      <span style={{ fontWeight: 500, flex: 1 }}>{tag.name}</span>
-                      <button
-                        style={{
-                          background: "white",
-                          border: "none",
-                          fontSize: "16px",
-                          cursor: "pointer",
-                          padding: "0",
-                          borderRadius: "50%",
-                          width: "15px",
-                          height: "15px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "black",
-                        }}
-                        onClick={() => removeTag(tag.id)}
-                        title="Remove tag"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Search input */}
-                  <input
-                    type="text"
-                    value={tagQuery}
-                    onChange={handleTagInputChange}
-                    placeholder={selectedTags.length > 0 ? "" : "Search tags..."}
-                    style={{
-                      flex: 1,
-                      minWidth: "120px",
-                      border: "none",
-                      outline: "none",
-                      background: "transparent",
-                      color: "white",
-                      fontSize: "14px",
-                      padding: "4px 0",
-                      margin: "0 4px 4px 0",
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && tagQuery.trim()) {
-                        const matchedTag = searchResults.find(
-                          (t) =>
-                            t.name.toLowerCase() ===
-                            tagQuery.toLowerCase().trim()
-                        );
-                        if (matchedTag) addTag(matchedTag.id);
-                        e.preventDefault();
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Dropdown */}
-                {tagQuery && searchResults.length > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      background: "rgba(0,0,0,0.8)",
-                      color: "white",
-                      maxHeight: "150px",
-                      overflowY: "auto",
-                      borderRadius: "6px",
-                      zIndex: 1000,
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {searchResults.map((tag) => (
-                      <div
-                        key={tag.id}
-                        style={{
-                          padding: "8px 12px",
-                          cursor: "pointer",
-                          borderBottom: "1px solid rgba(255,255,255,0.05)",
-                        }}
-                        onClick={() => addTag(tag.id)}
-                      >
-                        {tag.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
+             </div>
+           )}
+         </div>
+ 
         {/* CATEGORY */}
-                      <div className="category-button-wrapper">
-                        <button
-                          className="btn publish"
-                          onClick={() => setShowCategoryPopup(!showCategoryPopup)}
-                        >
-                          <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Category
-                        </button>
-        
-                        {showCategoryPopup && (
-                          <div
-                            style={{
-                              marginTop: "8px",
-                              width: "855px",
-                              height: "92px",
-                              background: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid rgba(80, 80, 80, 0.24)",
-                              borderRadius: "16px",
-                              padding: "16px",
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {categoriesLoading ? (
-                              <div className="popup-loading">Loading...</div>
-                            ) : categoriesError ? (
-                              <div className="popup-error">Error loading categories</div>
-                            ) : (
-                              <>
-                                <label
-                                  style={{
-                                    fontSize: "14px",
-                                    fontWeight: 500,
-                                    color: "rgba(255,255,255,0.8)",
-                                    marginBottom: "6px",
-                                  }}
-                                >
-                                  Category
-                                </label>
-        
-                                {/* Custom Dropdown Header */}
-                                <div
-                                  onClick={() => setDropdownOpen(!dropdownOpen)} // ✅ Toggle dropdown
-                                  className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer  transition hover:bg-white/20"
-                                  style={{
-                                    width: "823px", // Match original width
-                                    height: "40px", // Match original height
-                                  }}
-                                >
-                                  {selectedCategory?.name || "No Category"}
-                                  <span className="ml-2 text-xs opacity-70">▼</span>
-                                </div>
-        
-                                {/* Custom Dropdown Menu (with your specified styling) */}
-                                {dropdownOpen && (
-                                  <div
-                                    className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
-                                    style={{
-                                      scrollbarWidth: "none", // Firefox
-                                      msOverflowStyle: "none", // IE/Edge
-                                      width: "823px", // Match header width for alignment
-                                    }}
-                                  >
-                                    {/* Hide scrollbar for Chrome, Safari, Edge */}
-                                    <style>
-                                      {`
-                                        div::-webkit-scrollbar {
-                                          display: none;
-                                        }
-                                      `}
-                                    </style>
-        
-                                    {/* "No Category" Option */}
-                                    <div
-                                      onClick={() => {
-                                        handleCategoryChange("0"); // Or your logic for no category
-                                        setDropdownOpen(false);
-                                        setShowCategoryPopup(false); // Close popup as in original
-                                      }}
-                                      className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                                    >
-                                      No Category
-                                    </div>
-        
-                                    {/* Category Options */}
-                                    {categories.map((cat) => (
-                                      <div
-                                        key={cat.id}
-                                        onClick={() => {
-                                          handleCategoryChange(cat.id);
-                                          setDropdownOpen(false);
-                                          // Optionally close popup: setShowCategoryPopup(false);
-                                        }}
-                                        className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                                      >
-                                        {cat.name}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-              </div>
-              <style jsx>{`
-        .editor-container {
-          position: absolute;
-          left: 208px;
-          top: 61px;
-          width: 855px;
-          display: flex;
-          flex-direction: column;
-          font-family: "Public Sans", sans-serif;
-          color: #f5f5f5;
-        }
-        .fullscreen-mode {
-          position: fixed;
-          inset: 0;
-          background: #000;
-          z-index: 9999;
-          padding: 40px;
-          width: 100%;
-          height: 100%;
-          max-width: none;
-          left: 0;
-          top: 0;
-          display: flex;
-          flex-direction: column;
-          overflow: auto;
-        }
-        .post-title {
-          width: 100%;
-          min-height: calc(64px * 3);
-          max-height: calc(64px * 3);
-          resize: none;
-          overflow: hidden;
-          font-family: "Barlow", sans-serif;
-          font-weight: 800;
-          font-size: 48px;
-          line-height: 64px;
-          border: none;
-          outline: none;
-          background: transparent;
-          color: transparent;
-          -webkit-background-clip: text;
-        }
-        .post-title::placeholder {
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .post-title:not(:placeholder-shown) {
-          background: radial-gradient(137.85% 214.06% at 50% 50%, #5be49b 0%, #ffffff 50%, #5be49b 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .fullscreen-mode .post-title {
-          font-size: 36px; /* Slightly smaller in fullscreen for better fit */
-          line-height: 48px;
-          min-height: calc(48px * 2); /* Adjust height accordingly */
-          max-height: calc(48px * 2);
-        }
-       .bubble-toolbar {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 4px;
-        background: #222121ff; /* Solid light gray (matches typical chat input boxes) */
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-      }
-        .fullscreen-mode .bubble-toolbar {
-          max-width: 100%; /* Ensure toolbar doesn't overflow */
-          overflow-x: auto; /* Horizontal scroll if too many buttons */
-          padding: 12px;
-        }
-        .bubble-toolbar.visible {
-          opacity: 1;
-          pointer-events: all;
-          transform: translateY(0);
-        }
-        .bubble-toolbar-select1 {
-          padding: 6px 8px;
-          border: none;
-          border-radius: 6px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 6px;
-          color: #ddd;
-          font-size: 14px;
-          cursor: pointer;
-          outline: none;
-          transition: background 0.2s, color 0.2s;
-          
-          background-repeat: no-repeat;
-          background-position: right 6px center;
-          padding-right: 22px;
-        }
-        .bubble-toolbar-select1:hover {
-          background: rgba(255, 255, 255, 0.08);
-          color: #5be49b;
-        }
-        .bubble-toolbar button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 6px;
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          border-radius: 6px;
-          color: #ddd;
-          transition: background 0.2s, color 0.2s;
-        }
-        .bubble-toolbar button:hover {
-          background: rgba(255, 255, 255, 0.08);
-          color: #fff;
-        }
-        .bubble-toolbar button.active {
-          position: relative;
-          width: 28px;
-          height: 28px;
-          border-radius: 6px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: inset 0 0 4px rgba(239, 214, 255, 0.25);
-          backdrop-filter: blur(10px);
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 12px;
-          cursor: pointer;
-          overflow: hidden;
-          transition: transform 0.2s ease, background 0.2s ease;
-        }
-
-        /* Bottom glow */
-        .bubble-toolbar button.active::after {
-          content: "";
-          position: absolute;
-          bottom: 0; /* stick to the bottom */
-          left: 0;
-          width: 100%;
-          height: 50%; /* cover only bottom half */
-          border-radius: 0 0 6px 6px; /* rounded bottom corners only */
-          background: radial-gradient(circle at 50% 100%, rgba(91, 228, 155, 0.5) 0%, transparent 80%);
-          filter: blur(6px);
-          z-index: 0; /* behind the content */
-        }
-
-        .bubble-toolbar-separator {
-          width: 1px;
-          height: 20px;
-          background: rgba(255, 255, 255, 0.15);
-          margin: 0 6px;
-        }
-        /* Outer wrapper frame */
-        .editor-wrapper {
-          position: relative;
-          flex: 1;
-          padding: 24px;
-          border-radius: 16px;
-          background: transparent;
-          border: none; /* hide border by default */
-          transition: border 0.2s ease, background 0.2s ease;
-        }
-
-        /* Show border only when there is content */
-        .editor-wrapper.has-content {
-          border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .fake-placeholder {
-          position: absolute;
-          top: 25px;
-          left: 25px;
-          pointer-events: none;
-          font-size: 16px;
-          font-family: "Barlow", sans-serif;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .editor {
-          min-height: 400px;
-          padding: 20px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-          font-size: 16px;
-          line-height: 1.6;
-          box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.04);
-          transition: border-color 0.2s ease;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .editor:focus-within {
-          border-color: #5be49b;
-        }
-        .fullscreen-mode .editor {
-          min-height: calc(100vh - 300px); /* Adjust for title + toolbar + actions + padding */
-          border-radius: 0; /* Remove rounded corners in fullscreen for edge-to-edge */
-        }
-
-        /* Force TipTap list items to behave as proper list items */
-        .editor ul,
-        .editor ol {
-          padding-left: 1.5em;
-          margin-left: 0;
-          list-style-position: inside;
-          color: #fff; /* bullet/number color */
-        }
-
-        .editor li {
-          display: list-item; /* ensure bullets/numbers appear */
-          color: #fff;
-          margin: 0.25em 0;
-        }
-
-        /* Make markers visible */
-        .editor ul li::marker,
-        .editor ol li::marker {
-          color: #5be49b;
-          font-size: 16px;
-        }
-
-        /* Nested lists */
-        .editor ul ul,
-        .editor ol ol {
-          padding-left: 1.5em;
-        }
-
-        /* Task list checkboxes */
-        .editor li[data-type="taskItem"] {
-          list-style: none; /* remove default bullet, handled by checkbox */
-        }
-
-        /* Ensure editor content shows images correctly */
-        .editor img {
-          display: block;        /* images should be block */
-          max-width: 100%;       /* responsive width */
-          height: auto;          /* preserve aspect ratio */
-          margin: 12px 0;
-          border-radius: 8px;
-          box-shadow: 0 0 12px rgba(91, 228, 155, 0.2);
-        }
-
-        /* TipTap sometimes wraps images in a div
-                /* TipTap sometimes wraps images in a div/figure */
-        .editor figure {
-          margin: 0;
-          padding: 0;
-          display: flex;
-          justify-content: center; /* center images */
-        }
-
-        .editor figure img {
-          max-width: 100%;
-          height: auto;
-        }
-
-        .action-box {
-          margin-top: 250px;
-          margin-bottom: 160px;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 24px;
-        }
-        .fullscreen-mode .action-box {
-          display: flex;
-          margin-top: 20px;
-          margin-bottom: 20px;
-          align-self: stretch; /* Full width in fullscreen */
-          flex-direction: colum; /* Change to row for better space usage in fullscreen */
-          justify-content: space-between;
-          margin-bottom: 150px;
-        }
-        .btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          border-radius: 99px;
-          background: rgba(145, 158, 171, 0.12);
-          border: 1px solid rgba(145, 158, 171, 0.32);
-          font-size: 12px;
-          color: #7b7b7b;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .btn:hover {
-          background: rgba(145, 158, 171, 0.18);
-          border-color: rgba(145, 158, 171, 0.4);
-          color: #fff;
-        }
-          // -------------------------------
-    // 🟢 Category Popup Styles (Fixed)
-    // -------------------------------
-    .category-popup-container {
-      
-        position: absolute; /* FIXED: Proper absolute positioning relative to parent */
-        top: 85%; /* FIXED: Position directly below the button */
-        buttom: 40px; /* FIXED: Remove bottom positioning */
-        left: 0; /* FIXED: Align to left edge of button wrapper */
-        z-index: 1000; /* FIXED: Ensure it layers above other elements */
-        width: 300px; /* FIXED: Responsive width (adjust as needed; fits most buttons) */
-    }
-
-    .category-popup {
-        background: rgba(255, 255, 255, 0.03); /* UPDATED: Same as toolbar background */
-        border: 1px solid rgba(255, 255, 255, 0.08); /* UPDATED: Same as toolbar border */
-        border-radius: 12px; /* Matches toolbar radius */
-        padding: 12px; /* Matches toolbar padding */
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-        color: #ddd; /* Light text like toolbar */
-        font-size: 14px;
-        min-width: 250px; /* FIXED: Reduced min-width to prevent overflow */
-        max-width: 300px; /* FIXED: Cap width for responsiveness */
-        max-height: 200px; /* Limit height for scroll if many categories */
-        overflow-y: auto; /* Scroll if needed */
-        transition: opacity 0.2s ease, transform 0.2s ease; /* Smooth appear */
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    /* Hover effect for popup (like toolbar) */
-    .category-popup:hover {
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .popup-title { /* NEW: Styled h3 for popup title */
-        margin: 0 0 10px 0;
-        font-size: 14px;
-        font-weight: 600;
-        color: #fff;
-        text-align: left;
-        padding-bottom: 4px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    /* UPDATED: .toolbar-select - Ensure it fits dark theme in popup */
-    .toolbar-select {
-        width: 100%;
-        padding: 8px 12px; /* Slightly more padding */
-        margin-bottom: 0; /* No margin in popup */
-        border: 1px solid rgba(255, 255, 255, 0.08); /* Dark border */
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.03); /* Dark background */
-        color: #ddd; /* Light text */
-        font-size: 14px;
-        cursor: pointer;
-        outline: none;
-        transition: background 0.2s, color 0.2s;
-        appearance: none; /* Remove default dropdown arrow */
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ddd' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e"); /* Custom dark arrow */
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        padding-right: 30px; /* Space for arrow */
-    }
-
+               <div className="category-button-wrapper">
+                 <button
+                   className="btn publish"
+                   onClick={() => setShowCategoryPopup(!showCategoryPopup)}
+                 >
+                   <Image1 src="/pluslogo.png" alt="Add" width={15} height={15} /> Add Category
+                 </button>
  
-  // ... (your existing styles) ...
-
-  /* ===== FULLSCREEN DROPDOWN FIXES ===== */
-  .fullscreen-mode .bubble-toolbar {
-    /* Ensure dropdown isn't clipped by overflow */
-    overflow: visible; /* Override auto to allow dropdown to extend */
-  }
-
-  .fullscreen-mode .bubble-toolbar .relative > div:last-child {
-    /* Target the dropdown menu specifically */
-    position: fixed; /* Change to fixed for viewport-relative positioning in fullscreen */
-    z-index: 9999; /* Higher than fullscreen z-index (9999) to float above everything */
-    top: auto; /* Let it position naturally, but adjust if needed */
-    left: auto;
-    right: auto;
-    transform: translateY(0); /* Ensure no weird transforms */
-    max-height: 200px; /* Limit height to prevent overflow */
-    overflow-y: auto; /* Scroll if too many options */
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Stronger shadow for visibility */
-    width:135px;
-  }
-
-  /* Adjust dropdown header in fullscreen for better interaction */
-  .fullscreen-mode .bubble-toolbar .relative > div:first-child {
-    /* The dropdown header button */
-    position: relative; /* Ensure it stays in flow */
-    z-index: 10000; /* Above dropdown */
-    width:135px;
-  }
-
-  /* Ensure options are fully visible and clickable */
-  .fullscreen-mode .bubble-toolbar .relative > div:last-child > div {
-    /* Individual dropdown options */
-    background: rgba(0, 0, 0, 0.9); /* Darker for contrast */
-    color: #fff;
-    padding: 10px; /* Slightly larger for touch */
-    cursor: pointer;
-    transition: background 0.2s;
-    width:135px;
-  }
-
-  .fullscreen-mode .bubble-toolbar .relative > div:last-child > div:hover {
-    background: rgba(46, 50, 48, 0.2); /* Green hover */
-  }
-
+                 {showCategoryPopup && (
+                   <div
+                     style={{
+                       marginTop: "8px",
+                       width: "calc(100vw - 40px)", // CHANGED: Responsive width
+                       maxWidth: "855px", // CHANGED: Cap at desktop width
+                       height: "92px",
+                       background: "rgba(255, 255, 255, 0.05)",
+                       border: "1px solid rgba(80, 80, 80, 0.24)",
+                       borderRadius: "16px",
+                       padding: "16px",
+                       display: "flex",
+                       flexDirection: "column",
+                       justifyContent: "center",
+                     }}
+                   >
+                     {categoriesLoading ? (
+                       <div className="popup-loading">Loading...</div>
+                     ) : categoriesError ? (
+                       <div className="popup-error">Error loading categories</div>
+                     ) : (
+                       <>
+                         <label
+                           style={{
+                             fontSize: "14px",
+                             fontWeight: 500,
+                             color: "rgba(255,255,255,0.8)",
+                             marginBottom: "6px",
+                           }}
+                         >
+                           Category
+                         </label>
+ 
+                         {/* Custom Dropdown Header */}
+                         <div
+                           onClick={() => setDropdownOpen(!dropdownOpen)} // ✅ Toggle dropdown
+                           className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer  transition hover:bg-white/20"
+                           style={{
+                             width: "calc(100vw - 75px)", // CHANGED: Responsive width
+                             maxWidth: "823px", // CHANGED: Cap at desktop width
+                             height: "40px", // Match original height
+                           }}
+                         >
+                           {selectedCategory?.name || "No Category"}
+                           <span className="ml-2 text-xs opacity-70">▼</span>
+                         </div>
+ 
+                         {/* Custom Dropdown Menu (with your specified styling) */}
+                         {dropdownOpen && (
+                           <div
+                             className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                             style={{
+                               scrollbarWidth: "none", // Firefox
+                               msOverflowStyle: "none", // IE/Edge
+                               width: "calc(100vw - 40px)", // CHANGED: Responsive width
+                               maxWidth: "855px", // CHANGED: Cap at desktop width
+                             }}
+                           >
+                             {/* Hide scrollbar for Chrome, Safari, Edge */}
+                             <style>
+                               {`
+                                 div::-webkit-scrollbar {
+                                   display: none;
+                                 }
+                               `}
+                             </style>
+ 
+                             {/* "No Category" Option */}
+                             <div
+                               onClick={() => {
+                                 handleCategoryChange("0"); // Or your logic for no category
+                                 setDropdownOpen(false);
+                                 setShowCategoryPopup(false); // Close popup as in original
+                               }}
+                               className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                             >
+                               No Category
+                             </div>
+ 
+                             {/* Category Options */}
+                             {categories.map((cat) => (
+                               <div
+                                 key={cat.id}
+                                 onClick={() => {
+                                   handleCategoryChange(cat.id);
+                                   setDropdownOpen(false);
+                                   // Optionally close popup: setShowCategoryPopup(false);
+                                 }}
+                                 className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                               >
+                                 {cat.name}
+                               </div>
+                             ))}
+                           </div>
+                         )}
+                       </>
+                     )}
+                   </div>
+                 )}
+               </div>
+ 
+               </div>
+               
+             <style jsx>{`
+         .editor-container {
+           position: absolute;
+           left: 208px;
+           top: 61px;
+           width: 855px;
+           display: flex;
+           flex-direction: column;
+           font-family: "Public Sans", sans-serif;
+           color: #f5f5f5;
+         }
+         .fullscreen-mode {
+           position: fixed;
+           inset: 0;
+           background: #000;
+           z-index: 9999;
+           padding: 40px;
+           width: 100%;
+           height: 100%;
+           max-width: none;
+           left: 0;
+           top: 0;
+           display: flex;
+           flex-direction: column;
+           overflow: auto;
+         }
+         .post-title {
+           width: 100%;
+           min-height: calc(64px * 3);
+           max-height: calc(64px * 3);
+           resize: none;
+           overflow: hidden;
+           font-family: "Barlow", sans-serif;
+           font-weight: 800;
+           font-size: 48px;
+           line-height: 64px;
+           border: none;
+           outline: none;
+           background: transparent;
+           color: transparent;
+           -webkit-background-clip: text;
+         }
+         .post-title::placeholder {
+           background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
+           -webkit-background-clip: text;
+           -webkit-text-fill-color: transparent;
+         }
+         .post-title:not(:placeholder-shown) {
+           background: radial-gradient(137.85% 214.06% at 50% 50%, #5be49b 0%, #ffffff 50%, #5be49b 100%);
+           -webkit-background-clip: text;
+           -webkit-text-fill-color: transparent;
+         }
+         .fullscreen-mode .post-title {
+           font-size: 36px; /* Slightly smaller in fullscreen for better fit */
+           line-height: 48px;
+           min-height: calc(48px * 2); /* Adjust height accordingly */
+           max-height: calc(48px * 2);
+         }
+        .bubble-toolbar {
+         display: flex;
+         align-items: center;
+         flex-wrap: wrap;
+         gap: 4px;
+         background: #222121ff; /* Solid light gray (matches typical chat input boxes) */
+         border: 1px solid rgba(255, 255, 255, 0.08);
+         border-radius: 12px;
+         padding: 8px;
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+         z-index: 1000;
+       }
+         .fullscreen-mode .bubble-toolbar {
+           max-width: 100%; /* Ensure toolbar doesn't overflow */
+           overflow-x: auto; /* Horizontal scroll if too many buttons */
+           padding: 12px;
+         }
+         .bubble-toolbar.visible {
+           opacity: 1;
+           pointer-events: all;
+           transform: translateY(0);
+         }
+         .bubble-toolbar-select1 {
+           padding: 6px 8px;
+           border: none;
+           border-radius: 6px;
+           background: rgba(255, 255, 255, 0.03);
+           border: 1px solid rgba(255, 255, 255, 0.08);
+           border-radius: 6px;
+           color: #ddd;
+           font-size: 14px;
+           cursor: pointer;
+           outline: none;
+           transition: background 0.2s, color 0.2s;
+           
+           background-repeat: no-repeat;
+           background-position: right 6px center;
+           padding-right: 22px;
+         }
+         .bubble-toolbar-select1:hover {
+           background: rgba(255, 255, 255, 0.08);
+           color: #5be49b;
+         }
+         .bubble-toolbar button {
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           padding: 6px;
+           border: none;
+           background: transparent;
+           cursor: pointer;
+           border-radius: 6px;
+           color: #ddd;
+           transition: background 0.2s, color 0.2s;
+         }
+         .bubble-toolbar button:hover {
+           background: rgba(255, 255, 255, 0.08);
+           color: #fff;
+         }
+         .bubble-toolbar button.active {
+           position: relative;
+           width: 28px;
+           height: 28px;
+           border-radius: 6px;
+           background: rgba(255, 255, 255, 0.05);
+           border: 1px solid rgba(255, 255, 255, 0.1);
+           box-shadow: inset 0 0 4px rgba(239, 214, 255, 0.25);
+           backdrop-filter: blur(10px);
+ 
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           color: #ffffff;
+           font-weight: 600;
+           font-size: 12px;
+           cursor: pointer;
+           overflow: hidden;
+           transition: transform 0.2s ease, background 0.2s ease;
+         }
+ 
+         /* Bottom glow */
+         .bubble-toolbar button.active::after {
+           content: "";
+           position: absolute;
+           bottom: 0; /* stick to the bottom */
+           left: 0;
+           width: 100%;
+           height: 50%; /* cover only bottom half */
+           border-radius: 0 0 6px 6px; /* rounded bottom corners only */
+           background: radial-gradient(circle at 50% 100%, rgba(91, 228, 155, 0.5) 0%, transparent 80%);
+           filter: blur(6px);
+           z-index: 0; /* behind the content */
+         }
+ 
+         .bubble-toolbar-separator {
+           width: 1px;
+           height: 20px;
+           background: rgba(255, 255, 255, 0.15);
+           margin: 0 6px;
+         }
+         /* Outer wrapper frame */
+         .editor-wrapper {
+           position: relative;
+           flex: 1;
+           padding: 24px;
+           border-radius: 16px;
+           background: transparent;
+           border: none; /* hide border by default */
+           transition: border 0.2s ease, background 0.2s ease;
+         }
+ 
+         /* Show border only when there is content */
+         .editor-wrapper.has-content {
+           border: 2px solid rgba(255, 255, 255, 0.1);
+         }
+ 
+         .fake-placeholder {
+           position: absolute;
+           top: 25px;
+           left: 25px;
+           pointer-events: none;
+           font-size: 16px;
+           font-family: "Barlow", sans-serif;
+           background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
+           -webkit-background-clip: text;
+           -webkit-text-fill-color: transparent;
+         }
+         .editor {
+           min-height: 400px;
+           padding: 20px;
+           background: rgba(255, 255, 255, 0.02);
+           border: 1px solid rgba(255, 255, 255, 0.08);
+           border-radius: 14px;
+           font-size: 16px;
+           line-height: 1.6;
+           box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.04);
+           transition: border-color 0.2s ease;
+           width: 100%;
+           box-sizing: border-box;
+         }
+         .editor:focus-within {
+           border-color: #5be49b;
+         }
+         .fullscreen-mode .editor {
+           min-height: calc(100vh - 300px); /* Adjust for title + toolbar + actions + padding */
+           border-radius: 0; /* Remove rounded corners in fullscreen for edge-to-edge */
+         }
+ 
+         div :global(ul) {
+           list-style-type: disc;
+           padding-left: 1.5rem;
+         }
+         div :global(ol) {
+           list-style-type: decimal;
+           padding-left: 1.5rem;
+         }
+          div :global(h1) {
+           font-size: 1.5rem;
+           font-weight: bold;
+         }
+         div :global(h2) {
+           font-size: 1.25rem;
+           font-weight: bold;
+         }
+         div :global(h3) {
+           font-size: 1.1rem;
+           font-weight: bold;
+         }
+ 
+           /* ===== LINK STYLING IN EDITOR ===== */
+   .editor a {
+     color: blue;
+     text-decoration: underline;
+   }
+ 
+ 
+         /* Ensure editor content shows images correctly */
+         .editor img {
+           display: block;        /* images should be block */
+           max-width: 100%;       /* responsive width */
+           height: auto;          /* preserve aspect ratio */
+           margin: 12px 0;
+           border-radius: 8px;
+           box-shadow: 0 0 12px rgba(91, 228, 155, 0.2);
+         }
+ 
+         /* TipTap sometimes wraps images in a div
+                 /* TipTap sometimes wraps images in a div/figure */
+         .editor figure {
+           margin: 0;
+           padding: 0;
+           display: flex;
+           justify-content: center; /* center images */
+         }
+ 
+         .editor figure img {
+           max-width: 100%;
+           height: auto;
+         }
+ 
+         .action-box {
+           margin-top: 250px;
+           margin-bottom: 160px;
+           display: flex;
+           flex-direction: column;
+           align-items: flex-start;
+           gap: 24px;
+         }
+         .fullscreen-mode .action-box {
+           display: flex;
+           margin-top: auto;
+           margin-bottom: 20px;
+           align-self: stretch; /* Full width in fullscreen */
+           flex-direction: colum; /* Change to row for better space usage in fullscreen */
+           justify-content: space-between;
+           margin-bottom: 150px;
+         }
+         .btn {
+           display: flex;
+           align-items: center;
+           gap: 8px;
+           padding: 8px 12px;
+           border-radius: 99px;
+           background: rgba(145, 158, 171, 0.12);
+           border: 1px solid rgba(145, 158, 171, 0.32);
+           font-size: 12px;
+           color: #7b7b7b;
+           cursor: pointer;
+           transition: all 0.2s ease;
+         }
+         .btn:hover {
+           background: rgba(145, 158, 171, 0.18);
+           border-color: rgba(145, 158, 171, 0.4);
+           color: #fff;
+         }
+           // -------------------------------
+     // 🟢 Category Popup Styles (Fixed)
+     // -------------------------------
+     .category-popup-container {
+       
+         position: absolute; /* FIXED: Proper absolute positioning relative to parent */
+         top: 85%; /* FIXED: Position directly below the button */
+         buttom: 40px; /* FIXED: Remove bottom positioning */
+         left: 0; /* FIXED: Align to left edge of button wrapper */
+         z-index: 1000; /* FIXED: Ensure it layers above other elements */
+         width: 300px; /* FIXED: Responsive width (adjust as needed; fits most buttons) */
+     }
+ 
+     .category-popup {
+         background: rgba(255, 255, 255, 0.03); /* UPDATED: Same as toolbar background */
+         border: 1px solid rgba(255, 255, 255, 0.08); /* UPDATED: Same as toolbar border */
+         border-radius: 12px; /* Matches toolbar radius */
+         padding: 12px; /* Matches toolbar padding */
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+         color: #ddd; /* Light text like toolbar */
+         font-size: 14px;
+         min-width: 250px; /* FIXED: Reduced min-width to prevent overflow */
+         max-width: 300px; /* FIXED: Cap width for responsiveness */
+         max-height: 200px; /* Limit height for scroll if many categories */
+         overflow-y: auto; /* Scroll if needed */
+         transition: opacity 0.2s ease, transform 0.2s ease; /* Smooth appear */
+         opacity: 1;
+         transform: translateY(0);
+     }
+ 
+     /* Hover effect for popup (like toolbar) */
+     .category-popup:hover {
+         background: rgba(255, 255, 255, 0.05);
+     }
+ 
+     .popup-title { /* NEW: Styled h3 for popup title */
+         margin: 0 0 10px 0;
+         font-size: 14px;
+         font-weight: 600;
+         color: #fff;
+         text-align: left;
+         padding-bottom: 4px;
+         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+     }
+ 
+     /* UPDATED: .toolbar-select - Ensure it fits dark theme in popup */
+     .toolbar-select {
+         width: 100%;
+         padding: 8px 12px; /* Slightly more padding */
+         margin-bottom: 0; /* No margin in popup */
+         border: 1px solid rgba(255, 255, 255, 0.08); /* Dark border */
+         border-radius: 6px;
+         background: rgba(255, 255, 255, 0.03); /* Dark background */
+         color: #ddd; /* Light text */
+         font-size: 14px;
+         cursor: pointer;
+         outline: none;
+         transition: background 0.2s, color 0.2s;
+         appearance: none; /* Remove default dropdown arrow */
+         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ddd' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e"); /* Custom dark arrow */
+         background-repeat: no-repeat;
+         background-position: right 8px center;
+         padding-right: 30px; /* Space for arrow */
+     }
+ 
   
-
-
-
-    /* NEW: Persistent Selected Category Label - Under button; stays visible after selection */
-    .category-button-wrapper {
-        position: relative; /* Anchor for absolute popup */
-        display: flex;
-        width:132px;
-        flex-direction: column;
-        gap: 8px; /* Space between button and label */
-    }
-
-    .selected-category-label {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        background: rgba(91, 228, 155, 0.1); /* Green tint for success */
-        border: 1px solid rgba(91, 228, 155, 0.3);
-        border-radius: 20px; /* Pill shape */
-        font-size: 12px;
-        color: #5be49b; /* Green text */
-        max-width: 200px; /* Prevent overflow */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .selected-icon {
-        font-size: 12px;
-        font-weight: bold;
-    }
-
-    .clear-selection-btn { /* NEW: Small X button to clear selection */
-        background: none;
-        border: none;
-        color: #5be49b;
-        font-size: 14px;
-        cursor: pointer;
-        padding: 0;
-        margin-left: auto; /* Push to right */
-        width: 16px;
-        height: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background 0.2s;
-    }
-
-    .clear-selection-btn:hover {
-        background: rgba(91, 228, 155, 0.2);
-    }
-
-    /* UPDATED: Loading/Error in Popup - Dark theme */
-    .loading, .error {
-        padding: 10px;
-        text-align: center;
-        font-size: 12px;
-    }
-
-    .loading {
-        color: #888; /* Darker gray */
-    }
-
-    .error {
-        color: #ff6b6b; /* Red for errors */
-    }
-
-    /* Fullscreen Adjustments for Popup/Label - FIXED: Prevent right overflow and button overlap */
-    .fullscreen-mode .category-popup-container {
-        position: fixed; /* In fullscreen, make it fixed to viewport */
-        top: auto;
-        bottom: 150px; /* FIXED: Higher positioning to avoid overlapping "Add Category" button */
-        left: auto;
-        right: 30; /* FIXED: Reduced from 40px to prevent right-edge overflow */
-        width: 220px; /* FIXED: Narrower width to fit smaller fullscreen space */
-        max-width: 220px; /* FIXED: Enforce no horizontal overflow */
-        z-index: 1000; /* FIXED: High layer to float above buttons */
-    }
-
-    .fullscreen-mode .category-popup {
-        min-width: 220px; /* FIXED: Match container */
-        max-width: 220px;
-    }
-
-    .fullscreen-mode .selected-category-label {
-        color: #fff; /* Ensure visibility in dark fullscreen */
-        background: rgba(91, 228, 155, 0.2);
-        border-color: rgba(91, 228, 155, 0.4);
-    }
-.selected-tags-box {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(80, 80, 80, 0.24);
-    border-radius: 16px;
-    padding: 16px;
-    margin: 12px 0;
-    width: 855px; /* Fixed width */
-    height: 64px; /* Fixed height */
-    display: flex; /* Keep flex for tag alignment */
-    flex-wrap: nowrap; /* Prevent wrapping to a new line; tags will stay in one row */
-    /* NEW: Horizontally center the pills */
-    align-items: flex-start; /* NEW: Vertically center the pills */
-    gap: 14px; /* Keep spacing */
-    overflow-x: auto; /* Horizontal scroll if tags exceed width */
-    overflow-y: hidden; /* Prevent vertical growth */
-}
-
-.tag-pill {
-    background: rgba(255, 255, 255, 0.1); /* Semi-transparent white for pill background */
-    border: 1px solid rgba(255, 255, 255, 0.15); /* Subtle border */
-    border-radius: 20px; /* Rounded pill shape */
+   // ... (your existing styles) ...
+ 
+   /* ===== FULLSCREEN DROPDOWN FIXES ===== */
+   .fullscreen-mode .bubble-toolbar {
+     /* Ensure dropdown isn't clipped by overflow */
+     overflow: visible; /* Override auto to allow dropdown to extend */
+   }
+ 
+   .fullscreen-mode .bubble-toolbar .relative > div:last-child {
+     /* Target the dropdown menu specifically */
+     position: fixed; /* Change to fixed for viewport-relative positioning in fullscreen */
+     z-index: 9999; /* Higher than fullscreen z-index (9999) to float above everything */
+     top: auto; /* Let it position naturally, but adjust if needed */
+     left: auto;
+     right: auto;
+     transform: translateY(0); /* Ensure no weird transforms */
+     max-height: 200px; /* Limit height to prevent overflow */
+     overflow-y: auto; /* Scroll if too many options */
+     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Stronger shadow for visibility */
+     width:135px;
+   }
+ 
+   /* Adjust dropdown header in fullscreen for better interaction */
+   .fullscreen-mode .bubble-toolbar .relative > div:first-child {
+     /* The dropdown header button */
+     position: relative; /* Ensure it stays in flow */
+     z-index: 10000; /* Above dropdown */
+     width:135px;
+   }
+ 
+   /* Ensure options are fully visible and clickable */
+   .fullscreen-mode .bubble-toolbar .relative > div:last-child > div {
+     /* Individual dropdown options */
+     background: rgba(0, 0, 0, 0.9); /* Darker for contrast */
+     color: #fff;
+     padding: 10px; /* Slightly larger for touch */
+     cursor: pointer;
+     transition: background 0.2s;
+     width:135px;
+   }
+ 
+   .fullscreen-mode .bubble-toolbar .relative > div:last-child > div:hover {
+     background: rgba(46, 50, 48, 0.2); /* Green hover */
+   }
+ 
    
-    height: 32px; /* Fixed height */
-    padding: 2px 6px; /* ADJUSTED: Slightly reduced for tighter text alignment without offset */
-    display: flex; /* Align name and button inline */
-    align-items: center; /* Vertical center */
-    gap: 2px; /* Space between name and button - kept as is */
-    font-size: 14px; /* Readable text size */
-    color: rgba(255, 255, 255, 0.9); /* Light text color */
-    max-width: fit-content; /* Prevents pill from stretching */
-}
-
-.tag-name {
-    font-weight: 500; /* Semi-bold for emphasis */
-    white-space: nowrap; /* Prevent text wrapping inside pill */
-    overflow: hidden; /* Hide overflow if tag name is too long */
-    text-overflow: ellipsis; /* Add ellipsis for long names */
-    /* No changes: Text alignment is flex-driven, should now align flush without offset */
-}
-
-.remove-tag-btn {
-    background: none; /* No background */
-    border: none; /* No border */
-    font-size: 18px; /* Larger for easy clicking */
-    cursor: pointer; /* Hand cursor on hover */
-    padding: 0 4px; /* Small padding around × */
-    border-radius: 50%; /* Circular hover effect */
-    transition: all 0.2s ease; /* Smooth hover */
-    min-width: 20px; /* Ensure consistent size */
-    min-height: 20px; /* Ensure consistent size */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.remove-tag-btn:hover {
  
-}
-
-
-
-/* ===== REFERENCE POPUP STYLES (NEW) ===== */
-/* Container: Positions popup below the "Add Reference" button */
-.reference-popup-container {
-  position: absolute;
-  top: 100%; /* Positions directly below the button */
-  left: 0;
-  z-index: 1000;
-  width: 300px; /* Same as category popup */
-}
-
-/* Popup: Dark theme, similar to category */
-.reference-popup {
-  margin-bottom: 35px; /* Space from button */
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  color: #ddd;
-  font-size: 14px;
-  min-width: 250px;
-  max-width: 300px;
-  max-height: 250px; /* Allow space for textarea */
-  overflow-y: auto;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.reference-popup:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Textarea: Multi-line input like comments */
-.reference-textarea {
-  width: 100%;
-  min-height: 80px; /* Enough for multi-line text */
-  padding: 8px 12px;
-  margin: 8px 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #ddd;
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical; /* Allow vertical resize only */
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.reference-textarea:hover,
-.reference-textarea:focus {
-  border-color: #5be49b;
-  box-shadow: 0 0 0 2px rgba(91, 228, 155, 0.2);
-}
-
-/* Add Button: Matches your + icon style */
-.add-reference-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: rgba(91, 228, 155, 0.1);
-  border: 1px solid rgba(91, 228, 155, 0.3);
-  color: #5be49b;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+ 
+ 
+     /* NEW: Persistent Selected Category Label - Under button; stays visible after selection */
+     .category-button-wrapper {
+         position: relative; /* Anchor for absolute popup */
+         display: flex;
+         width:132px;
+         flex-direction: column;
+         gap: 8px; /* Space between button and label */
+     }
+ 
+     .selected-category-label {
+         display: flex;
+         align-items: center;
+         gap: 6px;
+         padding: 6px 10px;
+         background: rgba(91, 228, 155, 0.1); /* Green tint for success */
+         border: 1px solid rgba(91, 228, 155, 0.3);
+         border-radius: 20px; /* Pill shape */
+         font-size: 12px;
+         color: #5be49b; /* Green text */
+         max-width: 200px; /* Prevent overflow */
+         white-space: nowrap;
+         overflow: hidden;
+         text-overflow: ellipsis;
+     }
+ 
+     .selected-icon {
+         font-size: 12px;
+         font-weight: bold;
+     }
+ 
+     .clear-selection-btn { /* NEW: Small X button to clear selection */
+         background: none;
+         border: none;
+         color: #5be49b;
+         font-size: 14px;
+         cursor: pointer;
+         padding: 0;
+         margin-left: auto; /* Push to right */
+         width: 16px;
+         height: 16px;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         border-radius: 50%;
+         transition: background 0.2s;
+     }
+ 
+     .clear-selection-btn:hover {
+         background: rgba(91, 228, 155, 0.2);
+     }
+ 
+     /* UPDATED: Loading/Error in Popup - Dark theme */
+     .loading, .error {
+         padding: 10px;
+         text-align: center;
+         font-size: 12px;
+     }
+ 
+     .loading {
+         color: #888; /* Darker gray */
+     }
+ 
+     .error {
+         color: #ff6b6b; /* Red for errors */
+     }
+ 
+     /* Fullscreen Adjustments for Popup/Label - FIXED: Prevent right overflow and button overlap */
+     .fullscreen-mode .category-popup-container {
+         position: fixed; /* In fullscreen, make it fixed to viewport */
+         top: auto;
+         bottom: 150px; /* FIXED: Higher positioning to avoid overlapping "Add Category" button */
+         left: auto;
+         right: 30; /* FIXED: Reduced from 40px to prevent right-edge overflow */
+         width: 220px; /* FIXED: Narrower width to fit smaller fullscreen space */
+         max-width: 220px; /* FIXED: Enforce no horizontal overflow */
+         z-index: 1000; /* FIXED: High layer to float above buttons */
+     }
+ 
+     .fullscreen-mode .category-popup {
+         min-width: 220px; /* FIXED: Match container */
+         max-width: 220px;
+     }
+ 
+     .fullscreen-mode .selected-category-label {
+         color: #fff; /* Ensure visibility in dark fullscreen */
+         background: rgba(91, 228, 155, 0.2);
+         border-color: rgba(91, 228, 155, 0.4);
+     }
+ .selected-tags-box {
+     background: rgba(255, 255, 255, 0.05);
+     border: 1px solid rgba(80, 80, 80, 0.24);
+     border-radius: 16px;
+     padding: 16px;
+     margin: 12px 0;
+     width: 855px; /* Fixed width */
+     height: 64px; /* Fixed height */
+     display: flex; /* Keep flex for tag alignment */
+     flex-wrap: nowrap; /* Prevent wrapping to a new line; tags will stay in one row */
+     /* NEW: Horizontally center the pills */
+     align-items: flex-start; /* NEW: Vertically center the pills */
+     gap: 14px; /* Keep spacing */
+     overflow-x: auto; /* Horizontal scroll if tags exceed width */
+     overflow-y: hidden; /* Prevent vertical growth */
+ }
+ 
+ .tag-pill {
+     background: rgba(255, 255, 255, 0.1); /* Semi-transparent white for pill background */
+     border: 1px solid rgba(255, 255, 255, 0.15); /* Subtle border */
+     border-radius: 20px; /* Rounded pill shape */
+    
+     height: 32px; /* Fixed height */
+     padding: 2px 6px; /* ADJUSTED: Slightly reduced for tighter text alignment without offset */
+     display: flex; /* Align name and button inline */
+     align-items: center; /* Vertical center */
+     gap: 2px; /* Space between name and button - kept as is */
+     font-size: 14px; /* Readable text size */
+     color: rgba(255, 255, 255, 0.9); /* Light text color */
+     max-width: fit-content; /* Prevents pill from stretching */
+ }
+ 
+ .tag-name {
+     font-weight: 500; /* Semi-bold for emphasis */
+     white-space: nowrap; /* Prevent text wrapping inside pill */
+     overflow: hidden; /* Hide overflow if tag name is too long */
+     text-overflow: ellipsis; /* Add ellipsis for long names */
+     /* No changes: Text alignment is flex-driven, should now align flush without offset */
+ }
+ 
+ .remove-tag-btn {
+     background: none; /* No background */
+     border: none; /* No border */
+     font-size: 18px; /* Larger for easy clicking */
+     cursor: pointer; /* Hand cursor on hover */
+     padding: 0 4px; /* Small padding around × */
+     border-radius: 50%; /* Circular hover effect */
+     transition: all 0.2s ease; /* Smooth hover */
+     min-width: 20px; /* Ensure consistent size */
+     min-height: 20px; /* Ensure consistent size */
+     display: flex;
+     align-items: center;
+     justify-content: center;
+ }
+ 
+ .remove-tag-btn:hover {
   
-
-.add-reference-btn:hover:not(:disabled) {
-  background: rgba(91, 228, 155, 0.2);
-  border-color: #5be49b;
-  color: #fff;
-}
-
-.add-reference-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Reference Pills/Box: Below the button, like tags */
-.reference-button-wrapper {
-  position: relative; /* Anchor for popup */
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.selected-references-box {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(80, 80, 80, 0.24);
-  border-radius: 16px;
-  padding: 8px; /* Smaller padding than tags */
-  margin: 8px 0;
-  width: 100%; /* Full width of wrapper */
-  min-height: 40px; /* Space for pills */
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.reference-pill {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  height: 32px;
-  padding: 4px 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px; /* Smaller for longer text */
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 200px; /* Limit pill width */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.reference-text {
-  font-weight: 500;
-  flex: 1; /* Take available space */
-}
-
-.remove-reference-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0 4px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  min-width: 20px;
-  min-height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ff6b6b; /* Red for remove */
-}
-
-.remove-reference-btn:hover {
-  background: rgba(255, 107, 107, 0.2);
-  color: #fff;
-}
-
-/* Fullscreen Adjustments for Reference Popup */
-.fullscreen-mode .reference-popup-container {
-  position: fixed;
-  top: auto;
-  bottom: 200px; /* Adjust to avoid overlap with other buttons */
-  left: auto;
-  right: 40px; /* Position on right in fullscreen */
-  width: 280px;
-}
-
-.fullscreen-mode .reference-popup {
-  min-width: 280px;
-  max-width: 280px;
-}
-
-.fullscreen-mode .selected-references-box {
-  width: auto; /* Flexible in fullscreen */
-  max-width: 300px;
-}
-
-/* Reuse existing error class for referenceError */
-.popup-error {
-  color: #ff6b6b;
-  font-size: 12px;
-  margin: 4px 0;
-  padding: 4px;
-  background: rgba(255, 107, 107, 0.1);
-  border-radius: 4px;
-}
-
-      `}</style>
-    </div>
-  );
-}
+ }
+ 
+ 
+ 
+ /* ===== REFERENCE POPUP STYLES (NEW) ===== */
+ /* Container: Positions popup below the "Add Reference" button */
+ .reference-popup-container {
+   position: absolute;
+   top: 100%; /* Positions directly below the button */
+   left: 0;
+   z-index: 1000;
+   width: 300px; /* Same as category popup */
+ }
+ 
+ /* Popup: Dark theme, similar to category */
+ .reference-popup {
+   margin-bottom: 35px; /* Space from button */
+   background: rgba(255, 255, 255, 0.03);
+   border: 1px solid rgba(255, 255, 255, 0.08);
+   border-radius: 12px;
+   padding: 12px;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+   color: #ddd;
+   font-size: 14px;
+   min-width: 250px;
+   max-width: 300px;
+   max-height: 250px; /* Allow space for textarea */
+   overflow-y: auto;
+   transition: opacity 0.2s ease, transform 0.2s ease;
+   opacity: 1;
+   transform: translateY(0);
+ }
+ 
+ .reference-popup:hover {
+   background: rgba(255, 255, 255, 0.05);
+ }
+ 
+ /* Textarea: Multi-line input like comments */
+ .reference-textarea {
+   width: 100%;
+   min-height: 80px; /* Enough for multi-line text */
+   padding: 8px 12px;
+   margin: 8px 0;
+   border: 1px solid rgba(255, 255, 255, 0.08);
+   border-radius: 6px;
+   background: rgba(255, 255, 255, 0.03);
+   color: #ddd;
+   font-size: 14px;
+   font-family: inherit;
+   resize: vertical; /* Allow vertical resize only */
+   outline: none;
+   transition: border-color 0.2s;
+ }
+ 
+ .reference-textarea:hover,
+ .reference-textarea:focus {
+   border-color: #5be49b;
+   box-shadow: 0 0 0 2px rgba(91, 228, 155, 0.2);
+ }
+ 
+ /* Add Button: Matches your + icon style */
+ .add-reference-btn {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   width: 100%;
+   padding: 8px 12px;
+   border-radius: 6px;
+   background: rgba(91, 228, 155, 0.1);
+   border: 1px solid rgba(91, 228, 155, 0.3);
+   color: #5be49b;
+   font-size: 14px;
+   font-weight: 500;
+   cursor: pointer;
+   transition: all 0.2s ease;
+ }
+   
+ 
+ .add-reference-btn:hover:not(:disabled) {
+   background: rgba(91, 228, 155, 0.2);
+   border-color: #5be49b;
+   color: #fff;
+ }
+ 
+ .add-reference-btn:disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+ }
+ 
+ /* Reference Pills/Box: Below the button, like tags */
+ .reference-button-wrapper {
+   position: relative; /* Anchor for popup */
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+ }
+ 
+ .selected-references-box {
+   background: rgba(255, 255, 255, 0.05);
+   border: 1px solid rgba(80, 80, 80, 0.24);
+   border-radius: 16px;
+   padding: 8px; /* Smaller padding than tags */
+   margin: 8px 0;
+   width: 100%; /* Full width of wrapper */
+   min-height: 40px; /* Space for pills */
+   display: flex;
+   flex-wrap: nowrap;
+   align-items: center;
+   gap: 8px;
+   overflow-x: auto;
+   overflow-y: hidden;
+ }
+ 
+ .reference-pill {
+   background: rgba(255, 255, 255, 0.1);
+   border: 1px solid rgba(255, 255, 255, 0.15);
+   border-radius: 20px;
+   height: 32px;
+   padding: 4px 8px;
+   display: flex;
+   align-items: center;
+   gap: 4px;
+   font-size: 12px; /* Smaller for longer text */
+   color: rgba(255, 255, 255, 0.9);
+   max-width: 200px; /* Limit pill width */
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+ }
+ 
+ .reference-text {
+   font-weight: 500;
+   flex: 1; /* Take available space */
+ }
+ 
+ .remove-reference-btn {
+   background: none;
+   border: none;
+   font-size: 16px;
+   cursor: pointer;
+   padding: 0 4px;
+   border-radius: 50%;
+   transition: all 0.2s ease;
+   min-width: 20px;
+   min-height: 20px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   color: #ff6b6b; /* Red for remove */
+ }
+ 
+ .remove-reference-btn:hover {
+   background: rgba(255, 107, 107, 0.2);
+   color: #fff;
+ }
+ 
+ /* Fullscreen Adjustments for Reference Popup */
+ .fullscreen-mode .reference-popup-container {
+   position: fixed;
+   top: auto;
+   bottom: 200px; /* Adjust to avoid overlap with other buttons */
+   left: auto;
+   right: 40px; /* Position on right in fullscreen */
+   width: 280px;
+ }
+ 
+ .fullscreen-mode .reference-popup {
+   min-width: 280px;
+   max-width: 280px;
+ }
+ 
+ .fullscreen-mode .selected-references-box {
+   width: auto; /* Flexible in fullscreen */
+   max-width: 300px;
+ }
+ 
+ /* Reuse existing error class for referenceError */
+ .popup-error {
+   color: #ff6b6b;
+   font-size: 12px;
+   margin: 4px 0;
+   padding: 4px;
+   background: rgba(255, 107, 107, 0.1);
+   border-radius: 4px;
+ }
+ 
+ .save-btn {
+   position: relative;
+   box-shadow: inset 0px 0px 4px rgba(239, 214, 255, 0.25);
+   border: 1px solid rgba(145, 158, 171, 0.32);
+   color: #5be49b;
+   min-width: 78px;
+   padding: 6px 16px;
+   border-radius: 999px;
+   white-space: nowrap;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   background: rgba(91, 228, 155, 0.1);
+   font-weight: 600;
+   cursor: pointer;
+   overflow: hidden;
+   transition: all 0.2s ease-in-out;
+ }
+ 
+ .save-btn:hover {
+   transform: scale(1.03);
+   background: rgba(91, 228, 155, 0.2);
+ }
+ 
+ .save-btn:disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+ }
+ 
+ .save-btn .glow-bg {
+   position: absolute;
+   inset: 0;
+   border-radius: 500px;
+   background: radial-gradient(
+     circle,
+     rgba(119, 237, 139, 0.5) 0%,
+     transparent 50%
+   );
+   filter: blur(8px);
+   z-index: 0;
+ }
+ 
+ .save-btn .text {
+   position: relative;
+   z-index: 10;
+ }
+ 
+ /* ===== MOBILE RESPONSIVENESS (NEW) ===== */
+   @media (max-width: 768px) {
+     .editor-container {
+       left: 0; /* CHANGED: Full width on mobile */
+       top: 50; /* CHANGED: Adjust top for mobile */
+       width: 100%; /* CHANGED: Full viewport width */
+       padding: 10px; /* CHANGED: Smaller padding */
+     }
+     .post-title {
+       font-size: 32px; /* CHANGED: Smaller font for mobile */
+       line-height: 40px; /* CHANGED: Adjust line height */
+       min-height: calc(40px * 2); /* CHANGED: Smaller height */
+       max-height: calc(40px * 2);
+     }
+     .editor-wrapper {
+       padding: 16px; /* CHANGED: Smaller padding */
+     }
+     .editor {
+       min-height: 300px; /* CHANGED: Smaller min height */
+       padding: 12px; /* CHANGED: Smaller padding */
+       font-size: 14px; /* CHANGED: Smaller font */
+     }
+ 
+     .bubble-toolbar {
+       padding: 6px; /* Smaller padding */
+       gap: 2px; /* Tighter gaps */
+       max-width: calc(100vw - 20px); /* NEW: Limit width to viewport minus margin */
+       overflow-x: auto; /* Horizontal scroll if needed */
+       flex-wrap: nowrap; /* Prevent wrapping to keep it compact */
+     }
+     .bubble-toolbar button {
+       min-width: 32px; /* Slightly smaller for fit, but still touch-friendly */
+       min-height: 32px;
+       padding: 4px; /* Smaller padding */
+     }
+     /* NEW: Make heading dropdown responsive in toolbar */
+     .bubble-toolbar .relative > div:first-child {
+       width: 100px; /* Smaller fixed width for mobile */
+       max-width: 100px; /* Prevent stretching */
+     }
+     .bubble-toolbar .relative > div:last-child {
+       width: 100px; /* Match header width */
+       max-width: 100px;
+     }
+ 
+       `}</style>
+     </div>
+   );
+ }

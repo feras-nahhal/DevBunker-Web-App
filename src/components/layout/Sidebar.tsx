@@ -70,6 +70,24 @@ export default function Sidebar({
     moveGlow();
   }, [pathname]);
 
+  // Recalculate glow when mobile sidebar opens
+useEffect(() => {
+  if (isMobile && isMobileOpen) {
+    // Wait for the slide-in transition (300ms)
+    setTimeout(() => {
+      const activeItem = document.querySelector(".menu-item.active, .menu-subitem.active");
+      if (!activeItem) return;
+      const rect = activeItem.getBoundingClientRect();
+      const sidebarRect = activeItem.closest(".sidebar")!.getBoundingClientRect();
+      if (glowRightRef.current)
+        glowRightRef.current.style.top = rect.top - sidebarRect.top + "px";
+      if (glowLeftRef.current)
+        glowLeftRef.current.style.top = rect.top - sidebarRect.top + "px";
+    }, 350); // Slightly longer than your CSS transition (300ms)
+  }
+}, [isMobileOpen, pathname]);
+
+
   // Collapse toggle (desktop)
   const toggleCollapse = () => {
     const newState = !collapsed;

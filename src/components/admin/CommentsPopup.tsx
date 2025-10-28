@@ -482,6 +482,26 @@ export default function CommentsPopup({
           background: rgba(255, 255, 255, 0.12);
           border-radius: 3px;
         }
+        div :global(ul) {
+          list-style-type: disc;
+          padding-left: 1.5rem;
+        }
+        div :global(ol) {
+          list-style-type: decimal;
+          padding-left: 1.5rem;
+        }
+         div :global(h1) {
+          font-size: 1.5rem;
+          font-weight: bold;
+        }
+        div :global(h2) {
+          font-size: 1.25rem;
+          font-weight: bold;
+        }
+        div :global(h3) {
+          font-size: 1.1rem;
+          font-weight: bold;
+        }
       `}</style>
     </>
   );

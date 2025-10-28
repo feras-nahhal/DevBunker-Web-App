@@ -1,45 +1,36 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react/menus"; // FIXED: Import from the correct path as per TipTap docs
+import React, { useMemo, useState, useEffect } from "react";
+import { useEditor, EditorContent} from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
-import Link1 from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
+import Heading, { Level } from "@tiptap/extension-heading";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
+import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
-import Underline1 from "@tiptap/extension-underline";
 import Highlight from "@tiptap/extension-highlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import Image from "@tiptap/extension-image";
+import Code from "@tiptap/extension-code";
+import CodeBlock from "@tiptap/extension-code-block";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
 import Image1 from "next/image";
 import { useCategories } from "@/hooks/useCategories";
 import { useTags } from "@/hooks/useTags";
 import { useContentTags } from "@/hooks/useContentTags";
 import { useReferences } from "@/hooks/useReferences";
+// Icons
 import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Highlighter,
-  List,
-  ListOrdered,
-  ListTodo,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Quote,
-  Minus,
-  Link as LinkIcon,
-  Unlink,
-  Image as ImageIcon,
-  Code,
-  SquareCode,
-  Undo,
-  Redo,
-  X,
-  Maximize,
-  Minimize,
+  Bold, Italic, Underline as UnderlineIcon, Strikethrough, Highlighter,
+  List, ListOrdered, ListTodo,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Quote, Minus, Link as LinkIcon, Unlink, Image as ImageIcon,
+  Code as CodeIcon, SquareCode, Undo, Redo, X,  Maximize,
+  Minimize
 } from "lucide-react";
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
@@ -105,7 +96,12 @@ export default function CreateResearchEditor({
     const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
     const [tagIds, setTagIds] = useState<string[]>([]);
     const [showTagSelector, setShowTagSelector] = useState(false); 
-  
+
+  // ===== Url======================
+      const [showPopup, setShowPopup] = useState(false);
+      const [showPopup1, setShowPopup1] = useState(false);
+      const [url, setUrl] = useState("");
+      const [imageUrl, setImageUrl] = useState("");
 
 // ===== REFERENCE STATE (NEW) =====
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
@@ -117,6 +113,8 @@ export default function CreateResearchEditor({
   const { tags: fetchedTags, fetchTags } = useContentTags();
   const { references: fetchedReferences, refresh: refreshReferences } = useReferences(researchId || "");
 
+
+ 
 
 
 
@@ -200,17 +198,38 @@ export default function CreateResearchEditor({
   
 
   // ===== TIPTAP EDITOR =====
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
-      Link1,
-      Image,
-      Underline1,
-      Highlight,
+  const extensions = useMemo(
+    () => [
+      StarterKit.configure({
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+      }),
+       TextStyle,
+    Color.configure({ types: ["textStyle"] }),
+      Heading.configure({ levels: [1, 2, 3] }),
+      BulletList,
+      OrderedList,
+      ListItem,
       TaskList,
       TaskItem,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Underline,
+      Link.configure({ openOnClick: true }),
+      Highlight,
+      Image,
+      Code,
+      CodeBlock,
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
     ],
+    []
+  );
+
+  const editor = useEditor({
+    extensions,
+    editable: true,
     content: body,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
@@ -221,6 +240,50 @@ export default function CreateResearchEditor({
   if (!mounted || !editor) return null;
 
   const hasContent = editor.getText().trim().length > 0;
+
+   //==========Link==================
+
+
+     const applyLink = () => {
+       const { from, to } = editor.state.selection;
+       const selectedText = editor.state.doc.textBetween(from, to).trim();
+       
+       if (from === to || selectedText === "") {
+         alert("Please select some text to link.");
+         return;
+       }
+       
+       // Check if selection is the entire line/paragraph (optional, but helpful)
+       const lineText = editor.state.doc.textBetween(
+         editor.state.doc.resolve(from).start(),
+         editor.state.doc.resolve(from).end()
+       ).trim();
+       if (selectedText === lineText) {
+         alert("Please select only part of the text, not the entire line.");
+         return;
+       }
+
+       let finalUrl = url.trim();
+       if (finalUrl && !/^https?:\/\//i.test(finalUrl)) {
+         finalUrl = `https://${finalUrl}`;
+       }
+
+       editor.chain().focus().setLink({ href: finalUrl }).run();
+       editor.commands.setTextSelection(to);
+
+       setShowPopup(false);
+       setUrl("");
+     };
+     
+
+
+  const applyImage = () => {
+    if (imageUrl.trim()) {
+      editor.chain().focus().setImage({ src: imageUrl.trim() }).run();
+      setImageUrl("");
+      setShowPopup(false);
+    }
+  };
 
 
 
@@ -372,7 +435,7 @@ export default function CreateResearchEditor({
 
             <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive("bold") ? "active" : ""}><Bold size={18} /></button>
             <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive("italic") ? "active" : ""}><Italic size={18} /></button>
-            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive("underline") ? "active" : ""}><Underline size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive("underline") ? "active" : ""}><UnderlineIcon size={18} /></button>
             <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive("strike") ? "active" : ""}><Strikethrough size={18} /></button>
             <button onClick={() => editor.chain().focus().toggleHighlight().run()} className={editor.isActive("highlight") ? "active" : ""}><Highlighter size={18} /></button>
 
@@ -392,24 +455,31 @@ export default function CreateResearchEditor({
             <button onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus size={18} /></button>
 
             <span className="bubble-toolbar-separator" />
+           {/* Link button */}
+            <button onClick={() => setShowPopup(true)}>
+              <LinkIcon size={18} />
+            </button>
+
+             {/* Unlink button */}
             <button
               onClick={() => {
-                const url = prompt("Enter URL");
-                if (url) editor.chain().focus().setLink({ href: url }).run();
+                editor
+                  .chain()
+                  .focus()
+                  .unsetLink()
+                  .setColor("inherit")
+                  .unsetMark("underline")
+                  .run();
               }}
-            ><LinkIcon size={18} /></button>
-            <button onClick={() => editor.chain().focus().unsetLink().run()}><Unlink size={18} /></button>
+            >
+              <Unlink size={18} />
+            </button>
 
             <span className="bubble-toolbar-separator" />
-            <button
-              onClick={() => {
-                const url = prompt("Enter image URL");
-                if (url) editor.chain().focus().setImage({ src: url }).run();
-              }}
-            ><ImageIcon size={18} /></button>
+             <button onClick={() => setShowPopup1(true)}><ImageIcon size={18} /></button>
 
             <span className="bubble-toolbar-separator" />
-            <button onClick={() => editor.chain().focus().toggleCode().run()}><Code size={18} /></button>
+            <button onClick={() => editor.chain().focus().toggleCode().run()}><CodeIcon size={18} /></button>
             <button onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode size={18} /></button>
 
             <span className="bubble-toolbar-separator" />
@@ -426,9 +496,151 @@ export default function CreateResearchEditor({
         <EditorContent editor={editor} className="editor" />
       </div>
 
+       {/* Popup */}
+          {showPopup && (
+            <div
+              style={{
+                marginTop: "12px",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(80, 80, 80, 0.24)",
+                borderRadius: "16px",
+                padding: "16px",
+                width: "calc(100vw - 40px)", // CHANGED: Responsive width (full viewport minus padding)
+                maxWidth: "855px", // CHANGED: Cap at desktop width
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  color: "rgba(255,255,255,0.9)",
+                }}
+              >
+                🔗 Enter Link URL
+              </label>
+
+              <input
+                type="text"
+                placeholder="https://example.com"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                style={{
+                  width: "100%",
+                  background: "rgba(0, 0, 0, 0.25)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "8px",
+                  color: "white",
+                  padding: "8px 10px",
+                  fontSize: "14px",
+                }}
+              />
+
+              <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => setShowPopup(false)}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    borderRadius: "99px",
+                    color: "white",
+                    padding: "6px 12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+            onClick={applyLink}
+            disabled={!url.trim()}
+            className="save-btn"
+          >
+            <span className="glow-bg"></span>
+            <span className="text">Add Link</span>
+          </button>
+
+              </div>
+            </div>
+          )}
+
+       {showPopup1 && (
+        <div
+           style={{
+              marginTop: "12px",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(80, 80, 80, 0.24)",
+              borderRadius: "16px",
+              padding: "16px",
+              width: "calc(100vw - 40px)", // CHANGED: Responsive width
+              maxWidth: "855px", // CHANGED: Cap at desktop width
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+        >
+          <label
+            style={{
+              fontSize: "16px",
+              fontWeight: 500,
+              color: "rgba(255,255,255,0.9)",
+            }}
+          >
+            🖼️ Enter Image URL
+          </label>
+
+          <input
+            type="text"
+            placeholder="https://example.com/image.png"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            style={{
+              width: "100%",
+              background: "rgba(0, 0, 0, 0.25)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "8px",
+              color: "white",
+              padding: "8px 10px",
+              fontSize: "14px",
+            }}
+          />
+
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+            <button
+              onClick={() => setShowPopup1(false)}
+              style={{
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                borderRadius: "99px",
+                color: "white",
+                padding: "6px 12px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={applyImage}
+              disabled={!imageUrl.trim()}
+              className="save-btn"
+            >
+              <span className="glow-bg"></span>
+              <span className="text">Add Image</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+
 
       {/* ===== ACTIONS BOX ===== */}
       <div className="action-box">
+
+      
+
 
        {/* ===== REFERENCES SECTION ===== */}
         <div style={{ marginTop: "16px" }}>
@@ -452,7 +664,8 @@ export default function CreateResearchEditor({
                 border: "1px solid rgba(80, 80, 80, 0.24)",
                 borderRadius: "16px",
                 padding: "16px",
-                width: "855px",
+                width: "calc(100vw - 40px)", // CHANGED: Responsive width
+                maxWidth: "855px", // CHANGED: Cap at desktop width
               }}
             >
               {/* Existing References (now vertical + green text) */}
@@ -539,7 +752,7 @@ export default function CreateResearchEditor({
                   placeholder="Enter reference (e.g. Source: https://example.com - Description...)"
                   rows={3}
                   style={{
-                    width: "823px",
+          
                     background: "rgba(0, 0, 0, 0.25)",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
                     borderRadius: "8px",
@@ -547,6 +760,8 @@ export default function CreateResearchEditor({
                     padding: "8px 10px",
                     fontSize: "14px",
                     resize: "none",
+                    width: "calc(100vw - 75px)", // CHANGED: Responsive width
+                    maxWidth: "823px", // CHANGED: Cap at desktop width
                   }}
                 />
 
@@ -606,7 +821,8 @@ export default function CreateResearchEditor({
               <div
                 style={{
                   position: "relative",
-                  width: "663px",
+                  width: "calc(100vw - 40px)", // CHANGED: Responsive width
+                  maxWidth: "663px", // CHANGED: Cap at desktop width
                   background: "rgba(255, 255, 255, 0.05)",
                   border: "1px solid rgba(80, 80, 80, 0.24)",
                   borderRadius: "16px",
@@ -753,7 +969,8 @@ export default function CreateResearchEditor({
                   <div
                     style={{
                       marginTop: "8px",
-                      width: "855px",
+                      width: "calc(100vw - 40px)", // CHANGED: Responsive width
+                      maxWidth: "855px", // CHANGED: Cap at desktop width
                       height: "92px",
                       background: "rgba(255, 255, 255, 0.05)",
                       border: "1px solid rgba(80, 80, 80, 0.24)",
@@ -786,7 +1003,8 @@ export default function CreateResearchEditor({
                           onClick={() => setDropdownOpen(!dropdownOpen)} // ✅ Toggle dropdown
                           className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer  transition hover:bg-white/20"
                           style={{
-                            width: "823px", // Match original width
+                            width: "calc(100vw - 75px)", // CHANGED: Responsive width
+                            maxWidth: "823px", // CHANGED: Cap at desktop width
                             height: "40px", // Match original height
                           }}
                         >
@@ -801,7 +1019,8 @@ export default function CreateResearchEditor({
                             style={{
                               scrollbarWidth: "none", // Firefox
                               msOverflowStyle: "none", // IE/Edge
-                              width: "823px", // Match header width for alignment
+                              width: "calc(100vw - 40px)", // CHANGED: Responsive width
+                              maxWidth: "855px", // CHANGED: Cap at desktop width
                             }}
                           >
                             {/* Hide scrollbar for Chrome, Safari, Edge */}
@@ -1055,38 +1274,33 @@ export default function CreateResearchEditor({
           border-radius: 0; /* Remove rounded corners in fullscreen for edge-to-edge */
         }
 
-        /* Force TipTap list items to behave as proper list items */
-        .editor ul,
-        .editor ol {
-          padding-left: 1.5em;
-          margin-left: 0;
-          list-style-position: inside;
-          color: #fff; /* bullet/number color */
+        div :global(ul) {
+          list-style-type: disc;
+          padding-left: 1.5rem;
+        }
+        div :global(ol) {
+          list-style-type: decimal;
+          padding-left: 1.5rem;
+        }
+         div :global(h1) {
+          font-size: 1.5rem;
+          font-weight: bold;
+        }
+        div :global(h2) {
+          font-size: 1.25rem;
+          font-weight: bold;
+        }
+        div :global(h3) {
+          font-size: 1.1rem;
+          font-weight: bold;
         }
 
-        .editor li {
-          display: list-item; /* ensure bullets/numbers appear */
-          color: #fff;
-          margin: 0.25em 0;
-        }
+          /* ===== LINK STYLING IN EDITOR ===== */
+  .editor a {
+    color: blue;
+    text-decoration: underline;
+  }
 
-        /* Make markers visible */
-        .editor ul li::marker,
-        .editor ol li::marker {
-          color: #5be49b;
-          font-size: 16px;
-        }
-
-        /* Nested lists */
-        .editor ul ul,
-        .editor ol ol {
-          padding-left: 1.5em;
-        }
-
-        /* Task list checkboxes */
-        .editor li[data-type="taskItem"] {
-          list-style: none; /* remove default bullet, handled by checkbox */
-        }
 
         /* Ensure editor content shows images correctly */
         .editor img {
@@ -1592,6 +1806,98 @@ export default function CreateResearchEditor({
   background: rgba(255, 107, 107, 0.1);
   border-radius: 4px;
 }
+
+.save-btn {
+  position: relative;
+  box-shadow: inset 0px 0px 4px rgba(239, 214, 255, 0.25);
+  border: 1px solid rgba(145, 158, 171, 0.32);
+  color: #5be49b;
+  min-width: 78px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(91, 228, 155, 0.1);
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.save-btn:hover {
+  transform: scale(1.03);
+  background: rgba(91, 228, 155, 0.2);
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.save-btn .glow-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 500px;
+  background: radial-gradient(
+    circle,
+    rgba(119, 237, 139, 0.5) 0%,
+    transparent 50%
+  );
+  filter: blur(8px);
+  z-index: 0;
+}
+
+.save-btn .text {
+  position: relative;
+  z-index: 10;
+}
+
+/* ===== MOBILE RESPONSIVENESS (NEW) ===== */
+  @media (max-width: 768px) {
+    .editor-container {
+      left: 40; /* CHANGED: Full width on mobile */
+      top: 50; /* CHANGED: Adjust top for mobile */
+      width: 100%; /* CHANGED: Full viewport width */
+      padding: 10px; /* CHANGED: Smaller padding */
+    }
+    .post-title {
+      font-size: 32px; /* CHANGED: Smaller font for mobile */
+      line-height: 40px; /* CHANGED: Adjust line height */
+      min-height: calc(40px * 2); /* CHANGED: Smaller height */
+      max-height: calc(40px * 2);
+    }
+    .editor-wrapper {
+      padding: 16px; /* CHANGED: Smaller padding */
+    }
+    .editor {
+      min-height: 300px; /* CHANGED: Smaller min height */
+      padding: 12px; /* CHANGED: Smaller padding */
+      font-size: 14px; /* CHANGED: Smaller font */
+    }
+
+    .bubble-toolbar {
+      padding: 6px; /* Smaller padding */
+      gap: 2px; /* Tighter gaps */
+      max-width: calc(100vw - 20px); /* NEW: Limit width to viewport minus margin */
+      overflow-x: auto; /* Horizontal scroll if needed */
+      flex-wrap: nowrap; /* Prevent wrapping to keep it compact */
+    }
+    .bubble-toolbar button {
+      min-width: 32px; /* Slightly smaller for fit, but still touch-friendly */
+      min-height: 32px;
+      padding: 4px; /* Smaller padding */
+    }
+    /* NEW: Make heading dropdown responsive in toolbar */
+    .bubble-toolbar .relative > div:first-child {
+      width: 100px; /* Smaller fixed width for mobile */
+      max-width: 100px; /* Prevent stretching */
+    }
+    .bubble-toolbar .relative > div:last-child {
+      width: 100px; /* Match header width */
+      max-width: 100px;
+    }
 
       `}</style>
     </div>
