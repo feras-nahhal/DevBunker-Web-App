@@ -43,7 +43,7 @@ export default function ExplorePage() {
           {/* 🔹 Breadcrumb / Title */}
           <div className="flex items-center mb-4">
             <Image
-              src="/Tag.svg"
+              src="/tag.svg"
               alt="Menu Icon"
               width={25}
               height={25}
@@ -72,7 +72,7 @@ export default function ExplorePage() {
           {/* 🔹 Breadcrumb / Title */}
           <div className="flex items-center mb-4">
             <Image
-              src="/Tag.svg"
+              src="/tag.svg"
               alt="Menu Icon"
               width={25}
               height={25}
