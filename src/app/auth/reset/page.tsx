@@ -157,11 +157,11 @@ export default function ResetPasswordPage() {
         {/* Right Column */}
         <div className="flex items-center justify-center px-6 py-12 md:py-0">
           {/* Outer Box */}
-         <div className={`w-full max-w-[420px] md:w-[420px] h-[380px] flex items-center justify-center ${theme === 'dark' ? 'bg-white/[0.05] border-white/10' : 'bg-black/[0.05] border-black/10'} backdrop-blur-[20px] rounded-2xl shadow-lg`}style={{
+         <div className={`w-full max-w-[420px] md:w-[420px] h-[383px] flex items-center justify-center ${theme === 'dark' ? 'bg-white/[0.05] border-white/10' : 'bg-black/[0.05] border-black/10'} backdrop-blur-[20px] rounded-2xl shadow-lg`}style={{
               boxShadow: "inset 0px 0px 7px rgba(255, 255, 255, 0.16)",
             }}>
             {/* Inner Box */}
-             <div className={`w-full max-w-[404px] md:w-[404px] h-[360px] flex flex-col p-6 gap-6 ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-black/[0.05]'} rounded-xl`}>
+             <div className={`w-[95%] max-w-[404px] md:w-[404px] h-[365px] flex flex-col p-6 gap-6 ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-black/[0.05]'} rounded-xl`}>
               {/* Header */}
               <div>
                 <h1 className={`text-xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-black"}`}>

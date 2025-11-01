@@ -90,7 +90,7 @@ export default function ReadlaterCard({
       action: handleShareClick,
     },
   {
-    name: "Remove Readlater",
+    name: "Remove  Read Later",
     icon: "/readlaterlogo.png",
     action: async () => {
       if (onRemoveFromReadlater) await onRemoveFromReadlater();

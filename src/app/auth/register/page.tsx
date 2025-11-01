@@ -129,10 +129,7 @@ export default function RegisterPage() {
           className="object-contain"
         />
         <div className="flex items-center gap-4">
-          <button onClick={toggleTheme} className={`flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-gray-300 hover:text-green-400' : 'text-gray-700 hover:text-green-600'}`}>
-            {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </button>
+     
           <a
             href="#"
             className={`flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-gray-300 hover:text-green-400' : 'text-gray-700 hover:text-green-600'}`}
@@ -171,7 +168,7 @@ export default function RegisterPage() {
           >
             {/* Inner Box */}
             <div
-              className={`w-full max-w-[404px] md:w-[404px] h-[405px] flex flex-col p-6 gap-6 ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-black/[0.05]'} rounded-xl`}
+              className={`w-[96%] max-w-[404px] md:w-[404px] h-[405px] flex flex-col p-6 gap-6 ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-black/[0.05]'} rounded-xl`}
             >
               {/* Header */}
               <div>

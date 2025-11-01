@@ -63,10 +63,7 @@ export default function LoginPage() {
       <header className="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-4 z-20">
         <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
         <div className="flex items-center gap-4">
-          <button onClick={toggleTheme} className={`flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-gray-300 hover:text-green-400' : 'text-gray-700 hover:text-green-600'}`}>
-            {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </button>
+      
           <a href="#" className={`flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-gray-300 hover:text-green-400' : 'text-gray-700 hover:text-green-600'}`}>
             <Image src="/setting_logo.png" alt="Help Icon" width={20} height={20} className="object-contain" />
             Need help?
@@ -86,7 +83,11 @@ export default function LoginPage() {
           <div className={`w-full max-w-[420px] md:w-[420px] h-[371px] flex items-center justify-center ${theme === 'dark' ? 'bg-white/[0.05] border-white/10' : 'bg-black/[0.05] border-black/10'} backdrop-blur-[20px] rounded-2xl shadow-lg`}style={{
               boxShadow: "inset 0px 0px 7px rgba(255, 255, 255, 0.16)",
             }}>
-            <div className={`w-full max-w-[404px] md:w-[404px] h-[355px] flex flex-col p-6 gap-6 ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-black/[0.05]'} rounded-xl`}>
+            <div
+              className={`w-[96%] md:w-[404px] h-[355px] flex flex-col p-6 gap-6 ${
+                theme === "dark" ? "bg-white/[0.05]" : "bg-black/[0.05]"
+              } rounded-xl`}
+            >
               <div>
                 <h1 className={`text-xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Sign in to your account</h1>
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>

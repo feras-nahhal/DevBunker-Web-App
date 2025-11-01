@@ -213,11 +213,9 @@ export default function UserCard({
           {/* Email / ID Block (title/desc – w-[370px]) */}
           <div className="flex w-[370px] flex-col items-start gap-2 shrink-0">
             <span className="text-white text-[14px] font-['Public Sans'] leading-[18px] block truncate">
-              {email || "No email"} {/* NEW: Email as title/name */}
+              {email.length > 50 ? email.slice(0, 50) + "..." : email || "No email"}
             </span>
-            <span className="text-[12px] text-[rgba(204,204,204,0.5)] leading-[14px] font-['Public Sans'] block truncate">
-              {id} {/* NEW: ID as description (truncated) */}
-            </span>
+            
           </div>
 
           {/* Date / Role / Status / Full Email Columns (gap-[100px] tight) */}
@@ -275,10 +273,6 @@ export default function UserCard({
               </span>
             </span>
 
-            {/* Full Email (last column, truncated) */}
-            <span className="text-white text-[12px] font-['Public Sans'] truncate min-w-[200px] text-center">
-              {email || "No email"} {/* NEW: Full email (truncate via CSS) */}
-            </span>
           </div>
         </div>
 

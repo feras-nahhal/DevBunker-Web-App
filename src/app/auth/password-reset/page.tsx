@@ -76,15 +76,7 @@ export default function ResetPasswordPage() {
       <header className="absolute top-0 left-0 w-full flex items-center justify-between px-6 py-4 z-20">
         <Image src="/logo.png" alt="Logo" width={40} height={40} />
         <div className="flex items-center gap-4">
-          <button
-            onClick={toggleTheme}
-            className={`flex items-center gap-2 text-sm ${
-              theme === "dark" ? "text-gray-300 hover:text-green-400" : "text-gray-700 hover:text-green-600"
-            }`}
-          >
-            {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-            {theme === "dark" ? "Light" : "Dark"}
-          </button>
+       
           <a
             href="#"
             className={`flex items-center gap-2 text-sm ${
@@ -117,7 +109,7 @@ export default function ResetPasswordPage() {
         <div className="flex items-center justify-center px-6 py-12 md:py-0">
           {/* Outer Frame */}
           <div
-            className={`relative flex items-center justify-center w-full max-w-[420px] h-[312px] rounded-2xl backdrop-blur-[37px] border border-[rgba(80,80,80,0.24)] shadow-lg ${
+            className={`relative flex items-center justify-center w-full max-w-[420px] h-[325px] rounded-2xl backdrop-blur-[37px] border border-[rgba(80,80,80,0.24)] shadow-lg ${
               theme === "dark" ? "bg-white/[0.05]" : "bg-black/[0.05]"
             }`}
             style={{
@@ -126,13 +118,9 @@ export default function ResetPasswordPage() {
           >
             {/* Inner Card */}
             <div
-              className={`flex flex-col p-6 gap-4 rounded-[16px] ${
+              className={`w-[95%] md:w-[404px] h-[305px] flex flex-col p-6 gap-6 ${
                 theme === "dark" ? "bg-white/[0.05]" : "bg-black/[0.05]"
-              }`}
-              style={{
-                width: "404px",
-                height: "296px",
-              }}
+              } rounded-xl`}
             >
               <div className="text-center">
                 <h1 className={`text-xl font-bold mb-2 ${theme === "dark" ? "text-white" : "text-black"}`}>

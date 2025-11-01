@@ -6,6 +6,7 @@ import { AnyContent } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import DraftCardSkeleton from "./DraftCardSkeleton";
 import { useAuthContext } from "@/hooks/AuthProvider";
+import DeleteConfirmPopup from "./DeleteConfirmPopup";
 
 interface DraftGridProps {
   type?: "all" | "post" | "research" | "mindmap";
@@ -49,6 +50,12 @@ export default function DraftGrid({
         return contentType;
     }
   };
+
+  const [deletePopup, setDeletePopup] = useState<{
+    id: string;
+    type: "post" | "mindmap" | "research";
+    title: string;
+  } | null>(null);
 
   const handleDelete = async (
     id: string,
@@ -161,6 +168,13 @@ export default function DraftGrid({
               <DraftCard
                 {...card}
                 type={contentType}
+                onDelete={() =>
+                      setDeletePopup({
+                        id: card.id,
+                        type: card.content_type as "post" | "mindmap" | "research",
+                        title: card.title,
+                      })
+                    }
                 categoryName={
                   typeof card.categoryName === "string"
                     ? [card.categoryName]
@@ -207,6 +221,19 @@ export default function DraftGrid({
           </div>
         </div>
       )}
+       {deletePopup && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+                          <DeleteConfirmPopup
+                            title={deletePopup.title}
+                            type={deletePopup.type}
+                            onConfirm={async () => {
+                              await handleDelete(deletePopup.id, deletePopup.type);
+                              // ❌ remove setDeletePopup(null) here — popup now closes inside itself
+                            }}
+                            onClose={() => setDeletePopup(null)}
+                          />
+                        </div>
+                      )}
     </>
   );
 }

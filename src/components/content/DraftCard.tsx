@@ -17,6 +17,7 @@ interface DraftCardProps {
   author_id: string;
   authorEmail?: string;
   onOpenContent?: () => void;
+  onDelete?: () => void;
 }
 
 export default function DraftCard({
@@ -29,6 +30,7 @@ export default function DraftCard({
   comments: initialComments = 0,
   author_id,
   authorEmail,
+  onDelete,
   onOpenContent
 }: DraftCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,19 +63,11 @@ export default function DraftCard({
   }, []);
 
   /** 🗑️ Handle Delete */
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this draft?")) return;
-    try {
-      setLoading(true);
-      await deleteContent(id, token || undefined);
-      alert("Deleted successfully!");
-    } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Failed to delete content.");
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleDelete = () => {
+  if (!onDelete) return; // safety check
+  onDelete();
+};
+
 
   /** ✏️ Handle Edit */
   const handleEdit = () => {

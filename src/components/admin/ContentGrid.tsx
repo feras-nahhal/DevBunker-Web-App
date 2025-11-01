@@ -29,6 +29,7 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [categorySearch, setCategorySearch] = useState("");
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
 
   // Example categories list (you can replace with actual)
   const categoriesList = Array.from(new Set(data.map((d) => d.categoryName || d.category_id || "")));
@@ -276,7 +277,7 @@ const clearAllFilters = () => {
           border: "1px solid rgba(80,80,80,0.24)",
           boxShadow: "inset 0 0 7px rgba(255,255,255,0.16)",
           backdropFilter: "blur(12px)",
-          overflow: "hidden",
+          overflow: "visible",
         }}
       >
         {/* 🧠 Stats Summary */}
@@ -309,6 +310,7 @@ const clearAllFilters = () => {
   <div className="flex flex-wrap items-end gap-3 mb-3">
     {/* 🔍 Main Search */}
     <div className="flex-1 min-w-[200px]">
+      <label className="block text-white text-[12px] mb-1">Search</label>
       <input
         type="text"
         value={search}
@@ -330,7 +332,7 @@ const clearAllFilters = () => {
         }}
         onFocus={() => setStatusDropdownOpen(true)}
         placeholder="Type to search..."
-        className="w-full px-2 py-1 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+        className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
       />
       {statusDropdownOpen && (
         <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
@@ -370,7 +372,7 @@ const clearAllFilters = () => {
         }}
         onFocus={() => setCategoryDropdownOpen(true)}
         placeholder="Type to search..."
-        className="w-full px-2 py-1 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+        className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
       />
        {categoryDropdownOpen && (
               <div
@@ -406,20 +408,20 @@ const clearAllFilters = () => {
 
   {/* Bottom Row: Pills + Clear Button */}
   {(selectedStatuses.length > 0 || selectedCategories.length > 0) && (
-    <div className="flex gap-3">
+    <div className="flex gap-3 items-start">
       {/* Selected Statuses */}
       {selectedStatuses.length > 0 && (
-        <div className="w-[220px] flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+        <div className="flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px] w-fit max-w-[450px]">
           <div className="flex flex-wrap gap-1">
             {selectedStatuses.map((status) => (
               <div
                 key={status}
-                className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all"
+                className="flex items-center gap-1 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)] rounded-[20px] h-[25px] px-2 py-1 text-[12px] text-[rgba(255,255,255,0.9)] max-w-[150px] whitespace-nowrap overflow-hidden text-ellipsis transition-all hover:bg-white/20"
               >
                 <span className="truncate max-w-[60px]">{status}</span>
                 <button
                   onClick={() => removeFromArray(selectedStatuses, setSelectedStatuses, status)}
-                  className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]"
+                  className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
                 >
                   ×
                 </button>
@@ -431,17 +433,17 @@ const clearAllFilters = () => {
 
       {/* Selected Categories */}
       {selectedCategories.length > 0 && (
-        <div className="w-[220px] flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+        <div className="flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px] w-fit max-w-[350px]">
           <div className="flex flex-wrap gap-1">
             {selectedCategories.map((cat) => (
               <div
                 key={cat}
-                className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/[0.1] border border-dashed border-white/20 text-white text-[10px] hover:bg-white/[0.2] transition-all"
+                className="flex items-center gap-1 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)] rounded-[20px] h-[25px] px-2 py-1 text-[12px] text-[rgba(255,255,255,0.9)] max-w-[150px] whitespace-nowrap overflow-hidden text-ellipsis transition-all hover:bg-white/20"
               >
                 <span className="truncate max-w-[60px]">{cat}</span>
                 <button
                   onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)}
-                  className="ml-0.5 w-3 h-3 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-400 text-white text-[8px]"
+                  className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
                 >
                   ×
                 </button>
@@ -454,7 +456,7 @@ const clearAllFilters = () => {
       {/* Clear Button */}
       <button
         onClick={clearAllFilters}
-        className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium transition-all self-start"
+        className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium transition-all mt-2"
       >
         <Image
           src="/redtrash.svg"
@@ -508,26 +510,26 @@ const clearAllFilters = () => {
             {/* Email / User ID Labels */}
             <div className="flex w-[355px] flex-col items-start gap-2 shrink-0">
               <div className="text-left w-full">
-                <span className="text-white text-[12px] font-semibold">
+                <span className="text-white text-[14px] font-semibold">
                   Research 
                 </span>
-                <span className="text-[10px] text-[rgba(204,204,204,0.5)]">
+                <span className="text-[14px] text-[rgba(204,204,204,0.5)]">
                 </span>
               </div>
             </div>
 
             {/* Date / Role / Status / Full Email Labels */}
             <div className="flex flex-row gap-[100px] flex-1 min-w-0 items-center">
-              <span className="text-white text-[12px] font-semibold min-w-[100px] text-center">
+              <span className="text-white text-[14px] font-semibold min-w-[100px] text-center">
                 Date Created
               </span>
-              <span className="text-white text-[12px] font-semibold min-w-[100px] text-center">
+              <span className="text-white text-[14px] font-semibold min-w-[100px] text-center">
                 User
               </span>
-              <span className="text-white text-[12px] font-semibold min-w-[120px] text-center">
+              <span className="text-white text-[14px] font-semibold min-w-[120px] text-center">
                 Status
               </span>
-              <span className="text-white text-[12px] font-semibold min-w-[200px] text-center">
+              <span className="text-white text-[14px] font-semibold min-w-[200px] text-center">
                 Full Email
               </span>
             </div>
@@ -560,7 +562,7 @@ const clearAllFilters = () => {
         <div className="flex items-center justify-between w-full border-t border-[rgba(145,158,171,0.2)] py-3 px-5 bg-white/[0.05]">
           <div className="flex items-center gap-3">
             <span className="text-white text-[12px] opacity-80">
-              {selectedIds.length} row{selectedIds.length !== 1 ? "s" : ""} selected
+              {selectedIds.length} research{selectedIds.length !== 1 ? "s" : ""} selected
             </span>
             {selectedIds.length > 0 && (
               <>
@@ -584,23 +586,48 @@ const clearAllFilters = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Rows per page */}
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] text-gray-300">Rows per page:</span>
-              <input
-                type="number"
-                min={1}
-                max={filteredData.length}
-                value={itemsPerPage}
-                onChange={(e) => {
-                  const val = Math.max(1, Math.min(Number(e.target.value) || 1, filteredData.length));
-                  setItemsPerPage(val);
-                  setCurrentPage(1);
-                }}
-                className="bg-transparent text-white text-[12px] px-2 py-1 w-14 rounded-full outline-none border border-white/[0.2] hover:bg-white/[0.1] transition-all text-center focus:ring-1 focus:ring-green-400"
+           {/* Pagination (right) */}
+          <div className="flex items-center gap-2">
+            {/* Rows per page selector */}
+            <div className="relative flex items-center gap-1">
+              <span className="text-[12px] text-gray-300 whitespace-nowrap">
+                Rows per page:
+              </span>
 
-              />
+              {/* Selector button */}
+              <div
+                onClick={() => setRowsDropdownOpen(!rowsDropdownOpen)}
+                className="flex items-center justify-center bg-transparent text-white text-[12px] px-2 py-1 w-[60px] rounded-full outline-none border border-white/[0.2] hover:bg-white/[0.1] transition-all text-center cursor-pointer focus:ring-1 focus:ring-green-400"
+              >
+                {itemsPerPage === filteredData.length ? "All" : itemsPerPage}
+                <span className="ml-1  text-[10px]">▼</span>
+              </div>
+
+              {/* Dropdown menu */}
+              {rowsDropdownOpen && (
+                <div className="absolute left-[100px] top-full mt-[2px] w-[40px] bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_10px_rgba(0,0,0,0.4)] z-50">
+                  {[5, 10, 20, "All"].map((option) => (
+                    <div
+                      key={option}
+                      onClick={() => {
+                        const val = option === "All" ? filteredData.length : Number(option);
+                        setItemsPerPage(val);
+                        setCurrentPage(1);
+                        setRowsDropdownOpen(false);
+                      }}
+                 className={`px-2 py-1 text-[12px] text-white hover:bg-white/10 hover:rounded-[7px] cursor-pointer text-center transition-all ${
+                  (option === "All" && itemsPerPage === filteredData.length) ||
+                  option === itemsPerPage
+                    ? "bg-white/10 rounded-[7px]"
+                    : ""
+                }`}
+
+                    >
+                      {option}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Page info */}

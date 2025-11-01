@@ -248,8 +248,8 @@
 /* 📱 Mobile Mode (phones) */
 @media (max-width: 768px) {
   .header {
-    left: 0;
-    width: 100%;
+    left: 10;
+    width: 95%;
   
     height: 64px;
     padding: 6px 10px;
@@ -270,8 +270,8 @@
   }
 
   .search-bar .search-photo-btn {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
 
   .search-bar .ctrl-icon {

@@ -211,13 +211,11 @@ export default function ContentCard({
 
           {/* Title + Desc */}
           <div className="flex w-[370px] flex-col items-start gap-2 shrink-0">
-            <span className="text-white text-[14px] font-['Public Sans'] leading-[18px] block truncate">
-              {title}
-            </span>
-            <span className="text-[12px] text-[rgba(204,204,204,0.5)] leading-[14px] font-['Public Sans'] block truncate">
-              {truncateDescription(description || "")}
+            <span className="text-white text-[14px] font-['Public Sans'] leading-[18px] block">
+              {title.length > 50 ? title.slice(0, 50) + "..." : title}
             </span>
           </div>
+
 
           {/* Date + Author + Status */}
           <div className="flex flex-row  flex-1 min-w-0 items-center">

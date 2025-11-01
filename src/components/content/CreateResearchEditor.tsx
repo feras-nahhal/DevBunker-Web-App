@@ -258,17 +258,15 @@ export default function CreateResearchEditor({
          editor.state.doc.resolve(from).start(),
          editor.state.doc.resolve(from).end()
        ).trim();
-       if (selectedText === lineText) {
-         alert("Please select only part of the text, not the entire line.");
-         return;
-       }
+       
 
        let finalUrl = url.trim();
        if (finalUrl && !/^https?:\/\//i.test(finalUrl)) {
          finalUrl = `https://${finalUrl}`;
        }
 
-       editor.chain().focus().setLink({ href: finalUrl }).run();
+       editor.chain().focus().setLink({ href: finalUrl, class: "custom-link" }).run();
+
        editor.commands.setTextSelection(to);
 
        setShowPopup(false);
@@ -373,63 +371,75 @@ export default function CreateResearchEditor({
         >
           <div className="bubble-toolbar">
             
-       {/* Custom Dropdown for Heading Selection */}
-          <div className="relative">
-            {/* Dropdown Header (matches category header) */}
-            <div
-              onClick={() => setHeadingDropdownOpen(!headingDropdownOpen)}
-              className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer transition hover:bg-white/20"
-              style={{ width: '120px' }}
-            >
-              {selectedHeading || "Normal"}
-              <span className="ml-2 text-xs opacity-70">▼</span>
-            </div>
+        <div className="heading-controls">
+  {/* Desktop dropdown */}
+  <div className="desktop-dropdown hidden md:flex relative">
+    <div
+      onClick={() => setHeadingDropdownOpen(!headingDropdownOpen)}
+      className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer transition hover:bg-white/20"
+      style={{ width: '120px' }}
+    >
+      {selectedHeading || "Normal"}
+      <span className="ml-2 text-xs opacity-70">▼</span>
+    </div>
 
-            {/* Dropdown Menu (matches category menu) */}
-            {headingDropdownOpen && (
-              <div
-                className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
-                style={{
+    {headingDropdownOpen && (
+      <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+       style={{
                   scrollbarWidth: "none", // Firefox
                   msOverflowStyle: "none", // IE/Edge
                 }}
-              >
-                {/* Hide scrollbar for Chrome, Safari, Edge */}
-                <style>
-                  {`
-                    div::-webkit-scrollbar {
-                      display: none;
-                    }
-                  `}
-                </style>
-
-                <div
-                  onClick={() => {
-                    setSelectedHeading("Normal");
-                    editor.chain().focus().setParagraph().run();
-                    // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
-                  }}
-                  className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                >
-                  Normal
-                </div>
-
-                {[1, 2, 3].map((level) => (
-                  <div
-                    key={level}
-                    onClick={() => {
-                      setSelectedHeading(`Heading ${level}`);
-                      editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
-                      // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
-                    }}
-                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                  >
-                    Heading {level}
-                  </div>
-                ))}
-              </div>
-            )}
+>
+        <div
+          onClick={() => {
+            setSelectedHeading("Normal");
+            editor.chain().focus().setParagraph().run();
+          }}
+          className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+        >
+          Normal
+        </div>
+        {[1, 2, 3].map((level) => (
+          <div
+            key={level}
+            onClick={() => {
+              setSelectedHeading(`Heading ${level}`);
+              editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
+            }}
+            className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+          >
+            Heading {level}
           </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* Mobile buttons */}
+  <div className="mobile-buttons flex md:hidden gap-2">
+    <button
+      onClick={() => {
+        setSelectedHeading("Normal");
+        editor.chain().focus().setParagraph().run();
+      }}
+      className={`px-3 py-1 rounded-lg text-sm ${selectedHeading === "Normal" ? "bg-white/20" : "bg-white/10"}`}
+    >
+      Normal
+    </button>
+    {[1, 2, 3].map((level) => (
+      <button
+        key={level}
+        onClick={() => {
+          setSelectedHeading(`Heading ${level}`);
+          editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
+        }}
+        className={`px-3 py-1 rounded-lg text-sm ${selectedHeading === `Heading ${level}` ? "bg-white/20" : "bg-white/10"}`}
+      >
+        H{level}
+      </button>
+    ))}
+  </div>
+</div>
 
             <span className="bubble-toolbar-separator" />
 
@@ -496,143 +506,113 @@ export default function CreateResearchEditor({
         <EditorContent editor={editor} className="editor" />
       </div>
 
-       {/* Popup */}
-          {showPopup && (
-            <div
-              style={{
-                marginTop: "12px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(80, 80, 80, 0.24)",
-                borderRadius: "16px",
-                padding: "16px",
-                width: "calc(100vw - 40px)", // CHANGED: Responsive width (full viewport minus padding)
-                maxWidth: "855px", // CHANGED: Cap at desktop width
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  color: "rgba(255,255,255,0.9)",
-                }}
-              >
-                🔗 Enter Link URL
-              </label>
+        {(showPopup || showPopup1) && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.4)", // semi-transparent backdrop
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000, // on top of everything
+    }}
+    onClick={() => {
+      setShowPopup(false);
+      setShowPopup1(false);
+    }}
+  >
+    <div
+      style={{
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  padding: "16px",
+  width: "calc(100vw - 40px)",
+  maxWidth: "500px",
+  background: "rgba(255, 255, 255, 0.05)",
+  border: "1px solid rgba(80, 80, 80, 0.24)",
+  borderRadius: "16px",
+  boxShadow: "inset 0 0 7px rgba(255, 255, 255, 0.16)",
+  backdropFilter: "blur(37px)",
+}}
 
-              <input
-                type="text"
-                placeholder="https://example.com"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                style={{
-                  width: "100%",
-                  background: "rgba(0, 0, 0, 0.25)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  color: "white",
-                  padding: "8px 10px",
-                  fontSize: "14px",
-                }}
-              />
+      onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+    >
+      <label
+        style={{
+          fontSize: "16px",
+          fontWeight: 500,
+          color: "rgba(255,255,255,0.9)",
+        }}
+      >
+        {showPopup ? "🔗 Enter Link URL" : "🖼️ Enter Image URL"}
+      </label>
 
-              <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                <button
-                  onClick={() => setShowPopup(false)}
-                  style={{
-                    background: "rgba(255, 255, 255, 0.1)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    borderRadius: "99px",
-                    color: "white",
-                    padding: "6px 12px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancel
-                </button>
+      <input
+        type="text"
+        placeholder={
+          showPopup
+            ? "https://example.com"
+            : "https://example.com/image.png"
+        }
+        value={showPopup ? url : imageUrl}
+        onChange={(e) =>
+          showPopup ? setUrl(e.target.value) : setImageUrl(e.target.value)
+        }
+        style={{
+          width: "100%",
+          background: "rgba(0, 0, 0, 0.25)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          borderRadius: "8px",
+          color: "white",
+          padding: "8px 10px",
+          fontSize: "14px",
+        }}
+      />
 
-                <button
-            onClick={applyLink}
-            disabled={!url.trim()}
-            className="save-btn"
-          >
-            <span className="glow-bg"></span>
-            <span className="text">Add Link</span>
-          </button>
-
-              </div>
-            </div>
-          )}
-
-       {showPopup1 && (
-        <div
-           style={{
-              marginTop: "12px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(80, 80, 80, 0.24)",
-              borderRadius: "16px",
-              padding: "16px",
-              width: "calc(100vw - 40px)", // CHANGED: Responsive width
-              maxWidth: "855px", // CHANGED: Cap at desktop width
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          justifyContent: "flex-end",
+        }}
+      >
+        <button
+          onClick={() => {
+            setShowPopup(false);
+            setShowPopup1(false);
+          }}
+          style={{
+            background: "rgba(255, 255, 255, 0.1)",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+            borderRadius: "99px",
+            color: "white",
+            padding: "6px 12px",
+            cursor: "pointer",
+          }}
         >
-          <label
-            style={{
-              fontSize: "16px",
-              fontWeight: 500,
-              color: "rgba(255,255,255,0.9)",
-            }}
-          >
-            🖼️ Enter Image URL
-          </label>
+          Cancel
+        </button>
 
-          <input
-            type="text"
-            placeholder="https://example.com/image.png"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            style={{
-              width: "100%",
-              background: "rgba(0, 0, 0, 0.25)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "8px",
-              color: "white",
-              padding: "8px 10px",
-              fontSize: "14px",
-            }}
-          />
+        <button
+          onClick={showPopup ? applyLink : applyImage}
+          disabled={
+            showPopup ? !url.trim() : !imageUrl.trim()
+          }
+          className="save-btn"
+        >
+          <span className="glow-bg"></span>
+          <span className="text">{showPopup ? "Add Link" : "Add Image"}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-            <button
-              onClick={() => setShowPopup1(false)}
-              style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                borderRadius: "99px",
-                color: "white",
-                padding: "6px 12px",
-                cursor: "pointer",
-              }}
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={applyImage}
-              disabled={!imageUrl.trim()}
-              className="save-btn"
-            >
-              <span className="glow-bg"></span>
-              <span className="text">Add Image</span>
-            </button>
-          </div>
-        </div>
-      )}
 
 
 
@@ -1109,6 +1089,7 @@ export default function CreateResearchEditor({
           background: transparent;
           color: transparent;
           -webkit-background-clip: text;
+          caret-color: #fff; /* or any contrasting color */
         }
         .post-title::placeholder {
           background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
@@ -1235,6 +1216,7 @@ export default function CreateResearchEditor({
           background: transparent;
           border: none; /* hide border by default */
           transition: border 0.2s ease, background 0.2s ease;
+          top:20px;
         }
 
         /* Show border only when there is content */
@@ -1296,10 +1278,19 @@ export default function CreateResearchEditor({
         }
 
           /* ===== LINK STYLING IN EDITOR ===== */
-  .editor a {
-    color: blue;
-    text-decoration: underline;
-  }
+        div :global(a.custom-link) {
+          color: #105d81ff;
+          text-decoration: underline;
+          font-weight: 500;
+          background-color: rgba(90, 205, 240, 0.1);
+          border-radius: 3px;
+          padding: 0 2px;
+          transition: background 0.2s;
+        }
+
+        div :global(a.custom-link:hover) {
+          background-color: rgba(90, 142, 240, 0.2);
+        }
 
 
         /* Ensure editor content shows images correctly */
@@ -1327,7 +1318,7 @@ export default function CreateResearchEditor({
         }
 
         .action-box {
-          margin-top: 250px;
+          margin-top: 100px;
           margin-bottom: 160px;
           display: flex;
           flex-direction: column;
@@ -1854,42 +1845,47 @@ export default function CreateResearchEditor({
   z-index: 10;
 }
 
-/* ===== MOBILE RESPONSIVENESS (NEW) ===== */
+{/* ===== MOBILE RESPONSIVENESS (NEW) ===== */}
+
   @media (max-width: 768px) {
     .editor-container {
-      left: 40; /* CHANGED: Full width on mobile */
-      top: 50; /* CHANGED: Adjust top for mobile */
-      width: 100%; /* CHANGED: Full viewport width */
-      padding: 10px; /* CHANGED: Smaller padding */
+      left: 0; /* Full width on mobile */
+      top: 50px; /* Adjust top for mobile */
+      width: 100%; /* Full viewport width */
+      padding: 10px; /* Smaller padding */
     }
+
+    
     .post-title {
-      font-size: 32px; /* CHANGED: Smaller font for mobile */
-      line-height: 40px; /* CHANGED: Adjust line height */
-      min-height: calc(40px * 2); /* CHANGED: Smaller height */
+      font-size: 32px; /* Smaller font for mobile */
+      line-height: 40px; /* Adjust line height */
+      min-height: calc(40px * 2); /* Smaller height */
       max-height: calc(40px * 2);
     }
     .editor-wrapper {
-      padding: 16px; /* CHANGED: Smaller padding */
+      padding: 16px; /* Smaller padding */
     }
     .editor {
-      min-height: 300px; /* CHANGED: Smaller min height */
-      padding: 12px; /* CHANGED: Smaller padding */
-      font-size: 14px; /* CHANGED: Smaller font */
+      min-height: 300px; /* Smaller min height */
+      padding: 12px; /* Smaller padding */
+      font-size: 14px; /* Smaller font */
     }
 
     .bubble-toolbar {
       padding: 6px; /* Smaller padding */
       gap: 2px; /* Tighter gaps */
-      max-width: calc(100vw - 20px); /* NEW: Limit width to viewport minus margin */
+      max-width: calc(100vw - 20px); /* Limit width to viewport minus margin */
       overflow-x: auto; /* Horizontal scroll if needed */
       flex-wrap: nowrap; /* Prevent wrapping to keep it compact */
     }
+
     .bubble-toolbar button {
-      min-width: 32px; /* Slightly smaller for fit, but still touch-friendly */
+      min-width: 32px; /* Smaller for fit but touch-friendly */
       min-height: 32px;
       padding: 4px; /* Smaller padding */
     }
-    /* NEW: Make heading dropdown responsive in toolbar */
+
+    /* Make heading dropdown responsive in toolbar */
     .bubble-toolbar .relative > div:first-child {
       width: 100px; /* Smaller fixed width for mobile */
       max-width: 100px; /* Prevent stretching */
@@ -1898,6 +1894,15 @@ export default function CreateResearchEditor({
       width: 100px; /* Match header width */
       max-width: 100px;
     }
+    .desktop-dropdown {
+    display: none;
+    }
+    .mobile-buttons {
+    display: flex;
+    }
+  }
+
+
 
       `}</style>
     </div>

@@ -160,10 +160,7 @@ export default function CategoryCard({
           {/* Category Name / Category Id Block (title/desc – w-[300px]) */}
           <div className="flex w-[300px] flex-col items-start gap-2 shrink-0">
             <span className="text-white text-[14px] font-['Public Sans'] leading-[18px] block truncate">
-              {category_name || "No category name"} {/* FIXED: category_name as title */}
-            </span>
-            <span className="text-[12px] text-[rgba(204,204,204,0.5)] leading-[14px] font-['Public Sans'] block truncate">
-              Category Id: {id} {/* FIXED: Full category ID as description */}
+              {category_name.length > 50 ? category_name.slice(0, 50) + "..." : category_name || "No category name"}
             </span>
           </div>
 

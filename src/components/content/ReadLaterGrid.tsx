@@ -10,6 +10,8 @@ import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
 import ContentCardSkeleton from "./ContentCardSkeleton";
 import { useAuthContext } from "@/hooks/AuthProvider";
+import DeleteConfirmPopup from "./DeleteConfirmPopup";
+import { CONTENT_TYPES } from "@/lib/enums";
 
 interface ReadLaterGridProps {
   searchQuery?: string;
@@ -32,6 +34,11 @@ export default function ReadLaterGrid({
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedContentPopup, setSelectedContentPopup] = useState<AnyContent | null>(null);
+  const [deletePopup, setDeletePopup] = useState<{
+    id: string;
+    type: "post" | "mindmap" | "research";
+    title: string;
+  } | null>(null);
   const [selectedShareData, setSelectedShareData] = useState<{
     id: string;
     title: string;
@@ -212,36 +219,42 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
   };
 
   const handleDelete = async (
-    contentId: string,
-    contentType: "post" | "mindmap" | "research"
-  ) => {
-    if (!token) {
-      alert("You must be logged in to delete content.");
-      return;
-    }
-    try {
-      const apiPath = getApiPath(contentType);
-      const res = await fetch(`/api/content/${apiPath}/${contentId}`, {
+  contentId: string,
+  contentType: "post" | "mindmap" | "research"
+) => {
+  if (!token) {
+    alert("You must be logged in to delete content.");
+    return;
+  }
+
+  try {
+    // 1️⃣ Delete Read Later entry first
+    const readLaterItem = readLater.find((r) => r.content_id === contentId);
+    if (readLaterItem) {
+      const readLaterRes = await fetch(`/api/read-later/${readLaterItem.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to delete content");
-
-      const readLaterItem = readLater.find((r) => r.content_id === contentId);
-      if (readLaterItem) {
-        await fetch(`/api/read-later/${readLaterItem.id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-
-      await refetch();
-      await refetchReadLater();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete item.");
+      if (!readLaterRes.ok) throw new Error("Failed to delete Read Later item");
     }
-  };
+
+    // 2️⃣ Delete the main content
+    const apiPath = getApiPath(contentType);
+    const res = await fetch(`/api/content/${apiPath}/${contentId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to delete content");
+
+    // 3️⃣ Refetch data
+    await refetch();
+    await refetchReadLater();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete item.");
+  }
+};
+
 
   // 🔗 Open popup from query param (selectedContentId)
   useEffect(() => {
@@ -325,7 +338,7 @@ const isLoading = loading || !allContent.length;
                     {...card}
                     authorEmail={card.authorEmail || ""}
                     type={contentType}
-                    onDelete={() => handleDelete(card.id, contentType)}
+                    onDelete={() => setDeletePopup({ id: card.id, type: contentType,title:card.title })}
                     onRemoveFromReadlater={async () => {
                       const readLaterItem = readLater.find((r) => r.content_id === card.id);
                       if (!readLaterItem) return;
@@ -417,6 +430,20 @@ const isLoading = loading || !allContent.length;
             title={selectedShareData.title}
             type={selectedShareData.type}
             onClose={() => setSelectedShareData(null)}
+          />
+        </div>
+      )}
+
+      {deletePopup && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <DeleteConfirmPopup
+            title={deletePopup.title}
+            type={deletePopup.type}
+            onConfirm={async () => {
+              await handleDelete(deletePopup.id, deletePopup.type);
+              // ❌ remove setDeletePopup(null) here — popup now closes inside itself
+            }}
+            onClose={() => setDeletePopup(null)}
           />
         </div>
       )}

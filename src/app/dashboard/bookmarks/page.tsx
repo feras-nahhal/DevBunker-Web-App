@@ -12,6 +12,7 @@ import ContentGrid from "@/components/content/ContentGrid";
 import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
 
 import "./ExplorePage.css";
+import BookmarksGrid from "@/components/content/BookmarksGrid";
 
 export default function ExplorePage() {
   const router = useRouter();
@@ -133,12 +134,7 @@ export default function ExplorePage() {
             </h2>
           </div>
 
-          <ContentGrid
-            type="all"
-            searchQuery={searchQuery}
-            filters={filters}
-            selectedContentId={selectedContentId}
-          />
+          <BookmarksGrid searchQuery={searchQuery} filters={filters} />
         </div>
       </div>
     </div>

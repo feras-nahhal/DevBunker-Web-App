@@ -100,15 +100,17 @@ export default function CreateUserPopup({ onClose }: CreateUserPopupProps) {
           )}
         </div>
 
-       <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="relative w-[150px] h-[60px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden mt-2 ml-auto mr-6"
-      >
-        <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
-        <span className="relative z-10 text-green-400">{loading ? "..." : "Create"}</span>
-      </button>
-
+      <div className="flex justify-start pl-6">
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="relative w-[150px] h-[35px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden mt-2"
+        >
+          <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+          <span className="relative z-10 text-green-400">{loading ? "..." : "Create"}</span>
+        </button>
+      </div>
+      
       </div>
     </div>
   );

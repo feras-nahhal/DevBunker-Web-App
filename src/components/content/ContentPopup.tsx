@@ -92,7 +92,7 @@ export default function ContentPopup({
           {/* Title */}
           <div className="flex justify-center items-center mb-4 w-full">
             <h2
-            className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center text-center"
+            className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-left text-left"
             style={{
               width: "100%",
               maxWidth: "853px",
@@ -267,18 +267,13 @@ export default function ContentPopup({
             </div>
             )}
 
-          {/* Content Body */}
+           {/* Content Body */}
           {content_body && (
             <div
-              style={{ maxWidth: "100%", width: "100%", maxHeight: "1500px" }}
+              style={{ maxWidth: "853px", width: "100%"}}
               dangerouslySetInnerHTML={{ __html: content_body }}
             />
           )}
-
-
-
- 
-
 
           {/* Tags section */}
           {tags && tags.length > 0 && (
@@ -534,6 +529,19 @@ export default function ContentPopup({
         div :global(h3) {
           font-size: 1.1rem;
           font-weight: bold;
+        }
+         div :global(a.custom-link) {
+          color: #105d81ff;
+          text-decoration: underline;
+          font-weight: 500;
+          background-color: rgba(90, 205, 240, 0.1);
+          border-radius: 3px;
+          padding: 0 2px;
+          transition: background 0.2s;
+        }
+
+        div :global(a.custom-link:hover) {
+          background-color: rgba(90, 142, 240, 0.2);
         }
       `}</style>
     </>

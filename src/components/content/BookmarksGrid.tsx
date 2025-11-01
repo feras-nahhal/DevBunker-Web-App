@@ -11,6 +11,7 @@ import { AnyContent, Comment } from "@/types/content";
 import ContentPopup from "./ContentPopup";
 import SharePopup from "./SharePopup";
 import ContentCardSkeleton from "./ContentCardSkeleton";
+import DeleteConfirmPopup from "./DeleteConfirmPopup";
 
 interface BookmarksGridProps {
   searchQuery?: string;
@@ -39,6 +40,7 @@ export default function BookmarksGrid({
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(
     null
   );
+  const [deletePopup, setDeletePopup] = useState<{ id: string; type: CONTENT_TYPES; title: string } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedContentPopup, setSelectedContentPopup] =
     useState<AnyContent | null>(null);
@@ -217,30 +219,39 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
   };
 
   const handleDelete = async (contentId: string, contentType: CONTENT_TYPES) => {
-    if (!token) return alert("You must be logged in to delete content.");
+  if (!token) return alert("You must be logged in to delete content.");
 
-    try {
-      const res = await fetch(
-        `/api/content/${getApiPath(contentType)}/${contentId}`,
-        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!res.ok) throw new Error("Failed to delete content");
-
-      const bookmark = bookmarks.find((b) => b.content_id === contentId);
-      if (bookmark) {
-        await fetch(`/api/bookmarks/${bookmark.id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  try {
+    // 🟣 1️⃣ Remove from bookmarks first
+    const bookmark = bookmarks.find((b) => b.content_id === contentId);
+    if (bookmark?.id) {
+      const bookmarkRes = await fetch(`/api/bookmarks/${bookmark.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!bookmarkRes.ok) {
+        console.warn("Failed to remove bookmark before content deletion");
       }
-
-      await refetch();
-      await refetchBookmarks();
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete item.");
     }
-  };
+
+    // 🟢 2️⃣ Delete the content itself
+    const contentRes = await fetch(
+      `/api/content/${getApiPath(contentType)}/${contentId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (!contentRes.ok) throw new Error("Failed to delete content");
+
+    // 🟡 3️⃣ Refresh UI after both are done
+    await refetch();
+    await refetchBookmarks();
+  } catch (err) {
+    console.error("Delete error:", err);
+    alert("Failed to delete item.");
+  }
+};
 
   // Auto-open content popup if selectedContentId provided
   useEffect(() => {
@@ -270,7 +281,7 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
                     {...card}
                     authorEmail={card.authorEmail || ""}
                     type={contentType}
-                    onDelete={() => handleDelete(card.id, contentType)}
+                    onDelete={() => setDeletePopup({ id: card.id, type: contentType,title:card.title })}
                     onRemoveFromBookmark={async () => {
                       const bookmark = bookmarks.find((b) => b.content_id === card.id);
                       if (!bookmark) return;
@@ -337,6 +348,22 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
           />
         </div>
       )}
+
+      {deletePopup && (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+    <DeleteConfirmPopup
+      title={deletePopup.title}
+      type={deletePopup.type}
+      onConfirm={async () => {
+        await handleDelete(deletePopup.id, deletePopup.type);
+        // ❌ remove setDeletePopup(null) here — popup now closes inside itself
+      }}
+      onClose={() => setDeletePopup(null)}
+    />
+  </div>
+)}
+
+
     </>
   );
 }

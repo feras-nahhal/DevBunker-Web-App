@@ -161,11 +161,9 @@ export default function TagCard({
           {/* Tag Name / Tag Id Block (title/desc – w-[300px]) */}
           <div className="flex w-[300px] flex-col items-start gap-2 shrink-0">
             <span className="text-white text-[14px] font-['Public Sans'] leading-[18px] block truncate">
-              {tag_name || "No tag name"} {/* NEW: Tag name as title */}
+              {tag_name.length > 50 ? tag_name.slice(0, 50) + "..." : tag_name || "No tag name"}
             </span>
-            <span className="text-[12px] text-[rgba(204,204,204,0.5)] leading-[14px] font-['Public Sans'] block truncate">
-              Tag Id: {id} {/* FIXED: Full tag ID as description */}
-            </span>
+            
           </div>
 
           {/* Date / Send / Status Columns (gap-[120px] tight, no role) */}

@@ -153,8 +153,8 @@ export default function CreatePageHeader({
         /* 📱 Mobile Mode (phones) */
         @media (max-width: 768px) {
           .header {
-            left: 0;
-            width: 100%;
+            left: 10;
+            width: 95%;
           
             height: 64px;
             padding: 6px 10px;

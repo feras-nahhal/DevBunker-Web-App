@@ -9,7 +9,7 @@ import ContentCardSkeleton from "./ContentCardSkeleton";
 import { useContent } from "@/hooks/useContent";
 import { useAuthContext } from "@/hooks/AuthProvider";
 import { AnyContent, Comment } from "@/types/content";
-
+import DeleteConfirmPopup from "./DeleteConfirmPopup";
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
   searchQuery?: string;
@@ -34,6 +34,12 @@ export default function ContentGrid({
     id: string;
     title: string;
     type: "post" | "mindmap" | "research";
+  } | null>(null);
+
+  const [deletePopup, setDeletePopup] = useState<{
+    id: string;
+    type: "post" | "mindmap" | "research";
+    title: string;
   } | null>(null);
 
   //new part 
@@ -261,7 +267,13 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
                   <ContentCard
                     {...card}
                     type={contentType}
-                    onDelete={() => handleDelete(card.id, contentType)}
+                    onDelete={() =>
+                      setDeletePopup({
+                        id: card.id,
+                        type: card.content_type as "post" | "mindmap" | "research",
+                        title: card.title,
+                      })
+                    }
                     onOpenComments={() => handleOpenComments(card)}
                     onOpenContent={() => setSelectedContentPopup(card)}
                     user={user}
@@ -333,6 +345,20 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
             title={selectedShareData.title}
             type={selectedShareData.type}
             onClose={() => setSelectedShareData(null)}
+          />
+        </div>
+      )}
+
+       {deletePopup && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <DeleteConfirmPopup
+            title={deletePopup.title}
+            type={deletePopup.type}
+            onConfirm={async () => {
+              await handleDelete(deletePopup.id, deletePopup.type);
+              // ❌ remove setDeletePopup(null) here — popup now closes inside itself
+            }}
+            onClose={() => setDeletePopup(null)}
           />
         </div>
       )}
