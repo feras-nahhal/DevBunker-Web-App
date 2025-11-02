@@ -11,43 +11,22 @@ export async function POST(req: Request) {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // Dynamically determine base URL
-    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-    // Use host header to detect preview deployment URL or production
-    const host = req.headers.get("host");
-    if (host) {
-      const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
-      baseUrl = `${protocol}://${host}`;
-    }
-
-    // Build reset link
+    // ✅ Use your actual deployed domain or localhost for dev
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const resetLink = `${baseUrl}/auth/reset?email=${encodeURIComponent(email)}`;
 
-    // Send email
     const result = await resend.emails.send({
-  from: "devbunker@resend.dev",
-  to: email,
-  subject: "ESAP Password Reset Request",
-  html: `
-    <p>Hi there,</p>
-    <p>We received a request to reset your ESAP account password.</p>
-    <p>Click the button below to securely reset your password:</p>
-    <a href="${resetLink}" style="
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #1a73e8;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-    ">Reset Password</a>
-    <p>If you didn't request this, no worries — you can safely ignore this email.</p>
-    <p>Thank you for using ESAP!</p>
-    <p>— The ESAP Team</p>
-  `,
-});
-
+      from: "onboarding@resend.dev",
+      to: email,
+      subject: "Password Reset Request",
+      html: `
+        <p>Hello,</p>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetLink}" style="color: #1a73e8;">Reset Password</a>
+        <p>If you didn't request this, you can ignore this email.</p>
+      `,
+    });
 
     return NextResponse.json({ success: true, result });
   } catch (error: unknown) {
