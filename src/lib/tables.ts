@@ -1,5 +1,5 @@
 // src/lib/tables.ts
-import { pgTable, serial, uuid, varchar, text, timestamp, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, uuid, varchar, text, timestamp, jsonb, uniqueIndex,integer, } from "drizzle-orm/pg-core";
 import { USER_ROLES, USER_STATUS, CONTENT_TYPES, CONTENT_STATUS, TAG_CATEGORY_STATUS, NOTIFICATION_TYPES,VOTE_TYPE } from "./enums";
 
 // Users table
@@ -160,3 +160,11 @@ export const votes = pgTable(
     user_content_unique: uniqueIndex("user_content_unique").on(table.user_id, table.content_id),
   })
 );
+
+export const password_reset_pins = pgTable("password_reset_pins", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: varchar("email", { length: 255 }).notNull(),
+  pin: integer("pin").notNull(),
+  expires_at: timestamp("expires_at").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+});
