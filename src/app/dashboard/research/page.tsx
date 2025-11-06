@@ -10,6 +10,8 @@ import "./ResearchPage.css";
 import ContentCardSkeleton from "@/components/content/ContentCardSkeleton";
 import { useAuthContext } from "@/hooks/AuthProvider";
 import { CONTENT_STATUS } from "@/lib/enums";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll override with custom CSS)
 
 export default function ResearchPage() {
   // 🔐 Auth & Redirect Logic
@@ -34,7 +36,7 @@ export default function ResearchPage() {
     updated_after: "",
     updated_before: "",
     reference_text: "",  // NEW: Specific reference text
-    type: "all",
+    type: "research",
   });
 
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -138,7 +140,7 @@ const handleReferenceTextChange = (value: string) => {
       updated_after: "",
       updated_before: "",
       reference_text: "",  // NEW: Reset reference text
-      type: "all",
+      type: "research",
       q: debouncedSearchQuery,
     });
     setStatusDropdownOpen(false);
@@ -481,50 +483,99 @@ const handleReferenceTextChange = (value: string) => {
                                                           )}
                                                         </div>
                                     
-                                    
-                                                        {/* Created After Date */}
-                                                        <div className="relative w-full">
-                                                          <label className="block text-sm text-gray-300 mb-1">Created After</label>
-                                                          <input
-                                                            type="date"
-                                                            value={filters.created_after}
-                                                            onChange={(e) => handleCreatedAfterChange(e.target.value)}
-                                                            className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
-                                                          />
-                                                        </div>
-                                    
-                                                        {/* Created Before Date */}
-                                                        <div className="relative w-full">
-                                                          <label className="block text-sm text-gray-300 mb-1">Created Before</label>
-                                                          <input
-                                                            type="date"
-                                                            value={filters.created_before}
-                                                            onChange={(e) => handleCreatedBeforeChange(e.target.value)}
-                                                            className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
-                                                          />
-                                                        </div>
-                                    
-                                                        {/* Updated After Date */}
-                                                        <div className="relative w-full">
-                                                          <label className="block text-sm text-gray-300 mb-1">Updated After</label>
-                                                          <input
-                                                            type="date"
-                                                            value={filters.updated_after}
-                                                            onChange={(e) => handleUpdatedAfterChange(e.target.value)}
-                                                            className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
-                                                          />
-                                                        </div>
-                                    
-                                                        {/* Updated Before Date */}
-                                                        <div className="relative w-full">
-                                                          <label className="block text-sm text-gray-300 mb-1">Updated Before</label>
-                                                          <input
-                                                            type="date"
-                                                            value={filters.updated_before}
-                                                            onChange={(e) => handleUpdatedBeforeChange(e.target.value)}
-                                                            className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
-                                                          />
-                                                        </div>
+                              {/* Created After Date */}
+                              <div className="relative w-full">
+                                <label className="block text-sm text-gray-300 mb-1">Created After</label>
+
+                                {/* Input container for icon */}
+                                <div className="relative">
+                                  <DatePicker
+                                    selected={filters.created_after ? new Date(filters.created_after) : null}
+                                    onChange={(date) =>
+                                      handleCreatedAfterChange(date ? date.toISOString().split("T")[0] : "")
+                                    }
+                                    className="w-full p-2 pr-10 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] focus:outline-none focus:ring-2 focus:ring-white/30"
+                                    dateFormat="yyyy-MM-dd"
+                                    placeholderText="Select date"
+                                  />
+
+                                  {/* Calendar icon */}
+                                  <Image
+                                    src="/date.svg"
+                                    alt="Date Icon"
+                                    width={16}
+                                    height={16}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none opacity-80 transition-opacity duration-150"
+                                  />
+                                </div>
+                              </div>
+
+
+                              {/* Created Before Date */}
+                              <div className="relative w-full">
+                                <label className="block text-sm text-gray-300 mb-1">Created Before</label>
+                                <div className="relative">
+                                <DatePicker
+                                  selected={filters.created_before ? new Date(filters.created_before) : null}
+                                  onChange={(date) => handleCreatedBeforeChange(date ? date.toISOString().split('T')[0] : "")}
+                                  className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
+                                  dateFormat="yyyy-MM-dd"
+                                  placeholderText="Select date"
+                                />
+                                {/* Calendar icon */}
+                                  <Image
+                                    src="/date.svg"
+                                    alt="Date Icon"
+                                    width={16}
+                                    height={16}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none opacity-80 transition-opacity duration-150"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Updated After Date */}
+                              <div className="relative w-full">
+                                <label className="block text-sm text-gray-300 mb-1">Updated After</label>
+                                <div className="relative">
+                                <DatePicker
+                                  selected={filters.updated_after ? new Date(filters.updated_after) : null}
+                                  onChange={(date) => handleUpdatedAfterChange(date ? date.toISOString().split('T')[0] : "")}
+                                  className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
+                                  dateFormat="yyyy-MM-dd"
+                                  placeholderText="Select date"
+                                />
+                                {/* Calendar icon */}
+                                  <Image
+                                    src="/date.svg"
+                                    alt="Date Icon"
+                                    width={16}
+                                    height={16}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none opacity-80 transition-opacity duration-150"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Updated Before Date */}
+                              <div className="relative w-full">
+                                <label className="block text-sm text-gray-300 mb-1">Updated Before</label>
+                                <div className="relative">
+                                <DatePicker
+                                  selected={filters.updated_before ? new Date(filters.updated_before) : null}
+                                  onChange={(date) => handleUpdatedBeforeChange(date ? date.toISOString().split('T')[0] : "")}
+                                  className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
+                                  dateFormat="yyyy-MM-dd"
+                                  placeholderText="Select date"
+                                />
+                                {/* Calendar icon */}
+                                  <Image
+                                    src="/date.svg"
+                                    alt="Date Icon"
+                                    width={16}
+                                    height={16}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none opacity-80 transition-opacity duration-150"
+                                  />
+                                </div>
+                              </div>
                                                       </div>
                                     
                                                      {/* Buttons */}

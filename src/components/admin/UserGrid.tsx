@@ -7,6 +7,8 @@ import { useUsers } from "@/hooks/useUsers"; // NEW: Custom hook for admin users
 import { USER_ROLES, USER_STATUS } from "@/lib/enums";
 import Image from "next/image";
 import CategoryGridSkeleton from "./CategoryGridSkeleton";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"; 
 
 export default function UserGrid() {
   const { users, loading, error, refetch, deleteUser } = useUsers(); // NEW: Hook fetches from /api/admin/users
@@ -371,27 +373,47 @@ if (createdFrom || createdTo) {
                 </div>
               )}
             </div>
-            {/* 📅 Created From */}
-            <div className="w-[150px]">
-              <label className="block text-white text-[12px] mb-1">Created From</label>
-              <input
-                type="date"
-                value={createdFrom}
-                onChange={(e) => setCreatedFrom(e.target.value)}
-                className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+             {/* 📅 Created From */}
+          <div className="w-[150px]">
+            <label className="block text-white text-[12px] mb-1">Created After</label>
+            <div className="relative">
+              <DatePicker
+                selected={createdFrom ? new Date(createdFrom) : null}
+                onChange={(date) => setCreatedFrom(date ? date.toISOString().split("T")[0] : "")}
+                className="w-full p-2 pr-10 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] focus:outline-none focus:ring-2 focus:ring-white/30"
+                dateFormat="yyyy-MM-dd"
+                placeholderText="Select date"
+              />
+              <Image
+                src="/date.svg"
+                alt="Date Icon"
+                width={16}
+                height={16}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none opacity-80 transition-opacity duration-150"
               />
             </div>
+          </div>
 
-            {/* 📅 Created To */}
-            <div className="w-[150px]">
-              <label className="block text-white text-[12px] mb-1">Created To</label>
-              <input
-                type="date"
-                value={createdTo}
-                onChange={(e) => setCreatedTo(e.target.value)}
-                className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+          {/* 📅 Created To */}
+          <div className="w-[150px]">
+            <label className="block text-white text-[12px] mb-1">Created Before</label>
+            <div className="relative">
+              <DatePicker
+                selected={createdTo ? new Date(createdTo) : null}
+                onChange={(date) => setCreatedTo(date ? date.toISOString().split("T")[0] : "")}
+                className="w-full p-2 pr-10 bg-white/10 border border-white/20 rounded-lg text-white text-sm backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] focus:outline-none focus:ring-2 focus:ring-white/30"
+                dateFormat="yyyy-MM-dd"
+                placeholderText="Select date"
+              />
+              <Image
+                src="/date.svg"
+                alt="Date Icon"
+                width={16}
+                height={16}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none opacity-80 transition-opacity duration-150"
               />
             </div>
+          </div>
           </div>
           
   {/* New Horizontal Row: Selected Pills Boxes (Appears below, fixed position) */}

@@ -1,0 +1,118 @@
+// ... (imports and initial states remain the same)
+
+// Add to states:
+const [references, setReferences] = useState<string[]>([]);  // NEW: For reference texts
+const [referenceTextDropdownOpen, setReferenceTextDropdownOpen] = useState(false);  // NEW: Dropdown state
+
+// Add to filters state:
+const [filters, setFilters] = useState<Record<string, string>>({ 
+  status: "draft", 
+  category: "",
+  tag: "",
+  author_email: "",
+  created_after: "",
+  created_before: "",
+  updated_after: "",
+  updated_before: "",
+  has_references: "",
+  reference_text: "",  // NEW: Specific reference text
+  type: "all",
+});
+
+// Fetch references on mount (add to useEffect for fetchData)
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [catRes, tagRes, refRes] = await Promise.all([
+        fetch("/api/categories"),
+        fetch("/api/tags"),
+        fetch("/api/references"),  // NEW: Assume an API to get unique reference texts (see below)
+      ]);
+      const catData = await catRes.json();
+      const tagData = await tagRes.json();
+      const refData = await refRes.json();
+      if (catData.categories) setCategories(catData.categories);
+      if (tagData.tags) setTags(tagData.tags);
+      if (refData.references) setReferences(refData.references);  // NEW: Set references
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  fetchData();
+}, []);
+
+// Add handler:
+const handleReferenceTextChange = (value: string) => {
+  setFilters((prev) => ({ ...prev, reference_text: value }));
+};
+
+// Update handleResetFilters:
+const handleResetFilters = () => {
+  setFilters({
+    status: "",
+    category: "",
+    tag: "",
+    author_email: "",
+    created_after: "",
+    created_before: "",
+    updated_after: "",
+    updated_before: "",
+    has_references: "",
+    reference_text: "",  // NEW: Reset reference text
+    type: "all",
+    q: debouncedSearchQuery,
+  });
+  // ... (close dropdowns, including setReferenceTextDropdownOpen(false))
+};
+
+// Update close outside logic:
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
+      setIsFilterMenuOpen(false);
+      // ... (other dropdowns)
+      setReferenceTextDropdownOpen(false);  // NEW
+    }
+  };
+  // ...
+}, [isFilterMenuOpen]);
+
+// In the filter menu grid, add this new dropdown (replace or add to the 3x3 grid):
+{/* Reference Text Select */}  {/* NEW: Specific reference text filter */}
+<div className="relative w-full">
+  <label className="block text-sm text-gray-300 mb-1">Reference Text</label>
+  <div
+    onClick={() => setReferenceTextDropdownOpen(!referenceTextDropdownOpen)}
+    className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] transition hover:bg-white/20"
+  >
+    {filters.reference_text || "All Reference Texts"}
+    <span className="ml-2 text-xs opacity-70">▼</span>
+  </div>
+  {referenceTextDropdownOpen && (
+    <div
+      className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+      style={{
+        scrollbarWidth: "none", // Firefox
+        msOverflowStyle: "none", // IE/Edge
+      }}
+    >
+      <div
+        onClick={() => { handleReferenceTextChange(""); setReferenceTextDropdownOpen(false); }}
+        className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+      >
+        All Reference Texts
+      </div>
+      {references.map((ref, index) => (
+        <div
+          key={index}
+          onClick={() => { handleReferenceTextChange(ref); setReferenceTextDropdownOpen(false); }}
+          className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+        >
+          {ref}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+// ... (rest of the component remains the same)

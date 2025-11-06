@@ -35,3 +35,118 @@ button, [role="button"], .cursor-pointer {
 input[type="date"] {
   color-scheme: dark; /* tells the browser to render the date picker in dark mode */
 }
+
+
+/* Custom styles for react-datepicker popup */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+  transition: background 0.3s ease;
+}
+
+.react-datepicker__input-container input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.react-datepicker__input-container input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Popup calendar container - Matching dropdown style */
+/* Popup calendar container - Matching dropdown style but full size */
+.react-datepicker {
+  background: rgba(0, 0, 0, 0.8) !important;  /* bg-black/80 - Uniform background */
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;  /* border border-white/20 */
+  border-radius: 8px !important;  /* rounded-lg */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4) !important;  /* shadow-[0_0_15px_rgba(0,0,0,0.4)] */
+  backdrop-filter: blur(20px) !important;  /* backdrop-blur-2xl */
+  font-family: 'Public Sans', sans-serif !important;
+  color: white !important;  /* White text */
+  z-index: 50 !important;  /* z-50 */
+  /* Removed max-height and overflow-y to allow full expansion without scrolling */
+  /* Positioning is handled by react-datepicker (similar to absolute top-full left-0) */
+}
+
+
+/* Header (month/year navigation) - Match container background */
+.react-datepicker__header {
+  background: rgba(0, 0, 0, 0.8) !important;  /* Uniform bg-black/80 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px 8px 0 0 !important;  /* Match rounded-lg */
+  padding: 10px !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header {
+  color: white !important;  /* White text */
+  font-weight: 600 !important;
+}
+
+.react-datepicker__navigation {
+  background: none !important;
+  border: none !important;
+  color: white !important;
+  top: 10px !important;
+}
+
+.react-datepicker__navigation:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 50% !important;
+}
+
+/* Day names (e.g., Mon, Tue) - Match container background */
+.react-datepicker__day-names {
+  background: rgba(0, 0, 0, 0.8) !important;  /* Uniform bg-black/80 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.react-datepicker__day-name {
+  color: white !important;  /* White text */
+  font-weight: 500 !important;
+}
+
+/* Individual days - White text, subtle hovers on uniform background */
+.react-datepicker__day {
+  color: white !important;  /* White text */
+  border-radius: 8px !important;  /* Match rounded-lg */
+  margin: 2px !important;
+  transition: background 0.2s ease !important;
+  background: transparent !important;  /* No default background, blend with container */
+}
+
+.react-datepicker__day:hover {
+  background: rgba(255, 255, 255, 0.1) !important;  /* Subtle hover for interactivity */
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background: rgba(119, 237, 139, 0.5) !important;  /* Green accent to match your "Apply" button */
+  color: white !important;
+}
+
+.react-datepicker__day--today {
+  background: rgba(255, 255, 255, 0.1) !important;  /* Subtle today highlight */
+  color: white !important;
+}
+
+.react-datepicker__day--disabled {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Triangle pointer (if used) */
+.react-datepicker__triangle {
+  display: none !important;  /* Hide the default triangle for a cleaner look */
+}

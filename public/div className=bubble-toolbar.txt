@@ -1,0 +1,84 @@
+         <div className="bubble-toolbar">
+            <div className="heading-controls">
+       {/* Custom Dropdown for Heading Selection */}
+          <div className="relative">
+            {/* Dropdown Header (matches category header) */}
+            <div
+              onClick={() => setHeadingDropdownOpen(!headingDropdownOpen)}
+              className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer transition hover:bg-white/20"
+              style={{ width: '120px' }}
+            >
+              {selectedHeading || "Normal"}
+              <span className="ml-2 text-xs opacity-70">▼</span>
+            </div>
+
+            {/* Dropdown Menu (matches category menu) */}
+            {headingDropdownOpen && (
+              <div
+                className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
+                style={{
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
+              >
+                {/* Hide scrollbar for Chrome, Safari, Edge */}
+                <style>
+                  {`
+                    div::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}
+                </style>
+
+                <div
+                  onClick={() => {
+                    setSelectedHeading("Normal");
+                    editor.chain().focus().setParagraph().run();
+                    // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
+                  }}
+                  className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                >
+                  Normal
+                </div>
+
+                {[1, 2, 3].map((level) => (
+                  <div
+                    key={level}
+                    onClick={() => {
+                      setSelectedHeading(`Heading ${level}`);
+                      editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
+                      // Removed: setHeadingDropdownOpen(false); // Keeps menu open after selection
+                    }}
+                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                  >
+                    Heading {level}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+           {/* Mobile: buttons */}
+  <div className="mobile-buttons hidden md:hidden flex gap-2">
+    <button
+      onClick={() => {
+        setSelectedHeading("Normal");
+        editor.chain().focus().setParagraph().run();
+      }}
+      className={`px-3 py-1 rounded-lg text-sm ${selectedHeading === "Normal" ? "bg-white/20" : "bg-white/10"}`}
+    >
+      Normal
+    </button>
+    {[1, 2, 3].map((level) => (
+      <button
+        key={level}
+        onClick={() => {
+          setSelectedHeading(`Heading ${level}`);
+          editor.chain().focus().toggleHeading({ level: level as HeadingLevel }).run();
+        }}
+        className={`px-3 py-1 rounded-lg text-sm ${selectedHeading === `Heading ${level}` ? "bg-white/20" : "bg-white/10"}`}
+      >
+        H{level}
+      </button>
+    ))}
+  </div>
+          </div>
