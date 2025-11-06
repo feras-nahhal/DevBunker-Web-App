@@ -323,7 +323,7 @@ const handleReferenceTextChange = (value: string) => {
                                                       backdropFilter: "blur(12px)",
                                                       borderRadius: "16px",
                                                       zIndex: 9,
-                                                      overflow: "auto",
+                                                      overflow: "",
                                                     }}
                                                   >
                                                     <form onSubmit={handleFilterSubmit} className="w-full">

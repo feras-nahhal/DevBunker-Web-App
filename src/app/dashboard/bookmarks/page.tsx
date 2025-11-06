@@ -295,7 +295,7 @@ export default function ExplorePage() {
                                           backdropFilter: "blur(12px)",
                                           borderRadius: "16px",
                                           zIndex: 9,
-                                          overflow: "auto", // NEW: Allow scrolling if content overflows on mobile
+                                          overflow: "", // NEW: Allow scrolling if content overflows on mobile
                                         }}
                                       >
                                         <form onSubmit={handleFilterSubmit} className="w-full">
