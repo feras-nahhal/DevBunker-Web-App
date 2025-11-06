@@ -482,19 +482,6 @@ const handleReferenceTextChange = (value: string) => {
                                                         </div>
                                     
                                     
-                                    
-                                                        {/* Author Email Input */}
-                                                        <div className="relative w-full">
-                                                          <label className="block text-sm text-gray-300 mb-1">Author Email</label>
-                                                          <input
-                                                            type="email"
-                                                            placeholder="Author email"
-                                                            value={filters.author_email}
-                                                            onChange={(e) => handleAuthorEmailChange(e.target.value)}
-                                                            className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-400 backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
-                                                          />
-                                                        </div>
-                                    
                                                         {/* Created After Date */}
                                                         <div className="relative w-full">
                                                           <label className="block text-sm text-gray-300 mb-1">Created After</label>

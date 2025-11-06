@@ -30,3 +30,8 @@ body {
 button, [role="button"], .cursor-pointer {
   cursor: pointer;
 }
+
+
+input[type="date"] {
+  color-scheme: dark; /* tells the browser to render the date picker in dark mode */
+}

@@ -310,43 +310,6 @@ export default function MindmapPage() {
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                                 
             
-                                {/* Status Select */}
-                                <div className="relative w-full">
-                                  <label className="block text-sm text-gray-300 mb-1">Content Status</label>
-                                  <div
-                                    onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                                    className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] transition hover:bg-white/20"
-                                  >
-                                    {filters.status
-                                      ? filters.status.charAt(0).toUpperCase() + filters.status.slice(1).replace(/_/g, " ")
-                                      : "All Statuses"}
-                                    <span className="ml-2 text-xs opacity-70">▼</span>
-                                  </div>
-                                  {statusDropdownOpen && (
-                                    <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
-                                      style={{
-                                        scrollbarWidth: "none", // Firefox
-                                        msOverflowStyle: "none", // IE/Edge
-                                      }}
-                                    >
-                                      <div
-                                        onClick={() => { handleStatusChange(""); setStatusDropdownOpen(false); }}
-                                        className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                                      >
-                                        All Statuses
-                                      </div>
-                                      {Object.values(CONTENT_STATUS).map((status) => (
-                                        <div
-                                          key={status}
-                                          onClick={() => { handleStatusChange(status); setStatusDropdownOpen(false); }}
-                                          className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                                        >
-                                          {status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ")}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
             
                                 {/* Category Select */}
                                 <div className="relative w-full">
@@ -419,20 +382,6 @@ export default function MindmapPage() {
                                       ))}
                                     </div>
                                   )}
-                                </div>
-            
-            
-            
-                                {/* Author Email Input */}
-                                <div className="relative w-full">
-                                  <label className="block text-sm text-gray-300 mb-1">Author Email</label>
-                                  <input
-                                    type="email"
-                                    placeholder="Author email"
-                                    value={filters.author_email}
-                                    onChange={(e) => handleAuthorEmailChange(e.target.value)}
-                                    className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-400 backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)]"
-                                  />
                                 </div>
             
                                 {/* Created After Date */}
