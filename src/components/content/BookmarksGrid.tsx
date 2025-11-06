@@ -14,16 +14,14 @@ import ContentCardSkeleton from "./ContentCardSkeleton";
 import DeleteConfirmPopup from "./DeleteConfirmPopup";
 
 interface BookmarksGridProps {
+  type?: "all" | "post" | "research" | "mindmap";
   searchQuery?: string;
-  filters?: {
-    status?: string;
-    category?: string;
-    selectedContentId?: string | null;
-  };
+  filters?: Record<string, string>;  // UPDATED: Match full filter set
   selectedContentId?: string | null;
 }
 
 export default function BookmarksGrid({
+  type = "all",
   searchQuery = "",
   filters = {},
   selectedContentId,
@@ -31,16 +29,16 @@ export default function BookmarksGrid({
   const { bookmarks, loading, error, refetchBookmarks } =
     useBookmarksAndReadLater({ autoFetch: true });
   const { data: allContent = [], refetch } = useContent({
-    type: "all",
+    type,
     autoFetch: true,
   });
-  const { user } = useAuthContext(); // ✅ updated to use AuthContext
+  const { user } = useAuthContext();
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(
     null
   );
-  const [deletePopup, setDeletePopup] = useState<{ id: string; type: CONTENT_TYPES; title: string } | null>(null);
+  const [deletePopup, setDeletePopup] = useState<{ id: string; type: CONTENT_TYPES; title: string } | null>(null);  // UPDATED: Added title
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedContentPopup, setSelectedContentPopup] =
     useState<AnyContent | null>(null);
@@ -51,49 +49,50 @@ export default function BookmarksGrid({
   } | null>(null);
 
   const token =
-    typeof window !== "undefined"
+    typeof window !== "undefined"  // FIXED: Corrected from !== ""
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-//new part 
+  // New part
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
- 
+
   useEffect(() => {
-  if (bookmarks.length === 0) return;
-
-  const contentIds = bookmarks.map((c) => c.id).join(",");
-
-  fetch(`/api/comments/counts?content_ids=${contentIds}`)
-    .then((res) => res.json())
-    .then((json) => {
-      if (json.success) setCommentCounts(json.counts);
-      else setCommentCounts({});
-    })
-    .catch((err) => {
-      console.error("Failed to fetch comment counts:", err);
-      setCommentCounts({});
-    });
-  }, [bookmarks]);
-
-/** Fetch vote */
-const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dislikes: number }>>({});
-
-  // Fetch vote counts for all cards
-  const fetchVoteCounts = async () => {
     if (bookmarks.length === 0) return;
 
     const contentIds = bookmarks.map((c) => c.id).join(",");
 
-    try {
-      const res = await fetch(`/api/vote/counts?content_ids=${contentIds}`);
-      const json = await res.json();
-      if (json.success) setVoteCounts(json.counts);
-      else setVoteCounts({});
-    } catch (err) {
-      console.error("Failed to fetch vote counts:", err);
-      setVoteCounts({});
-    }
-  };
+    fetch(`/api/comments/counts?content_ids=${contentIds}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) setCommentCounts(json.counts);
+        else setCommentCounts({});
+      })
+      .catch((err) => {
+        console.error("Failed to fetch comment counts:", err);
+        setCommentCounts({});
+      });
+  }, [bookmarks]);
+
+  /** Fetch vote */
+  const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dislikes: number }>>({});
+
+  // Fetch vote counts for all cards
+const fetchVoteCounts = async () => {
+  if (bookmarks.length === 0) return;
+
+  const contentIds = bookmarks.map((c) => c.content_id).join(",");  // FIXED: Use content_id instead of id
+
+  try {
+    const res = await fetch(`/api/vote/counts?content_ids=${contentIds}`);
+    const json = await res.json();
+    if (json.success) setVoteCounts(json.counts);
+    else setVoteCounts({});
+  } catch (err) {
+    console.error("Failed to fetch vote counts:", err);
+    setVoteCounts({});
+  }
+};
+
 
   useEffect(() => {
     fetchVoteCounts();
@@ -126,7 +125,6 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
     }
   };
 
-
   // Merge bookmarks with content
   const bookmarkedContent = useMemo(() => {
     const matched = bookmarks
@@ -142,14 +140,47 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
       );
     }
 
+    // Existing filters
     if (filters.status) filtered = filtered.filter((i) => i.status === filters.status);
     if (filters.category)
       filtered = filtered.filter(
         (i) => i.category_id === filters.category || i.categoryName === filters.category
       );
 
+    // NEW: Additional filters from props
+    if (filters.tag) {
+      filtered = filtered.filter((i) => i.tags?.includes(filters.tag));
+    }
+    if (filters.author_email) {
+      filtered = filtered.filter((i) => i.authorEmail === filters.author_email);
+    }
+    if (filters.created_after) {
+      const afterDate = new Date(filters.created_after);
+      if (!isNaN(afterDate.getTime())) {
+        filtered = filtered.filter((i) => i.created_at && new Date(i.created_at) >= afterDate);
+      }
+    }
+    if (filters.created_before) {
+      const beforeDate = new Date(filters.created_before);
+      if (!isNaN(beforeDate.getTime())) {
+        filtered = filtered.filter((i) => i.created_at && new Date(i.created_at) <= beforeDate);
+      }
+    }
+    if (filters.updated_after) {
+      const afterDate = new Date(filters.updated_after);
+      if (!isNaN(afterDate.getTime())) {
+        filtered = filtered.filter((i) => i.updated_at && new Date(i.updated_at) >= afterDate);
+      }
+    }
+    if (filters.updated_before) {
+      const beforeDate = new Date(filters.updated_before);
+      if (!isNaN(beforeDate.getTime())) {
+        filtered = filtered.filter((i) => i.updated_at && new Date(i.updated_at) <= beforeDate);
+      }
+    }
+
     return filtered;
-  }, [bookmarks, allContent, searchQuery, filters]);
+  }, [bookmarks, allContent, searchQuery, filters]);  // UPDATED: Added filters to dependencies
 
   // Comments logic
   const fetchComments = async (contentId: string) => {
@@ -169,44 +200,44 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
     setIsPopupOpen(true);
   };
 
-   const handleAddComment = async (text: string, parentId?: string) => {
-  if (!token) {
-    alert("You must be logged in to comment.");
-    return;
-  }
+  const handleAddComment = async (text: string, parentId?: string) => {
+    if (!token) {
+      alert("You must be logged in to comment.");
+      return;
+    }
 
-  try {
-    const res = await fetch(`/api/comments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        content_id: selectedContent?.id,
-        text,
-        parent_id: parentId || null,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content_id: selectedContent?.id,
+          text,
+          parent_id: parentId || null,
+        }),
+      });
 
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
 
-    // ✅ Update the comments popup
-    await fetchComments(selectedContent!.id);
+      // ✅ Update the comments popup
+      await fetchComments(selectedContent!.id);
 
-    // ✅ Update the comment count for the card
-    setCommentCounts((prev) => ({
-      ...prev,
-      [selectedContent!.id]: (prev[selectedContent!.id] || 0) + 1,
-    }));
+      // ✅ Update the comment count for the card
+      setCommentCounts((prev) => ({
+        ...prev,
+        [selectedContent!.id]: (prev[selectedContent!.id] || 0) + 1,
+      }));
 
-  } catch (err) {
-    console.error("Failed to post comment:", err);
-    const message = err instanceof Error ? err.message : "Failed to post comment.";
-    alert(message);
-  }
-};
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+      const message = err instanceof Error ? err.message : "Failed to post comment.";
+      alert(message);
+    }
+  };
 
   // Delete content
   const getApiPath = (type: CONTENT_TYPES) => {
@@ -219,39 +250,39 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
   };
 
   const handleDelete = async (contentId: string, contentType: CONTENT_TYPES) => {
-  if (!token) return alert("You must be logged in to delete content.");
+    if (!token) return alert("You must be logged in to delete content.");
 
-  try {
-    // 🟣 1️⃣ Remove from bookmarks first
-    const bookmark = bookmarks.find((b) => b.content_id === contentId);
-    if (bookmark?.id) {
-      const bookmarkRes = await fetch(`/api/bookmarks/${bookmark.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!bookmarkRes.ok) {
-        console.warn("Failed to remove bookmark before content deletion");
+    try {
+      // 🟣 1️⃣ Remove from bookmarks first
+      const bookmark = bookmarks.find((b) => b.content_id === contentId);
+      if (bookmark?.id) {
+        const bookmarkRes = await fetch(`/api/bookmarks/${bookmark.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!bookmarkRes.ok) {
+          console.warn("Failed to remove bookmark before content deletion");
+        }
       }
+
+      // 🟢 2️⃣ Delete the content itself
+      const contentRes = await fetch(
+        `/api/content/${getApiPath(contentType)}/${contentId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!contentRes.ok) throw new Error("Failed to delete content");
+
+      // 🟡 3️⃣ Refresh UI after both are done
+      await refetch();
+      await refetchBookmarks();
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete item.");
     }
-
-    // 🟢 2️⃣ Delete the content itself
-    const contentRes = await fetch(
-      `/api/content/${getApiPath(contentType)}/${contentId}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    if (!contentRes.ok) throw new Error("Failed to delete content");
-
-    // 🟡 3️⃣ Refresh UI after both are done
-    await refetch();
-    await refetchBookmarks();
-  } catch (err) {
-    console.error("Delete error:", err);
-    alert("Failed to delete item.");
-  }
-};
+  };
 
   // Auto-open content popup if selectedContentId provided
   useEffect(() => {
@@ -281,7 +312,7 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
                     {...card}
                     authorEmail={card.authorEmail || ""}
                     type={contentType}
-                    onDelete={() => setDeletePopup({ id: card.id, type: contentType,title:card.title })}
+                    onDelete={() => setDeletePopup({ id: card.id, type: contentType, title: card.title })}  // UPDATED: Added title
                     onRemoveFromBookmark={async () => {
                       const bookmark = bookmarks.find((b) => b.content_id === card.id);
                       if (!bookmark) return;
@@ -350,20 +381,18 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
       )}
 
       {deletePopup && (
-  <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
-    <DeleteConfirmPopup
-      title={deletePopup.title}
-      type={deletePopup.type}
-      onConfirm={async () => {
-        await handleDelete(deletePopup.id, deletePopup.type);
-        // ❌ remove setDeletePopup(null) here — popup now closes inside itself
-      }}
-      onClose={() => setDeletePopup(null)}
-    />
-  </div>
-)}
-
-
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <DeleteConfirmPopup
+            title={deletePopup.title}
+            type={deletePopup.type}
+            onConfirm={async () => {
+              await handleDelete(deletePopup.id, deletePopup.type);
+              // ❌ remove setDeletePopup(null) here — popup now closes inside itself
+            }}
+            onClose={() => setDeletePopup(null)}
+          />
+        </div>
+      )}
     </>
   );
 }

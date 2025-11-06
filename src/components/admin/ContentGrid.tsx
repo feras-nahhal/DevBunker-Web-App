@@ -31,8 +31,19 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
 
+  // NEW: Author Email multi-select
+  const [selectedAuthorEmails, setSelectedAuthorEmails] = useState<string[]>([]);
+  const [authorEmailSearch, setAuthorEmailSearch] = useState("");
+  const [authorEmailDropdownOpen, setAuthorEmailDropdownOpen] = useState(false);
+  // NEW: Created Date range
+  const [createdAfter, setCreatedAfter] = useState("");
+  const [createdBefore, setCreatedBefore] = useState("");
+
   // Example categories list (you can replace with actual)
   const categoriesList = Array.from(new Set(data.map((d) => d.categoryName || d.category_id || "")));
+
+  // NEW: Example author emails list (from data)
+  const authorEmailsList = Array.from(new Set(data.map((d) => d.authorEmail || "").filter(Boolean)));
 
 
   // Selection + Pagination
@@ -71,32 +82,49 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
   }, [data]);
 
   /** 🧠 Client-side filtering */
-  const filteredData = useMemo(() => {
-    let filtered = [...data];
+const filteredData = useMemo(() => {
+  let filtered = [...data];
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      filtered = filtered.filter(
-        (item) =>
-          item.title?.toLowerCase().includes(q) ||
-          ("content_body" in item &&
-            item.content_body?.toLowerCase().includes(q))
-      );
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(
+      (item) =>
+        item.title?.toLowerCase().includes(q) ||
+        ("content_body" in item &&
+          item.content_body?.toLowerCase().includes(q))
+    );
+  }
+
+  // Multi-select status
+  if (selectedStatuses.length)
+    filtered = filtered.filter((i) => selectedStatuses.includes(i.status));
+
+  // Multi-select category
+  if (selectedCategories.length)
+    filtered = filtered.filter((i) =>
+      selectedCategories.includes(i.categoryName || i.category_id || "")
+    );
+
+  // NEW: Multi-select author email
+  if (selectedAuthorEmails.length)
+    filtered = filtered.filter((i) => selectedAuthorEmails.includes(i.authorEmail || ""));
+
+  // NEW: Created date range
+  if (createdAfter) {
+    const afterDate = new Date(createdAfter);
+    if (!isNaN(afterDate.getTime())) {
+      filtered = filtered.filter((i) => i.created_at && new Date(i.created_at) >= afterDate);
     }
+  }
+  if (createdBefore) {
+    const beforeDate = new Date(createdBefore);
+    if (!isNaN(beforeDate.getTime())) {
+      filtered = filtered.filter((i) => i.created_at && new Date(i.created_at) <= beforeDate);
+    }
+  }
 
-    // Multi-select status
-if (selectedStatuses.length)
-  filtered = filtered.filter((i) => selectedStatuses.includes(i.status));
-
-// Multi-select category
-if (selectedCategories.length)
-  filtered = filtered.filter((i) =>
-    selectedCategories.includes(i.categoryName || i.category_id || "")
-  );
-
-
-    return filtered;
-  }, [data, search, selectedStatuses, selectedCategories]);
+  return filtered;
+}, [data, search, selectedStatuses, selectedCategories, selectedAuthorEmails, createdAfter, createdBefore]);
 
   /** Pagination */
   const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
@@ -110,8 +138,8 @@ if (selectedCategories.length)
   );
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedStatuses, selectedCategories]);
+  setCurrentPage(1);
+}, [search, selectedStatuses, selectedCategories, selectedAuthorEmails, createdAfter, createdBefore]);
 
  const removeFromArray = (
   arr: string[],
@@ -131,8 +159,12 @@ const addToArray = (
 const clearAllFilters = () => {
   setSelectedStatuses([]);
   setSelectedCategories([]);
+  setSelectedAuthorEmails([]);  // NEW
   setStatusSearch("");
   setCategorySearch("");
+  setAuthorEmailSearch("");  // NEW
+  setCreatedAfter("");  // NEW
+  setCreatedBefore("");  // NEW
 };
 
 
@@ -309,7 +341,7 @@ const clearAllFilters = () => {
   {/* Top Row: Search + Filters (Fixed layout) */}
   <div className="flex flex-wrap items-end gap-3 mb-3">
     {/* 🔍 Main Search */}
-    <div className="flex-1 min-w-[200px]">
+    <div className="flex-1 min-w-[250px]">
       <label className="block text-white text-[12px] mb-1">Search</label>
       <input
         type="text"
@@ -321,7 +353,7 @@ const clearAllFilters = () => {
     </div>
 
     {/* 🚦 Statuses Dropdown */}
-    <div className="w-[220px] relative">
+    <div className="w-[200px] relative">
       <label className="block text-white text-[12px] mb-1">Statuses</label>
       <input
         type="text"
@@ -361,7 +393,7 @@ const clearAllFilters = () => {
     </div>
 
     {/* 🏷️ Categories Dropdown */}
-    <div className="w-[220px] relative">
+    <div className="w-[200px] relative">
       <label className="block text-white text-[12px] mb-1">Categories</label>
       <input
         type="text"
@@ -404,10 +436,81 @@ const clearAllFilters = () => {
               </div>
             )}
     </div>
+     {/* NEW: 👤 Author Emails Dropdown */}
+      <div className="w-[200px] relative">
+        <label className="block text-white text-[12px] mb-1">Author Emails</label>
+        <input
+          type="text"
+          value={authorEmailSearch}
+          onChange={(e) => {
+            setAuthorEmailSearch(e.target.value);
+            setAuthorEmailDropdownOpen(true);
+          }}
+          onFocus={() => setAuthorEmailDropdownOpen(true)}
+          placeholder="Type to search..."
+          className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+        />
+        {authorEmailDropdownOpen && (
+          <div
+            className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto"
+            style={{
+              scrollbarWidth: "none", // Firefox
+              msOverflowStyle: "none", // IE/Edge
+            }}
+          >
+            {/* Hide scrollbar for Chrome, Safari, Edge */}
+            <style>
+              {`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}
+            </style>
+            {authorEmailsList
+              .filter((email) => email.toLowerCase().includes(authorEmailSearch.toLowerCase()))
+              .map((email) => (
+                <div
+                  key={email}
+                  onClick={() => { addToArray(selectedAuthorEmails, setSelectedAuthorEmails, email, authorEmailsList); setAuthorEmailSearch(""); setAuthorEmailDropdownOpen(false); }}
+                  className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md"
+                >
+                  {email}
+                </div>
+              ))}
+            {authorEmailsList.filter((email) =>
+              email.toLowerCase().includes(authorEmailSearch.toLowerCase())
+            ).length === 0 && (
+              <div className="p-2 text-gray-400 text-sm italic">No emails found</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* NEW: 📅 Created After Date */}
+      <div className="w-[120px] relative">
+        <label className="block text-white text-[12px] mb-1">Created After</label>
+        <input
+          type="date"
+          value={createdAfter}
+          onChange={(e) => setCreatedAfter(e.target.value)}
+          className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+        />
+      </div>
+
+      {/* NEW: 📅 Created Before Date */}
+      <div className="w-[120px] relative">
+        <label className="block text-white text-[12px] mb-1">Created Before</label>
+        <input
+          type="date"
+          value={createdBefore}
+          onChange={(e) => setCreatedBefore(e.target.value)}
+          className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+        />
+      </div>
   </div>
 
   {/* Bottom Row: Pills + Clear Button */}
-  {(selectedStatuses.length > 0 || selectedCategories.length > 0) && (
+  {(selectedStatuses.length > 0 || selectedCategories.length > 0 || selectedAuthorEmails.length > 0) && (
     <div className="flex gap-3 items-start">
       {/* Selected Statuses */}
       {selectedStatuses.length > 0 && (
@@ -443,6 +546,28 @@ const clearAllFilters = () => {
                 <span className="truncate max-w-[60px]">{cat}</span>
                 <button
                   onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)}
+                  className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+      )}
+      {/* NEW: Selected Author Emails */}
+      {selectedAuthorEmails.length > 0 && (
+        <div className="flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px] w-fit max-w-[350px]">
+          <div className="flex flex-wrap gap-1">
+            {selectedAuthorEmails.map((email) => (
+              <div
+                key={email}
+                className="flex items-center gap-1 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)] rounded-[20px] h-[25px] px-2 py-1 text-[12px] text-[rgba(255,255,255,0.9)] max-w-[150px] whitespace-nowrap overflow-hidden text-ellipsis transition-all hover:bg-white/20"
+              >
+                <span className="truncate max-w-[60px]">{email}</span>
+                <button
+                  onClick={() => removeFromArray(selectedAuthorEmails, setSelectedAuthorEmails, email)}
                   className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
                 >
                   ×
@@ -524,13 +649,10 @@ const clearAllFilters = () => {
                 Date Created
               </span>
               <span className="text-white text-[14px] font-semibold min-w-[100px] text-center">
-                User
+                Author
               </span>
               <span className="text-white text-[14px] font-semibold min-w-[120px] text-center">
                 Status
-              </span>
-              <span className="text-white text-[14px] font-semibold min-w-[200px] text-center">
-                Full Email
               </span>
             </div>
           </div>

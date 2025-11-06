@@ -280,26 +280,26 @@ if (user?.id === author_id && onDelete) {
                  {/* Spacer pushes votes/comments to bottom */}
                  <div className="flex-1" />
                
-                 {/* Votes & Comments */}
-                 <div className="flex flex-row items-center justify-between w-full h-[44px] mt-2">
-                   {/* Likes/Dislikes */}
-                               <div className="flex items-center gap-2">
-                               <button
-                                 onClick={() => onVote && onVote("like")}
-                                 className="flex items-center gap-1 text-gray-400"
-                               >
-                                 <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
-                                 <span>{likes}</span>
-                               </button>
-                   
-                               <button
-                                 onClick={() => onVote && onVote("dislike")}
-                                 className="flex items-center gap-1 text-gray-400"
-                               >
-                                 <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
-                                 <span>{dislikes}</span>
-                               </button>
-                             </div>
+                {/* Votes & Comments */}
+                          <div className="flex flex-row items-center justify-between w-full h-[44px] mt-2">
+                            {/* Likes/Dislikes */}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => onVote && onVote("like")}
+                                className="flex items-center gap-1 text-gray-400"
+                              >
+                                <Image src="/arrawUp.svg" alt="Upvote" width={20} height={20} />
+                                <span>{likes}</span>
+                              </button>
+                
+                              <button
+                                onClick={() => onVote && onVote("dislike")}
+                                className="flex items-center gap-1 text-gray-400"
+                              >
+                                <Image src="/arrawDown.svg" alt="Downvote" width={20} height={20} />
+                                <span>{dislikes}</span>
+                              </button>
+                          </div>
                
                     <button
                                             onClick={(e) => {

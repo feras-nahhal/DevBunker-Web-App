@@ -1,21 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { content,users, categories, tags, content_tags,references_link } from "@/lib/tables";
-import { eq, like, sql } from "drizzle-orm";
+import { content, users, categories, tags, content_tags, references_link } from "@/lib/tables";
+import { eq, like, sql, gte, lte } from "drizzle-orm";  // Added gte, lte for date comparisons
 import { authMiddleware } from "@/lib/authMiddleware";
 import { CONTENT_STATUS } from "@/lib/enums";
 
-// GET /api/content/research?q=&status=&category=
+// GET /api/content/research?q=&status=&category=&tag=&author_email=&created_after=&created_before=&updated_after=&updated_before=&has_references=&reference_text=
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const search = url.searchParams.get("q") || "";
     const categoryId = url.searchParams.get("category") || "";
     const statusParam = url.searchParams.get("status"); // ✅ can be multiple
+    const tagParam = url.searchParams.get("tag") || "";  // New: Filter by tag name
+    const authorEmailParam = url.searchParams.get("author_email") || "";  // New: Filter by author email
+    const createdAfterParam = url.searchParams.get("created_after") || "";  // New: Created on/after date (ISO string)
+    const createdBeforeParam = url.searchParams.get("created_before") || "";  // New: Created before date
+    const updatedAfterParam = url.searchParams.get("updated_after") || "";  // New: Updated on/after date
+    const updatedBeforeParam = url.searchParams.get("updated_before") || "";  // New: Updated before date
+    const hasReferencesParam = url.searchParams.get("has_references") || "";  // NEW: Filter by presence of references
+    const referenceTextParam = url.searchParams.get("reference_text") || "";  // NEW: Filter by specific reference text
 
     const conditions = [eq(content.content_type, "research")];
 
-    // ✅ Handle multiple statuses
+    // ✅ Handle multiple statuses (unchanged)
     if (statusParam) {
       const statusList = statusParam.split(",").map((s) => s.trim());
       if (statusList.length > 1) {
@@ -24,15 +32,92 @@ export async function GET(req: NextRequest) {
         conditions.push(eq(content.status, statusList[0]));
       }
     } else {
-     // ✅ Default: include ALL statuses from CONTENT_STATUS enum
+      // ✅ Default: include ALL statuses from CONTENT_STATUS enum (unchanged)
       const allStatuses = Object.values(CONTENT_STATUS);
       conditions.push(sql`${content.status} IN (${sql.join(allStatuses, sql`, `)})`);
     }
 
+    // ✅ Existing filters (unchanged)
     if (categoryId) conditions.push(eq(content.category_id, categoryId));
     if (search) conditions.push(like(content.title, `%${search}%`));
 
-    // ✅ Combine conditions into a single SQL WHERE clause
+    // 🆕 New filter: Tag (using EXISTS subquery to check for association)
+    if (tagParam) {
+      conditions.push(
+        sql`EXISTS (
+          SELECT 1 FROM ${content_tags} ct
+          JOIN ${tags} t ON ct.tag_id = t.id
+          WHERE ct.content_id = ${content.id} AND t.name = ${tagParam}
+        )`
+      );
+    }
+
+    // 🆕 New filter: Author email
+    if (authorEmailParam) {
+      conditions.push(eq(users.email, authorEmailParam));
+    }
+
+    // 🆕 New filters: Date ranges (parse ISO strings to Date objects)
+    if (createdAfterParam) {
+      const createdAfter = new Date(createdAfterParam);
+      if (isNaN(createdAfter.getTime())) {
+        return NextResponse.json(
+          { success: false, error: "Invalid created_after date format. Use ISO string (e.g., 2023-01-01T00:00:00Z)." },
+          { status: 400 }
+        );
+      }
+      conditions.push(gte(content.created_at, createdAfter));
+    }
+    if (createdBeforeParam) {
+      const createdBefore = new Date(createdBeforeParam);
+      if (isNaN(createdBefore.getTime())) {
+        return NextResponse.json(
+          { success: false, error: "Invalid created_before date format. Use ISO string (e.g., 2023-01-01T00:00:00Z)." },
+          { status: 400 }
+        );
+      }
+      conditions.push(lte(content.created_at, createdBefore));
+    }
+    if (updatedAfterParam) {
+      const updatedAfter = new Date(updatedAfterParam);
+      if (isNaN(updatedAfter.getTime())) {
+        return NextResponse.json(
+          { success: false, error: "Invalid updated_after date format. Use ISO string (e.g., 2023-01-01T00:00:00Z)." },
+          { status: 400 }
+        );
+      }
+      conditions.push(gte(content.updated_at, updatedAfter));
+    }
+    if (updatedBeforeParam) {
+      const updatedBefore = new Date(updatedBeforeParam);
+      if (isNaN(updatedBefore.getTime())) {
+        return NextResponse.json(
+          { success: false, error: "Invalid updated_before date format. Use ISO string (e.g., 2023-01-01T00:00:00Z)." },
+          { status: 400 }
+        );
+      }
+      conditions.push(lte(content.updated_at, updatedBefore));
+    }
+
+    // 🆕 NEW: Filter by presence of references
+    if (hasReferencesParam === "true") {
+      conditions.push(
+        sql`EXISTS (
+          SELECT 1 FROM ${references_link} WHERE content_id = ${content.id}
+        )`
+      );
+    }
+
+    // 🆕 NEW: Filter by specific reference text
+    if (referenceTextParam) {
+      conditions.push(
+        sql`EXISTS (
+          SELECT 1 FROM ${references_link} WHERE content_id = ${content.id} AND text = ${referenceTextParam}
+        )`
+      );
+    }
+
+    // ✅ Combine conditions into a single SQL WHERE clause (unchanged)
     const whereClause = conditions.reduce(
       (acc, condition, idx) =>
         idx === 0 ? condition : sql`${acc} AND ${condition}`,
@@ -52,7 +137,7 @@ export async function GET(req: NextRequest) {
         excalidraw_data: content.excalidraw_data,
         created_at: content.created_at,
         updated_at: content.updated_at,
-        authorEmail: users.email, // 👈 include author email
+        authorEmail: users.email, // 👈 include author email (unchanged)
         categoryName: categories.name,
       })
       .from(content)
@@ -60,8 +145,8 @@ export async function GET(req: NextRequest) {
       .leftJoin(categories, eq(content.category_id, categories.id))
       .where(whereClause);
 
-      // -------------------------------
-    // 🟢 Fetch tags for all research items
+    // -------------------------------
+    // 🟢 Fetch tags for all research items (unchanged)
     // -------------------------------
     const contentIds = researchItems.map((r) => r.id);
 
@@ -86,7 +171,7 @@ export async function GET(req: NextRequest) {
       }));
 
     // -------------------------------
-    // 🟢 Group tags by content_id
+    // 🟢 Group tags by content_id (unchanged)
     // -------------------------------
     const tagsMap: Record<string, string[]> = {};
     tagsData.forEach((t) => {
@@ -95,7 +180,7 @@ export async function GET(req: NextRequest) {
     });
 
     // -------------------------------
-    // 🟢 Attach tags to content
+    // 🟢 Attach tags to content (unchanged)
     // -------------------------------
     const researchWithTags = researchItems.map((r) => ({
       ...r,

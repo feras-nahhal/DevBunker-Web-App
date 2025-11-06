@@ -11,26 +11,27 @@ import CategoryGridSkeleton from "./CategoryGridSkeleton";
 export default function UserGrid() {
   const { users, loading, error, refetch, deleteUser } = useUsers(); // NEW: Hook fetches from /api/admin/users
 
-const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
-const [roleSearch, setRoleSearch] = useState("");
-const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
-const [statusSearch, setStatusSearch] = useState("");
-const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
-
-
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [roleSearch, setRoleSearch] = useState("");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [statusSearch, setStatusSearch] = useState("");
+  const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
 
   // Filters (client-side)
   const [search, setSearch] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]); // NEW: Multi-select array for statuses
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]); // NEW: Multi-select array for roles
 
+  // NEW: Date filters
+  const [createdFrom, setCreatedFrom] = useState<string>(""); // ISO date string (e.g., "2023-01-01")
+  const [createdTo, setCreatedTo] = useState<string>(""); // ISO date string (e.g., "2023-12-31")
+
   // Selection + Pagination
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
-
-  /** 🧠 Client-side filtering (updated for multi-select arrays) */
+  /** 🧠 Client-side filtering (updated for multi-select arrays and dates) */
   const filteredData = useMemo(() => {
     let filtered = users || [];
 
@@ -62,8 +63,20 @@ const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
       );
     }
 
+    // 📅 Date range filter (created_at – assumes ISO string; inclusive)
+if (createdFrom || createdTo) {
+  filtered = filtered.filter((item) => {
+    if (!item.created_at) return false; // Skip if no date
+    const itemDate = new Date(item.created_at); // Parse created_at (ISO string)
+    const fromDate = createdFrom ? new Date(createdFrom) : null;
+    const toDate = createdTo ? new Date(createdTo) : null;
+    if (fromDate && itemDate < fromDate) return false;
+    if (toDate && itemDate > toDate) return false;
+    return true;
+  });
+}
     return filtered;
-  }, [users, search, selectedStatuses, selectedRoles]); // FIXED: Deps include arrays
+  }, [users, search, selectedStatuses, selectedRoles, createdFrom, createdTo]); // FIXED: Deps include new date filters
 
   /** Pagination */
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -75,7 +88,7 @@ const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedStatuses, selectedRoles]);
+  }, [search, selectedStatuses, selectedRoles, createdFrom, createdTo]); // Include new date filters
 
   /** NEW: Pill Multi-Select Handlers */
   // Add item to array (on Enter, comma, or blur)
@@ -106,37 +119,38 @@ const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
     setArray((prev) => prev.filter((item) => item !== valueToRemove));
   };
 
-  // Clear all (both roles and statuses)
+  // Clear all (both roles, statuses, and dates)
   const clearAllFilters = () => {
     setSelectedRoles([]);
     setSelectedStatuses([]);
+    setCreatedFrom("");
+    setCreatedTo("");
   };
 
   // Handle keydown for adding (Enter, comma)
-    const handleKeyDown = (
-      e: React.KeyboardEvent<HTMLInputElement>,
-      addFn: (value: string) => void
-    ) => {
-      if (e.key === "Enter" || e.key === ",") {
-        e.preventDefault();
-        const value = e.currentTarget.value.trim();
-        if (value) addFn(value);
-        e.currentTarget.value = ""; // Clear input
-      }
-    };
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    addFn: (value: string) => void
+  ) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const value = e.currentTarget.value.trim();
+      if (value) addFn(value);
+      e.currentTarget.value = ""; // Clear input
+    }
+  };
 
-    // Handle blur for adding (Tab or click away)
-      const handleBlur = (
-        e: React.FocusEvent<HTMLInputElement>,
-        addFn: (value: string) => void
-      ) => {
-        const value = e.currentTarget.value.trim();
-        if (value) {
-          addFn(value);
-          e.currentTarget.value = "";
-        }
-      };
-
+  // Handle blur for adding (Tab or click away)
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement>,
+    addFn: (value: string) => void
+  ) => {
+    const value = e.currentTarget.value.trim();
+    if (value) {
+      addFn(value);
+      e.currentTarget.value = "";
+    }
+  };
 
   /** Delete handlers (uses hook's deleteUser) */
   const handleDelete = async (id: string) => {
@@ -147,7 +161,6 @@ const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
       const errorMessage = err instanceof Error ? err.message : "Failed to delete user.";
       alert(errorMessage);
     }
-
   };
 
   const handleDeleteSelected = async () => {
@@ -163,7 +176,6 @@ const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
         err instanceof Error ? err.message : "Error deleting selected users.";
       alert(errorMessage);
     }
-
   };
 
   const handleSelect = (id: string, checked: boolean) =>
@@ -190,7 +202,7 @@ const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
   if (loading)
     return (
       <div className="flex justify-center text-gray-400 text-lg">
-        <CategoryGridSkeleton/>
+        <CategoryGridSkeleton />
       </div>
     );
 
@@ -258,110 +270,130 @@ const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
           ))}
         </div>
 
-  {/* 🔍 Search & Filters */}
-<div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
-  {/* Horizontal Row: Main Search + Filters (Fixed, no movement) */}
-  <div className="flex flex-wrap items-end gap-3 mb-3">
-    {/* 🔍 Main Search Input - Reduced Width */}
-    <div className="flex-1 min-w-[200px] ">
-      <label className="block text-white text-[12px] mb-1">Search</label>
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by email or ID..."
-        className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
-      />
-    </div>
+        {/* 🔍 Search & Filters */}
+        <div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
+          {/* Horizontal Row: Main Search + Filters (Fixed, no movement) */}
+          <div className="flex flex-wrap items-end gap-3 mb-3">
+            {/* 🔍 Main Search Input - Reduced Width */}
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-white text-[12px] mb-1">Search</label>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by email or ID..."
+                className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+              />
+            </div>
 
-    {/* 🎭 Roles (Category) Dropdown */}
-    <div className="w-[220px] relative">
-      <label className="block text-white text-[12px] mb-1">Roles</label>
-      {/* Search Input */}
-      <input
-        type="text"
-        placeholder="Type to search roles..."
-        value={roleSearch || ""}
-        onChange={(e) => {
-          setRoleSearch(e.target.value);
-          setRoleDropdownOpen(true);
-        }}
-        onFocus={() => setRoleDropdownOpen(true)}
-        className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
-      />
-      {/* Separate Results Box */}
-      {roleDropdownOpen && (
-        <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
-          {Object.values(USER_ROLES)
-            .filter((role) => role.toLowerCase().includes(roleSearch.toLowerCase()))
-            .map((role) => (
-              <div
-                key={role}
-                onClick={() => {
-                  addToArray(selectedRoles, setSelectedRoles, role, Object.values(USER_ROLES));
-                  setRoleSearch("");
-                  setRoleDropdownOpen(false);
+            {/* 🎭 Roles (Category) Dropdown */}
+            <div className="w-[220px] relative">
+              <label className="block text-white text-[12px] mb-1">Roles</label>
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder="Type to search roles..."
+                value={roleSearch || ""}
+                onChange={(e) => {
+                  setRoleSearch(e.target.value);
+                  setRoleDropdownOpen(true);
                 }}
-                className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
-              >
-                {role}
-              </div>
-            ))}
-          {Object.values(USER_ROLES).filter((role) =>
-            role.toLowerCase().includes(roleSearch.toLowerCase())
-          ).length === 0 && (
-            <div className="p-2 text-gray-400 text-sm italic">No roles found</div>
-          )}
-        </div>
-      )}
-    </div>
+                onFocus={() => setRoleDropdownOpen(true)}
+                className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+              />
+              {/* Separate Results Box */}
+              {roleDropdownOpen && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
+                  {Object.values(USER_ROLES)
+                    .filter((role) => role.toLowerCase().includes(roleSearch.toLowerCase()))
+                    .map((role) => (
+                      <div
+                        key={role}
+                        onClick={() => {
+                          addToArray(selectedRoles, setSelectedRoles, role, Object.values(USER_ROLES));
+                          setRoleSearch("");
+                          setRoleDropdownOpen(false);
+                        }}
+                        className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
+                      >
+                        {role}
+                      </div>
+                    ))}
+                  {Object.values(USER_ROLES).filter((role) =>
+                    role.toLowerCase().includes(roleSearch.toLowerCase())
+                  ).length === 0 && (
+                    <div className="p-2 text-gray-400 text-sm italic">No roles found</div>
+                  )}
+                </div>
+              )}
+            </div>
 
-    {/* 🚦 Statuses Dropdown */}
-    <div className="w-[220px] relative">
-      <label className="block text-white text-[12px] mb-1">Statuses</label>
-      {/* Search Input */}
-      <input
-        type="text"
-        placeholder="Type to search statuses..."
-        value={statusSearch || ""}
-        onChange={(e) => {
-          setStatusSearch(e.target.value);
-          setStatusDropdownOpen(true);
-        }}
-        onFocus={() => setStatusDropdownOpen(true)}
-        className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
-      />
-      {/* Separate Results Box */}
-      {statusDropdownOpen && (
-        <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
-          {Object.values(USER_STATUS)
-            .filter((status) =>
-              status.toLowerCase().includes(statusSearch.toLowerCase())
-            )
-            .map((status) => (
-              <div
-                key={status}
-                onClick={() => {
-                  addToArray(selectedStatuses, setSelectedStatuses, status, Object.values(USER_STATUS));
-                  setStatusSearch("");
-                  setStatusDropdownOpen(false);
+            {/* 🚦 Statuses Dropdown */}
+            <div className="w-[220px] relative">
+              <label className="block text-white text-[12px] mb-1">Statuses</label>
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder="Type to search statuses..."
+                value={statusSearch || ""}
+                onChange={(e) => {
+                  setStatusSearch(e.target.value);
+                  setStatusDropdownOpen(true);
                 }}
-                className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
-              >
-                {status}
-              </div>
-            ))}
-          {Object.values(USER_STATUS).filter((status) =>
-            status.toLowerCase().includes(statusSearch.toLowerCase())
-          ).length === 0 && (
-            <div className="p-2 text-gray-400 text-sm italic">No statuses found</div>
-          )}
-        </div>
-      )}
-    </div>
+                onFocus={() => setStatusDropdownOpen(true)}
+                className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+              />
+              {/* Separate Results Box */}
+              {statusDropdownOpen && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
+                  {Object.values(USER_STATUS)
+                    .filter((status) =>
+                      status.toLowerCase().includes(statusSearch.toLowerCase())
+                    )
+                    .map((status) => (
+                      <div
+                        key={status}
+                        onClick={() => {
+                          addToArray(selectedStatuses, setSelectedStatuses, status, Object.values(USER_STATUS));
+                          setStatusSearch("");
+                          setStatusDropdownOpen(false);
+                        }}
+                        className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
+                      >
+                        {status}
+                      </div>
+                    ))}
+                  {Object.values(USER_STATUS).filter((status) =>
+                    status.toLowerCase().includes(statusSearch.toLowerCase())
+                  ).length === 0 && (
+                    <div className="p-2 text-gray-400 text-sm italic">No statuses found</div>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* 📅 Created From */}
+            <div className="w-[150px]">
+              <label className="block text-white text-[12px] mb-1">Created From</label>
+              <input
+                type="date"
+                value={createdFrom}
+                onChange={(e) => setCreatedFrom(e.target.value)}
+                className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+              />
+            </div>
 
-  </div>
-
+            {/* 📅 Created To */}
+            <div className="w-[150px]">
+              <label className="block text-white text-[12px] mb-1">Created To</label>
+              <input
+                type="date"
+                value={createdTo}
+                onChange={(e) => setCreatedTo(e.target.value)}
+                className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+              />
+            </div>
+          </div>
+          
   {/* New Horizontal Row: Selected Pills Boxes (Appears below, fixed position) */}
 {(selectedRoles.length > 0 || selectedStatuses.length > 0) && (
   <div className="flex gap-3 items-start">

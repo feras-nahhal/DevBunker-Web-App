@@ -11,15 +11,16 @@ import SharePopup from "./SharePopup";
 import ContentCardSkeleton from "./ContentCardSkeleton";
 import { useAuthContext } from "@/hooks/AuthProvider";
 import DeleteConfirmPopup from "./DeleteConfirmPopup";
-import { CONTENT_TYPES } from "@/lib/enums";
 
 interface ReadLaterGridProps {
+  type?: "all" | "post" | "research" | "mindmap";
   searchQuery?: string;
   filters?: Record<string, string>;
   selectedContentId?: string | null;
 }
 
 export default function ReadLaterGrid({
+  type = "all",
   searchQuery = "",
   selectedContentId,
   filters = {},
@@ -27,8 +28,8 @@ export default function ReadLaterGrid({
   const { readLater, loading, error, refetchReadLater } = useBookmarksAndReadLater({
     autoFetch: true,
   });
-  const { data: allContent, refetch } = useContent({ type: "all", autoFetch: true });
-  const { user} = useAuthContext();
+  const { data: allContent, refetch } = useContent({ type, autoFetch: true });
+  const { user } = useAuthContext();
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<AnyContent | null>(null);
@@ -54,47 +55,46 @@ export default function ReadLaterGrid({
       ? localStorage.getItem("token") || undefined
       : undefined;
 
-
-
-//new part 
+  // New part
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
- 
+
   useEffect(() => {
-  if (readLater.length === 0) return;
-
-  const contentIds = readLater.map((c) => c.id).join(",");
-
-  fetch(`/api/comments/counts?content_ids=${contentIds}`)
-    .then((res) => res.json())
-    .then((json) => {
-      if (json.success) setCommentCounts(json.counts);
-      else setCommentCounts({});
-    })
-    .catch((err) => {
-      console.error("Failed to fetch comment counts:", err);
-      setCommentCounts({});
-    });
-  }, [readLater]);
-
-/** Fetch vote */
-const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dislikes: number }>>({});
-
-  // Fetch vote counts for all cards
-  const fetchVoteCounts = async () => {
     if (readLater.length === 0) return;
 
     const contentIds = readLater.map((c) => c.id).join(",");
 
-    try {
-      const res = await fetch(`/api/vote/counts?content_ids=${contentIds}`);
-      const json = await res.json();
-      if (json.success) setVoteCounts(json.counts);
-      else setVoteCounts({});
-    } catch (err) {
-      console.error("Failed to fetch vote counts:", err);
-      setVoteCounts({});
-    }
-  };
+    fetch(`/api/comments/counts?content_ids=${contentIds}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) setCommentCounts(json.counts);
+        else setCommentCounts({});
+      })
+      .catch((err) => {
+        console.error("Failed to fetch comment counts:", err);
+        setCommentCounts({});
+      });
+  }, [readLater]);
+
+  /** Fetch vote */
+  const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dislikes: number }>>({});
+
+  // Fetch vote counts for all cards
+const fetchVoteCounts = async () => {
+  if (readLater.length === 0) return;
+
+  const contentIds = readLater.map((c) => c.content_id).join(",");  // FIXED: Use content_id instead of id
+
+  try {
+    const res = await fetch(`/api/vote/counts?content_ids=${contentIds}`);
+    const json = await res.json();
+    if (json.success) setVoteCounts(json.counts);
+    else setVoteCounts({});
+  } catch (err) {
+    console.error("Failed to fetch vote counts:", err);
+    setVoteCounts({});
+  }
+};
+
 
   useEffect(() => {
     fetchVoteCounts();
@@ -149,6 +149,38 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
     );
   }
 
+  // NEW: Additional filters from props
+  if (filters.tag) {
+    readLaterContent = readLaterContent.filter((i) => i.tags?.includes(filters.tag));
+  }
+  if (filters.author_email) {
+    readLaterContent = readLaterContent.filter((i) => i.authorEmail === filters.author_email);
+  }
+  if (filters.created_after) {
+    const afterDate = new Date(filters.created_after);
+    if (!isNaN(afterDate.getTime())) {
+      readLaterContent = readLaterContent.filter((i) => i.created_at && new Date(i.created_at) >= afterDate);
+    }
+  }
+  if (filters.created_before) {
+    const beforeDate = new Date(filters.created_before);
+    if (!isNaN(beforeDate.getTime())) {
+      readLaterContent = readLaterContent.filter((i) => i.created_at && new Date(i.created_at) <= beforeDate);
+    }
+  }
+  if (filters.updated_after) {
+    const afterDate = new Date(filters.updated_after);
+    if (!isNaN(afterDate.getTime())) {
+      readLaterContent = readLaterContent.filter((i) => i.updated_at && new Date(i.updated_at) >= afterDate);
+    }
+  }
+  if (filters.updated_before) {
+    const beforeDate = new Date(filters.updated_before);
+    if (!isNaN(beforeDate.getTime())) {
+      readLaterContent = readLaterContent.filter((i) => i.updated_at && new Date(i.updated_at) <= beforeDate);
+    }
+  }
+
   /** 💬 Comments handling **/
   const fetchComments = async (contentId: string) => {
     try {
@@ -169,43 +201,43 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
   };
 
   const handleAddComment = async (text: string, parentId?: string) => {
-  if (!token) {
-    alert("You must be logged in to comment.");
-    return;
-  }
+    if (!token) {
+      alert("You must be logged in to comment.");
+      return;
+    }
 
-  try {
-    const res = await fetch(`/api/comments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        content_id: selectedContent?.id,
-        text,
-        parent_id: parentId || null,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          content_id: selectedContent?.id,
+          text,
+          parent_id: parentId || null,
+        }),
+      });
 
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
 
-    // ✅ Update the comments popup
-    await fetchComments(selectedContent!.id);
+      // ✅ Update the comments popup
+      await fetchComments(selectedContent!.id);
 
-    // ✅ Update the comment count for the card
-    setCommentCounts((prev) => ({
-      ...prev,
-      [selectedContent!.id]: (prev[selectedContent!.id] || 0) + 1,
-    }));
+      // ✅ Update the comment count for the card
+      setCommentCounts((prev) => ({
+        ...prev,
+        [selectedContent!.id]: (prev[selectedContent!.id] || 0) + 1,
+      }));
 
-  } catch (err) {
-    console.error("Failed to post comment:", err);
-    const message = err instanceof Error ? err.message : "Failed to post comment.";
-    alert(message);
-  }
-};
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+      const message = err instanceof Error ? err.message : "Failed to post comment.";
+      alert(message);
+    }
+  };
 
   const getApiPath = (contentType: "post" | "mindmap" | "research") => {
     switch (contentType) {
@@ -219,42 +251,41 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
   };
 
   const handleDelete = async (
-  contentId: string,
-  contentType: "post" | "mindmap" | "research"
-) => {
-  if (!token) {
-    alert("You must be logged in to delete content.");
-    return;
-  }
+    contentId: string,
+    contentType: "post" | "mindmap" | "research"
+  ) => {
+    if (!token) {
+      alert("You must be logged in to delete content.");
+      return;
+    }
 
-  try {
-    // 1️⃣ Delete Read Later entry first
-    const readLaterItem = readLater.find((r) => r.content_id === contentId);
-    if (readLaterItem) {
-      const readLaterRes = await fetch(`/api/read-later/${readLaterItem.id}`, {
+    try {
+      // 1️⃣ Delete Read Later entry first
+      const readLaterItem = readLater.find((r) => r.content_id === contentId);
+      if (readLaterItem) {
+        const readLaterRes = await fetch(`/api/read-later/${readLaterItem.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!readLaterRes.ok) throw new Error("Failed to delete Read Later item");
+      }
+
+      // 2️⃣ Delete the main content
+      const apiPath = getApiPath(contentType);
+      const res = await fetch(`/api/content/${apiPath}/${contentId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!readLaterRes.ok) throw new Error("Failed to delete Read Later item");
+      if (!res.ok) throw new Error("Failed to delete content");
+
+      // 3️⃣ Refetch data
+      await refetch();
+      await refetchReadLater();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete item.");
     }
-
-    // 2️⃣ Delete the main content
-    const apiPath = getApiPath(contentType);
-    const res = await fetch(`/api/content/${apiPath}/${contentId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Failed to delete content");
-
-    // 3️⃣ Refetch data
-    await refetch();
-    await refetchReadLater();
-  } catch (err) {
-    console.error(err);
-    alert("Failed to delete item.");
-  }
-};
-
+  };
 
   // 🔗 Open popup from query param (selectedContentId)
   useEffect(() => {
@@ -269,18 +300,19 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
   // 🧾 Summary text
   const totalResults = readLaterContent.length;
   const hasSearch = !!searchQuery.trim();
-  const hasFilters = !!(filters.status || filters.category);
+  const hasFilters = !!(filters.status || filters.category || filters.tag || filters.author_email || filters.created_after || filters.created_before || filters.updated_after || filters.updated_before);  // UPDATED: Include all filters
   const resultsText =
     hasSearch || hasFilters
       ? `Showing ${totalResults} read-later items${
           hasSearch ? ` for "${searchQuery}"` : ""
         }${filters.status ? ` (Status: ${filters.status})` : ""}${
           filters.category ? ` (Category: ${filters.category})` : ""
-        }.`
+        }${filters.tag ? ` (Tag: ${filters.tag})` : ""}${
+          filters.author_email ? ` (Author: ${filters.author_email})` : ""
+        }.`  // UPDATED: Include tag and author in summary
       : `Showing all ${totalResults} read-later items.`;
-const isLoading = loading || !allContent.length;
+
   // 🌀 Loading / Error states
-  
   if (error)
     return (
       <div className="flex justify-center py-10 text-red-500">
@@ -338,16 +370,16 @@ const isLoading = loading || !allContent.length;
                     {...card}
                     authorEmail={card.authorEmail || ""}
                     type={contentType}
-                    onDelete={() => setDeletePopup({ id: card.id, type: contentType,title:card.title })}
+                    onDelete={() => setDeletePopup({ id: card.id, type: contentType, title: card.title })}
                     onRemoveFromReadlater={async () => {
                       const readLaterItem = readLater.find((r) => r.content_id === card.id);
                       if (!readLaterItem) return;
                       try {
-                        const res = await fetch(`/api/read-later/${readLaterItem.id}`, {
+                        const readLaterRes = await fetch(`/api/read-later/${readLaterItem.id}`, {
                           method: "DELETE",
                           headers: { Authorization: `Bearer ${token}` },
                         });
-                        if (!res.ok) throw new Error("Failed to remove from read-later");
+                        if (!readLaterRes.ok) throw new Error("Failed to remove from read-later");
                         await refetchReadLater();
                       } catch (err) {
                         console.error(err);
@@ -366,7 +398,6 @@ const isLoading = loading || !allContent.length;
               );
             })}
       </div>
-
 
       {/* 💬 Comments Popup */}
       {isPopupOpen && selectedContent && (
@@ -414,7 +445,6 @@ const isLoading = loading || !allContent.length;
                   ? [selectedContentPopup.categoryName]
                   : selectedContentPopup.categoryName
               }
-              
             />
           </div>
         </div>

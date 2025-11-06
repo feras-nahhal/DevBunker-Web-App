@@ -13,9 +13,20 @@ export default function TagGrid() {
   const [search, setSearch] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]); // NEW: Multi-select for statuses only
 
+  // NEW: Filters for date and author
+  const [createdFrom, setCreatedFrom] = useState<string>(""); // ISO date string (e.g., "2023-01-01")
+  const [createdTo, setCreatedTo] = useState<string>(""); // ISO date string (e.g., "2023-12-31")
+  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]); // Multi-select for authors
+  const [authorSearch, setAuthorSearch] = useState(""); // For dropdown input
+  const [authorDropdownOpen, setAuthorDropdownOpen] = useState(false);
+
   const [statusSearch, setStatusSearch] = useState("");
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
+
+  // Compute unique authors from requests
+  const uniqueAuthors = useMemo(() => [...new Set(requests.map(r => r.authorEmail).filter((email): email is string => Boolean(email)))], [requests]);
+
 
   // Selection + Pagination
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -45,8 +56,33 @@ export default function TagGrid() {
       );
     }
 
+    // 📅 Date range filter (created_at – assumes ISO string; inclusive)
+    if (createdFrom || createdTo) {
+      filtered = filtered.filter((item) => {
+        const itemDate = new Date(item.created_at); // Parse created_at (ISO string)
+        const fromDate = createdFrom ? new Date(createdFrom) : null;
+        const toDate = createdTo ? new Date(createdTo) : null;
+        if (fromDate && itemDate < fromDate) return false;
+        if (toDate && itemDate > toDate) return false;
+        return true;
+      });
+    }
+
+    // 👤 Author filter (selected authors – exact match)
+    if (selectedAuthors.length > 0) {
+      filtered = filtered.filter((item) =>
+        selectedAuthors.some((author) =>
+          item.authorEmail?.toLowerCase() === author.toLowerCase()
+        )
+      );
+    }
+
+    // DEBUG: Log after filtering (check if filters hide data)
+    console.log("Grid: Filtered data length:", filtered.length, "First tag_name after filter:", filtered[0]?.tag_name, "Search:", search, "Statuses:", selectedStatuses, "Created From:", createdFrom, "Created To:", createdTo, "Selected Authors:", selectedAuthors); // DEBUG: Should be 10, "Databases", "", []
+
+
     return filtered;
-  }, [requests, search, selectedStatuses]); // FIXED: Deps include array
+}, [requests, search, selectedStatuses, createdFrom, createdTo, selectedAuthors]); // Add the new filters here
 
   /** Pagination */
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -55,10 +91,10 @@ export default function TagGrid() {
     currentPage * itemsPerPage
   );
 
-  // Reset page on filter change
+    // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedStatuses]);
+  }, [search, selectedStatuses, createdFrom, createdTo, selectedAuthors]); // Include new filters
 
   /** NEW: Pill Multi-Select Handlers (statuses only) */
   // Add item to array (on Enter, comma, or blur)
@@ -89,9 +125,13 @@ export default function TagGrid() {
     setArray((prev) => prev.filter((item) => item !== valueToRemove));
   };
 
-  // Clear all (statuses only)
+  // Clear all (statuses, dates, author)
   const clearAllFilters = () => {
     setSelectedStatuses([]);
+    setCreatedFrom("");
+    setCreatedTo("");
+    setSelectedAuthors([]);
+    setAuthorSearch("");
   };
 
   /// Handle keydown for adding (Enter, comma)
@@ -263,107 +303,190 @@ const bulkRejectSelected = async () => {
           ))}
         </div>
 
-      {/* 🔍 Search & Filters */}
-      <div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
+       {/* 🔍 Search & Filters */}
+              <div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
+                {/* Top Row: Search + Filters (Fixed layout) */}
+                <div className="flex flex-wrap items-end gap-3 mb-3">
+                  {/* 🔍 Main Search */}
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-white text-[12px] mb-1">Search</label>
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search..."
+                      className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+                    />
+                  </div>
       
-        {/* Top Row: Search + Filters (Fixed layout) */}
-        <div className="flex flex-wrap items-end gap-3 mb-3">
-          {/* 🔍 Main Search */}
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-white text-[12px] mb-1">Search</label>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
-            />
-          </div>
+                 
       
-          {/* 🚦 Statuses Dropdown */}
-          <div className="w-[220px] relative">
-            <label className="block text-white text-[12px] mb-1">Statuses</label>
-            <input
-              type="text"
-              value={statusSearch}
-              onChange={(e) => {
-                setStatusSearch(e.target.value);
-                setStatusDropdownOpen(true);
-              }}
-              onFocus={() => setStatusDropdownOpen(true)}
-              placeholder="Type to search..."
-              className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
-            />
-            {statusDropdownOpen && (
-              <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
-                {Object.values(TAG_CATEGORY_STATUS)
-                  .filter((s) => s.toLowerCase().includes(statusSearch.toLowerCase()))
-                  .map((s) => (
-                    <div
-                      key={s}
-                      onClick={() => {
-                        addToArray(selectedStatuses, setSelectedStatuses, s, Object.values(TAG_CATEGORY_STATUS));
-                        setStatusSearch("");
-                        setStatusDropdownOpen(false);
+                  {/* 👤 Author Dropdown */}
+                  <div className="w-[200px] relative">
+                    <label className="block text-white text-[12px] mb-1">Author</label>
+                    <input
+                      type="text"
+                      value={authorSearch}
+                      onChange={(e) => {
+                        setAuthorSearch(e.target.value);
+                        setAuthorDropdownOpen(true);
                       }}
-                      className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
+                      onFocus={() => setAuthorDropdownOpen(true)}
+                      placeholder="Type to search..."
+                      className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+                    />
+                    {authorDropdownOpen && (
+                      <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
+                        {uniqueAuthors
+                          .filter((email) => email.toLowerCase().includes(authorSearch.toLowerCase()))
+                          .map((email) => (
+                            <div
+                              key={email}
+                              onClick={() => {
+                                addToArray(selectedAuthors, setSelectedAuthors, email);
+                                setAuthorSearch("");
+                                setAuthorDropdownOpen(false);
+                              }}
+                              className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
+                            >
+                              {email}
+                            </div>
+                          ))}
+                        {uniqueAuthors.filter((email) =>
+                          email.toLowerCase().includes(authorSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="p-2 text-gray-400 text-sm italic">No authors found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+      
+                  {/* 🚦 Statuses Dropdown */}
+                  <div className="w-[220px] relative">
+                    <label className="block text-white text-[12px] mb-1">Statuses</label>
+                    <input
+                      type="text"
+                      value={statusSearch}
+                      onChange={(e) => {
+                        setStatusSearch(e.target.value);
+                        setStatusDropdownOpen(true);
+                      }}
+                      onFocus={() => setStatusDropdownOpen(true)}
+                      placeholder="Type to search..."
+                      className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
+                    />
+                    {statusDropdownOpen && (
+                      <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-auto">
+                        {Object.values(TAG_CATEGORY_STATUS)
+                          .filter((s) => s.toLowerCase().includes(statusSearch.toLowerCase()))
+                          .map((s) => (
+                            <div
+                              key={s}
+                              onClick={() => {
+                                addToArray(selectedStatuses, setSelectedStatuses, s, Object.values(TAG_CATEGORY_STATUS));
+                                setStatusSearch("");
+                                setStatusDropdownOpen(false);
+                              }}
+                              className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer rounded-md transition"
+                            >
+                              {s.replace("_", " ").toUpperCase()}
+                            </div>
+                          ))}
+                        {Object.values(TAG_CATEGORY_STATUS).filter((s) =>
+                          s.toLowerCase().includes(statusSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="p-2 text-gray-400 text-sm italic">No statuses found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                   {/* 📅 Created From */}
+                  <div className="w-[150px]">
+                    <label className="block text-white text-[12px] mb-1">Created From</label>
+                    <input
+                      type="date"
+                      value={createdFrom}
+                      onChange={(e) => setCreatedFrom(e.target.value)}
+                      className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+                    />
+                  </div>
+      
+                  {/* 📅 Created To */}
+                  <div className="w-[150px]">
+                    <label className="block text-white text-[12px] mb-1">Created To</label>
+                    <input
+                      type="date"
+                      value={createdTo}
+                      onChange={(e) => setCreatedTo(e.target.value)}
+                      className="w-full px-2 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25]"
+                    />
+                  </div>
+                </div>
+      
+                {/* Bottom Row: Pills + Clear Button */}
+                {(selectedStatuses.length > 0 || selectedAuthors.length > 0) && (
+                  <div className="flex gap-3 items-start">
+                    {/* Selected Statuses */}
+                    {selectedStatuses.length > 0 && (
+                      <div className="w-fit max-w-[275px] flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+                        <div className="flex flex-wrap gap-1">
+                          {selectedStatuses.map((status) => (
+                            <div
+                              key={status}
+                              className="flex items-center gap-1 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)] rounded-[20px] h-[25px] px-2 py-1 text-[12px] text-[rgba(255,255,255,0.9)] max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis transition-all hover:bg-white/20"
+                            >
+                              <span className="truncate max-w-[60px]">{status}</span>
+                              <button
+                                onClick={() => removeFromArray(selectedStatuses, setSelectedStatuses, status)}
+                                className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+      
+                    {/* Selected Authors */}
+                    {selectedAuthors.length > 0 && (
+                      <div className="w-fit max-w-[275px] flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
+                        <div className="flex flex-wrap gap-1">
+                          {selectedAuthors.map((author) => (
+                            <div
+                              key={author}
+                              className="flex items-center gap-1 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)] rounded-[20px] h-[25px] px-2 py-1 text-[12px] text-[rgba(255,255,255,0.9)] max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis transition-all hover:bg-white/20"
+                            >
+                              <span className="truncate max-w-[60px]">{author}</span>
+                              <button
+                                onClick={() => removeFromArray(selectedAuthors, setSelectedAuthors, author)}
+                                className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+      
+                    {/* Clear Button */}
+                    <button
+                      onClick={clearAllFilters}
+                      className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium transition-all mt-2"
                     >
-                      {s.replace("_", " ").toUpperCase()}
-                    </div>
-                  ))}
-                {Object.values(TAG_CATEGORY_STATUS).filter((s) =>
-                  s.toLowerCase().includes(statusSearch.toLowerCase())
-                ).length === 0 && (
-                  <div className="p-2 text-gray-400 text-sm italic">No statuses found</div>
+                      <Image
+                        src="/redtrash.svg"
+                        alt="Clear Filters"
+                        width={20}
+                        height={20}
+                        style={{ marginRight: "6px" }}
+                      />
+                      <span>Clear</span>
+                    </button>
+                  </div>
                 )}
               </div>
-            )}
-          </div>
-      
-        </div>
-      
-        {/* Bottom Row: Pills + Clear Button */}
-        {(selectedStatuses.length > 0) && (
-          <div className="flex gap-3 items-start">
-            {/* Selected Statuses */}
-            {selectedStatuses.length > 0 && (
-              <div className="w-fit max-w-[275px] flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px]">
-                <div className="flex flex-wrap gap-1">
-                  {selectedStatuses.map((status) => (
-                    <div
-                      key={status}
-                      className="flex items-center gap-1 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.15)] rounded-[20px] h-[25px] px-2 py-1 text-[12px] text-[rgba(255,255,255,0.9)] max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis transition-all hover:bg-white/20"
-                    >
-                      <span className="truncate max-w-[60px]">{status}</span>
-                      <button
-                        onClick={() => removeFromArray(selectedStatuses, setSelectedStatuses, status)}
-                        className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-      
-            {/* Clear Button */}
-            <button
-              onClick={clearAllFilters}
-              className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium transition-all mt-2"
-            >
-              <Image
-                src="/redtrash.svg"
-                alt="Clear Filters"
-                width={20}
-                height={20}
-                style={{ marginRight: "6px" }}
-              />
-              <span>Clear</span>
-            </button>
-          </div>
-        )}
-      </div>
       
 
          {/* Header Row (checkbox + labels) */}
@@ -417,7 +540,7 @@ const bulkRejectSelected = async () => {
                 Date
               </span>
               <span className="text-white text-[14px] font-semibold min-w-[120px] text-center">
-                Send
+                Author
               </span>
               <span className="text-white text-[14px] font-semibold min-w-[200px] text-center">
                 Status

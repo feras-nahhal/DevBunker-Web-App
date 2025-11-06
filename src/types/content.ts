@@ -53,6 +53,7 @@ export interface BaseContent {
   created_at?: string;
   updated_at?: string;
   excalidraw_data?:Record<string, unknown>;
+  tags?: string[]; // 👈 Ensure this is here
 
 }
 

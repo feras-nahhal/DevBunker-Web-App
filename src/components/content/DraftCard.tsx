@@ -80,17 +80,19 @@ const handleDelete = () => {
   };
 
   /** ✅ Handle Approve (status update) */
-  const handleApprove = async () => {
+const handleApprove = async () => {
   try {
     setLoading(true);
     if (type === "research") {
       // Send for approval (not directly published)
       await updateContent(id, { status: CONTENT_STATUS.PENDING_APPROVAL }, token || undefined);
-      alert("Approval request sent successfully!");
+      // Removed alert, reload page instead
+      window.location.reload();
     } else {
       // Directly publish posts or mindmaps
       await updateContent(id, { status: CONTENT_STATUS.PUBLISHED }, token || undefined);
-      alert("Draft approved successfully!");
+      // Removed alert, reload page instead
+      window.location.reload();
     }
   } catch (err) {
     console.error("Approval failed:", err);
@@ -98,7 +100,8 @@ const handleDelete = () => {
   } finally {
     setLoading(false);
   }
-  };
+};
+
 
   /** Menu Items */
   const menuItems = [

@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
                   Forgot your password?
                 </h1>
                 <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
-                  Enter your email below to receive a reset link. You’ll get an email with a secure link to the password reset page.
+                  Enter your email below and we’ll send a 4-digit PIN to reset your password.
                 </p>
               </div>
 
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
                         : "bg-[radial-gradient(circle,rgba(119,237,139,0.3)_0%,transparent_70%)]"
                     }`}
                   />
-                  <span className="relative z-10">{loading ? "Sending..." : "Send reset link"}</span>
+                  <span className="relative z-10">{loading ? "Sending..." : "Send"}</span>
                 </button>
 
                 <div className="flex justify-center">
