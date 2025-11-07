@@ -1,11 +1,12 @@
 "use client";
-import { Node, Edge } from "reactflow";
+
+import { Node, Edge } from "reactflow"; // You can remove this if no longer using React Flow
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import Sidebar from "@/components/layout/Sidebar";
-import ExcalidrawEditor from "@/components/content/ExcalidrawEditor";
+// ✅ Updated: Import the Excalidraw-based component
 import CreateMinemapHeader from "@/components/layout/CreateMinemapHeader";
 import MindmapEditorSkeleton from "@/components/content/MindmapEditorSkeleton";
 
@@ -13,16 +14,18 @@ import { useContent, ContentType } from "@/hooks/useContent";
 import { useAuthContext } from "@/hooks/AuthProvider";
 import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
-import { ReactFlowProvider } from "reactflow";
 import "./PostPage.css";
+import MindmapContent from "@/components/content/MindmapContent";
 
 interface Tag {
   id: string;
   name: string;
 }
+
+// ✅ Updated: Change to match Excalidraw's data structure
 interface ExcalidrawData {
-  nodes: Node[];
-  edges: Edge[];
+  elements: any[]; // Array of Excalidraw elements
+  appState: any;   // Excalidraw app state
 }
 
 export default function PostPage() {
@@ -38,9 +41,11 @@ export default function PostPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-
+  // ✅ Removed: nodes and edges state (no longer needed)
+  // const [nodes, setNodes] = useState<Node[]>([]);
+  // const [edges, setEdges] = useState<Edge[]>([]);
+  // ✅ Added: State for Excalidraw data
+  const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData>({ elements: [], appState: {} });
 
   const { getContentById, createContent, updateContent, loading: contentLoading, refetch } =
     useContent({ type: "mindmap" as ContentType, autoFetch: false });
@@ -59,61 +64,75 @@ export default function PostPage() {
   }, [authLoading, isAuthenticated]);
 
   // ✅ Fetch mindmap data if editing
-  useEffect(() => {
-    if (!mindmapId || !ready) return;
+useEffect(() => {
+  if (!mindmapId || !ready) return;
 
-    const fetchMindmap = async () => {
-      try {
-        const data = await getContentById(mindmapId);
-        if (data) {
-          setTitle(data.title || "");
-          setContentBody(data.content_body || "");
-          setSelectedCategoryId(data.category_id || null);
-          setSelectedTags(data.tags || []);
-          setNodes(data.excalidraw_data?.nodes || []);
-          setEdges(data.excalidraw_data?.edges || []);
-        }
-      } catch (err) {
-        alert(`Error fetching mindmap: ${err instanceof Error ? err.message : "Unknown error"}`);
+  const fetchMindmap = async () => {
+    try {
+      const data = await getContentById(mindmapId);
+      if (data) {
+        setTitle(data.title || "");
+        setContentBody(data.content_body || "");
+        setSelectedCategoryId(data.category_id || null);
+        setSelectedTags(data.tags || []);
+        // ✅ Clone and normalize excalidraw_data here to ensure mutability
+        const excalidrawData = data.excalidraw_data ? (() => {
+          const cloned = JSON.parse(JSON.stringify(data.excalidraw_data));
+          // Ensure appState is a plain, mutable object
+          cloned.appState = { ...cloned.appState };
+          if (!Array.isArray(cloned.appState.collaborators)) {
+            cloned.appState.collaborators = [];
+          }
+          // Ensure files is a plain, mutable object
+          if (cloned.files) {
+            cloned.files = { ...cloned.files };
+          }
+          return cloned;
+        })() : { elements: [], appState: {}, files: {} };
+        setExcalidrawData(excalidrawData);
       }
-    };
+    } catch (err) {
+      alert(`Error fetching mindmap: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  };
 
-    fetchMindmap();
-  }, [mindmapId, ready, getContentById]);
+  fetchMindmap();
+}, [mindmapId, ready, getContentById]);
+
 
   const isLoading = authLoading || contentLoading || saving;
 
-    const handleCancel = () => {
+  const handleCancel = () => {
     setTitle("");
     setContentBody("");
     setSelectedTags([]);
     setSelectedCategoryId(null);
-    setNodes([]);
-    setEdges([]);
+    // ✅ Updated: Reset Excalidraw data
+    setExcalidrawData({ elements: [], appState: {} });
     router.push("/dashboard/mindmaps");
   };
 
+  // ✅ Updated: Use Excalidraw data for initial props
   const initialTags = useMemo(() => selectedTags, [selectedTags]);
   const initialCategoryId = useMemo(() => selectedCategoryId || "", [selectedCategoryId]);
-  const initialNodes = useMemo(() => nodes, [nodes]);
-  const initialEdges = useMemo(() => edges, [edges]);
+  const initialExcalidrawData = useMemo(() => excalidrawData, [excalidrawData]);
 
   if (!ready || contentLoading) {
     return (
       <div className="dashboard">
         <Sidebar 
-                              onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
-                              isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
-                              onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
-                            />
+          onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <CreateMinemapHeader
-           onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
-          onCancel={handleCancel} // ✅ Unchanged: Still redirects
+            onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
+            onCancel={handleCancel} // ✅ Unchanged: Still redirects
             saving={isLoading}
             collapsed={sidebarCollapsed}
             isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
-          onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
           />
           <div className="post-container">
             <div className="flex items-center mb-4">
@@ -132,19 +151,19 @@ export default function PostPage() {
   return (
     <div className="dashboard">
       <Sidebar 
-                            onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
-                            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
-                            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
-                          />
+        onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+      />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <CreateMinemapHeader
-           onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
+          onSave={() => setIsModalOpen(true)} // ✅ Changed: Now triggers the modal instead of direct save
           onCancel={handleCancel} // ✅ Unchanged: Still redirects
-            saving={isLoading}
-            collapsed={sidebarCollapsed}
-            isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+          saving={isLoading}
+          collapsed={sidebarCollapsed}
+          isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
           onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
-          />
+        />
         <div className="post-container">
           <div className="flex items-center mb-4">
             <Image src="/pen.svg" alt="Menu Icon" width={25} height={25} className="object-contain mr-[4px]" />
@@ -154,19 +173,22 @@ export default function PostPage() {
           </div>
 
           <div className="editor-container">
-            <ReactFlowProvider>
-              <ExcalidrawEditor
-                mindmapId={mindmapId}
-                initialTitle={title}
-                initialContentBody={contentBody}
-                initialCategoryId={initialCategoryId}
-                initialTags={initialTags}
-                initialNodes={initialNodes}
-                initialEdges={initialEdges}
-                isModalOpen={isModalOpen} // ✅ New: Pass lifted state
-                setIsModalOpen={setIsModalOpen} // ✅ New: Pass setter
-              />
-            </ReactFlowProvider>
+            {/* ✅ Removed: <ReactFlowProvider> (not needed for Excalidraw) */}
+            <MindmapContent
+              mindmapId={mindmapId}
+              initialTitle={title}
+              initialContentBody={contentBody}
+              initialCategoryId={initialCategoryId}
+              initialTags={initialTags}
+              // ✅ Removed: initialNodes and initialEdges
+              // initialNodes={initialNodes}
+              // initialEdges={initialEdges}
+              // ✅ Added: Pass Excalidraw data
+              initialExcalidrawData={initialExcalidrawData}
+              isModalOpen={isModalOpen} // ✅ New: Pass lifted state
+              setIsModalOpen={setIsModalOpen} // ✅ New: Pass setter
+            />
+            {/* ✅ Removed: </ReactFlowProvider> */}
           </div>
         </div>
       </div>
