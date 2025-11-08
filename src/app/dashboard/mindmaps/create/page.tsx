@@ -15,7 +15,8 @@ import { useAuthContext } from "@/hooks/AuthProvider";
 import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
 import "./PostPage.css";
-import MindmapContent from "@/components/content/MindmapContent";
+// dashboard/mindmaps/create.tsx (or your page component)
+import dynamic from "next/dynamic";
 import type { 
   ExcalidrawElement 
 } from "@excalidraw/excalidraw/element/types";
@@ -49,6 +50,12 @@ export default function PostPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
+  // Dynamically import MindmapContent with SSR disabled
+  const MindmapContent = useMemo(() => dynamic(
+  () => import("@/components/content/MindmapContent"),
+  { ssr: false }
+), []);
+
   // ✅ Removed: nodes and edges state (no longer needed)
   // const [nodes, setNodes] = useState<Node[]>([]);
   // const [edges, setEdges] = useState<Edge[]>([]);
