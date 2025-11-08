@@ -49,6 +49,56 @@ export default function CommentsPopup({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeReplies, setActiveReplies] = useState<{ [key: string]: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  const memoizedMindmap = useMemo(() => {
+  if (!excalidraw_data) return null;
+  try {
+    const rawData = JSON.parse(JSON.stringify(excalidraw_data));
+    const Excalidraw = dynamic(
+      () => import('@excalidraw/excalidraw').then((mod) => mod.Excalidraw),
+      { ssr: false }
+    );
+
+    const deepCloneMutable = <T,>(obj: T): T => {
+      if (obj === null || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(deepCloneMutable) as T;
+      const cloned = {} as T;
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          cloned[key] = deepCloneMutable(obj[key]);
+        }
+      }
+      return cloned;
+    };
+
+    const initialData = {
+      elements: deepCloneMutable(rawData.elements) as ExcalidrawElement[],
+      appState: deepCloneMutable(rawData.appState || {}) as AppState,
+      files: deepCloneMutable(rawData.files || {}) as Record<string, BinaryFileData>,
+    };
+
+    return (
+      <Excalidraw
+        initialData={initialData}
+        viewModeEnabled={true}
+        theme="dark"
+        UIOptions={{
+          canvasActions: { export: false },
+          tools: { image: false },
+        }}
+      />
+    );
+  } catch (e) {
+    console.error("Error rendering mindmap:", e);
+    return (
+      <div className="text-red-400 text-sm">
+        ⚠️ Unable to display mindmap due to data compatibility issues.
+        Error: {e instanceof Error ? e.message : 'Unknown error'}
+      </div>
+    );
+  }
+}, [excalidraw_data]);
+
   useEffect(() => {
     if (id) fetchTags(id);
   }, [id]);
@@ -340,58 +390,7 @@ export default function CommentsPopup({
           
                         <div style={{ width: "100%", height: "400px" }}>
                           <React.Suspense fallback={<div className="text-white text-sm">Loading mind map...</div>}>
-                            {useMemo(() => {  // ✅ REPLACED: Wrapped in useMemo to prevent flicker
-                              try {
-                                // ✅ FIXED: Clone and then deep freeze the data to prevent modifications
-                                const rawData = JSON.parse(JSON.stringify(excalidraw_data));
-                                const Excalidraw = dynamic(() => import('@excalidraw/excalidraw').then(mod => mod.Excalidraw), { ssr: false });
-          
-                                // Ensure it's in Excalidraw format
-                                if (!rawData || typeof rawData !== "object" || !Array.isArray(rawData.elements)) {
-                                  throw new Error("Invalid Excalidraw data structure");
-                                }
-          
-                                // Deep freeze the data to make it immutable
-                                const deepFreeze = (obj: any): any => {
-                                  if (obj === null || typeof obj !== 'object') return obj;
-                                  if (Array.isArray(obj)) {
-                                    obj.forEach(deepFreeze);
-                                  } else {
-                                    Object.getOwnPropertyNames(obj).forEach(key => {
-                                      if (obj[key] && typeof obj[key] === 'object') {
-                                        deepFreeze(obj[key]);
-                                      }
-                                    });
-                                  }
-                                  return Object.freeze(obj);
-                                };
-          
-                                const initialData = {
-                                  elements: deepFreeze(rawData.elements) as ExcalidrawElement[],
-                                  appState: deepFreeze(rawData.appState || {}) as AppState,
-                                  files: deepFreeze(rawData.files || {}) as Record<string, BinaryFileData>,
-                                };
-          
-                                return (
-                                  <Excalidraw
-                                    initialData={initialData}
-                                    viewModeEnabled={true}
-                                    theme="dark"
-                                    UIOptions={{
-                                      canvasActions: { export: false },
-                                      tools: { image: false },
-                                    }}
-                                  />
-                                );
-                              } catch (e) {
-                                console.error("Error rendering mindmap:", e);
-                                return (
-                                  <div className="text-red-400 text-sm">
-                                    ⚠️ Unable to display mindmap due to data compatibility issues. Error: {e instanceof Error ? e.message : 'Unknown error'}
-                                  </div>
-                                );
-                              }
-                            }, [excalidraw_data])}  {/* ✅ Memoize based on excalidraw_data */}
+                            {memoizedMindmap}
                           </React.Suspense>
                         </div>
                       </div>
@@ -528,23 +527,23 @@ export default function CommentsPopup({
 
            
             {/* Label with superscript counter */}
-<div className="w-full max-w-[855px] flex justify-start items-center mb-2 px-2 sm:px-0">
-  <label className="text-white font-bold text-[18px] sm:text-[20px] leading-[22px] font-public-sans">
-    Comments
-    <sup className="text-gray-400 text-xs ml-1">{200 - newCommentText.length}</sup>
-  </label>
-</div>
+          <div className="w-full max-w-[855px] flex justify-start items-center mb-2 px-2 sm:px-0">
+            <label className="text-white font-bold text-[18px] sm:text-[20px] leading-[22px] font-public-sans">
+              Comments
+              <sup className="text-gray-400 text-xs ml-1">{200 - newCommentText.length}</sup>
+            </label>
+          </div>
 
             
 
             {/* Textarea */}
             <textarea
               value={newCommentText}
-  onChange={(e) => setNewCommentText(e.target.value)}
-  placeholder="Write your comment..."
-  className="w-full max-w-[855px] h-[120px] p-3 bg-transparent border border-[#918AAB26] rounded text-white text-sm resize-none focus:outline-none disabled:opacity-50"
-  maxLength={220}
-  disabled={isSubmitting}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                placeholder="Write your comment..."
+                className="w-full max-w-[855px] h-[120px] p-3 bg-transparent border border-[#918AAB26] rounded text-white text-sm resize-none focus:outline-none disabled:opacity-50"
+                maxLength={220}
+                disabled={isSubmitting}
             />
 
             {/* Submit button */}

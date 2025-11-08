@@ -36,6 +36,54 @@ export default function ContentPopup({
   status
 }: ContentPopupProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const memoizedMindmap = useMemo(() => {
+    if (!excalidraw_data) return null;
+    try {
+      const rawData = JSON.parse(JSON.stringify(excalidraw_data));
+      const Excalidraw = dynamic(
+        () => import('@excalidraw/excalidraw').then((mod) => mod.Excalidraw),
+        { ssr: false }
+      );
+
+      const deepCloneMutable = <T,>(obj: T): T => {
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(deepCloneMutable) as T;
+        const cloned = {} as T;
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            cloned[key] = deepCloneMutable(obj[key]);
+          }
+        }
+        return cloned;
+      };
+
+      const initialData = {
+        elements: deepCloneMutable(rawData.elements) as ExcalidrawElement[],
+        appState: deepCloneMutable(rawData.appState || {}) as AppState,
+        files: deepCloneMutable(rawData.files || {}) as Record<string, BinaryFileData>,
+      };
+
+      return (
+        <Excalidraw
+          initialData={initialData}
+          viewModeEnabled={true}
+          theme="dark"
+          UIOptions={{
+            canvasActions: { export: false },
+            tools: { image: false },
+          }}
+        />
+      );
+    } catch (e) {
+      console.error("Error rendering mindmap:", e);
+      return (
+        <div className="text-red-400 text-sm">
+          ⚠️ Unable to display mindmap due to data compatibility issues.
+          Error: {e instanceof Error ? e.message : 'Unknown error'}
+        </div>
+      );
+    }
+  }, [excalidraw_data]);
 
   const { references = [], loading: refsLoading, error: refsError } = useReferences(id) ?? {};
   const { tags, loading: tagsLoading, error: tagsError, fetchTags } = useContentTags();
@@ -136,58 +184,7 @@ export default function ContentPopup({
             >
               <div style={{ width: "100%", height: "400px" }}>
                 <React.Suspense fallback={<div className="text-white text-sm">Loading mind map...</div>}>
-                  {useMemo(() => {  // ✅ REPLACED: Wrapped in useMemo to prevent flicker
-                    try {
-                      // ✅ FIXED: Clone and then deep freeze the data to prevent modifications
-                      const rawData = JSON.parse(JSON.stringify(excalidraw_data));
-                      const Excalidraw = dynamic(() => import('@excalidraw/excalidraw').then(mod => mod.Excalidraw), { ssr: false });
-
-                      // Ensure it's in Excalidraw format
-                      if (!rawData || typeof rawData !== "object" || !Array.isArray(rawData.elements)) {
-                        throw new Error("Invalid Excalidraw data structure");
-                      }
-
-                      // Deep freeze the data to make it immutable
-                      const deepFreeze = (obj: any): any => {
-                        if (obj === null || typeof obj !== 'object') return obj;
-                        if (Array.isArray(obj)) {
-                          obj.forEach(deepFreeze);
-                        } else {
-                          Object.getOwnPropertyNames(obj).forEach(key => {
-                            if (obj[key] && typeof obj[key] === 'object') {
-                              deepFreeze(obj[key]);
-                            }
-                          });
-                        }
-                        return Object.freeze(obj);
-                      };
-
-                      const initialData = {
-                        elements: deepFreeze(rawData.elements) as ExcalidrawElement[],
-                        appState: deepFreeze(rawData.appState || {}) as AppState,
-                        files: deepFreeze(rawData.files || {}) as Record<string, BinaryFileData>,
-                      };
-
-                      return (
-                        <Excalidraw
-                          initialData={initialData}
-                          viewModeEnabled={true}
-                          theme="dark"
-                          UIOptions={{
-                            canvasActions: { export: false },
-                            tools: { image: false },
-                          }}
-                        />
-                      );
-                    } catch (e) {
-                      console.error("Error rendering mindmap:", e);
-                      return (
-                        <div className="text-red-400 text-sm">
-                          ⚠️ Unable to display mindmap due to data compatibility issues. Error: {e instanceof Error ? e.message : 'Unknown error'}
-                        </div>
-                      );
-                    }
-                  }, [excalidraw_data])}  {/* ✅ Memoize based on excalidraw_data */}
+                  {memoizedMindmap}
                 </React.Suspense>
               </div>
             </div>
