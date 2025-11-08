@@ -16,6 +16,12 @@ import { AnyContent } from "@/types/content";
 import { CONTENT_STATUS } from "@/lib/enums";
 import "./PostPage.css";
 import MindmapContent from "@/components/content/MindmapContent";
+import type { 
+  ExcalidrawElement 
+} from "@excalidraw/excalidraw/element/types";
+import type { AppState } from "@excalidraw/excalidraw/types";
+import type { BinaryFileData } from "@excalidraw/excalidraw/types";
+
 
 interface Tag {
   id: string;
@@ -24,9 +30,11 @@ interface Tag {
 
 // ✅ Updated: Change to match Excalidraw's data structure
 interface ExcalidrawData {
-  elements: any[]; // Array of Excalidraw elements
-  appState: any;   // Excalidraw app state
+  elements: ExcalidrawElement[]; // ✅ Array of Excalidraw elements
+  appState: AppState;            // ✅ Excalidraw app state
+  files?: Record<string, BinaryFileData>; // Optional files
 }
+
 
 export default function PostPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,7 +53,13 @@ export default function PostPage() {
   // const [nodes, setNodes] = useState<Node[]>([]);
   // const [edges, setEdges] = useState<Edge[]>([]);
   // ✅ Added: State for Excalidraw data
-  const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData>({ elements: [], appState: {} });
+const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData>({
+  elements: [],
+  appState: {} as AppState,
+  files: {}
+});
+
+
 
   const { getContentById, createContent, updateContent, loading: contentLoading, refetch } =
     useContent({ type: "mindmap" as ContentType, autoFetch: false });
@@ -108,7 +122,9 @@ useEffect(() => {
     setSelectedTags([]);
     setSelectedCategoryId(null);
     // ✅ Updated: Reset Excalidraw data
-    setExcalidrawData({ elements: [], appState: {} });
+    setExcalidrawData({   elements: [],
+  appState: {} as AppState,
+  files: {}});
     router.push("/dashboard/mindmaps");
   };
 

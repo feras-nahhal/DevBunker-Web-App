@@ -49,7 +49,6 @@ export default function CommentsPopup({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeReplies, setActiveReplies] = useState<{ [key: string]: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
-
   const memoizedMindmap = useMemo(() => {
   if (!excalidraw_data) return null;
   try {
