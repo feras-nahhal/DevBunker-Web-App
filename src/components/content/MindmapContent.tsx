@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useRef, useEffect, CSSProperties } from "react";
+import React, { useState, useCallback, useRef, useEffect, CSSProperties, Suspense } from "react";
 import { useContent } from "@/hooks/useContent";
 import { useCategories } from "@/hooks/useCategories";
 import { useContentTags } from "@/hooks/useContentTags";
@@ -7,12 +7,25 @@ import { useTags } from "@/hooks/useTags";
 import { useRouter } from "next/navigation";
 import { CONTENT_STATUS } from "@/lib/enums";
 import { useAuthContext } from "@/hooks/AuthProvider";
+import { Node, Edge } from "reactflow";
+
 // ✅ add this import at the top
-import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw"; // Named exports, no default
+// Use dynamic import for the component itself in the render function, but import types statically
+import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw"; 
 import "@excalidraw/excalidraw/index.css";
-// Temporarily use 'any' for types until Excalidraw stabilizes exports
-type ExcalidrawElement = any;
-type AppState = any;
+import {
+  BinaryFileData,
+  ExcalidrawImperativeAPI,
+} from "@excalidraw/excalidraw/types";
+import type { 
+  ExcalidrawElement, 
+  ExcalidrawTextElement, 
+  ExcalidrawBindableElement,
+  ExcalidrawArrowElement,
+  FractionalIndex,
+  ExcalidrawGenericElement
+} from "@excalidraw/excalidraw/element/types";
+import type { AppState } from "@excalidraw/excalidraw/types";
 
 type Tag = {
   id: string;
@@ -20,28 +33,27 @@ type Tag = {
 };
 
 // -----------------------------
-// Props for MindmapContent (updated)
 interface MindmapContentProps {
   mindmapId?: string | null;
   initialTitle?: string;
   initialContentBody?: string;
   initialCategoryId?: string;
   initialTags?: Tag[];
-  initialNodes?: any[]; // Kept for conversion, but now internal
-  initialEdges?: any[];
-  initialExcalidrawData?: { elements: ExcalidrawElement[]; appState: AppState; files?: any }; // ✅ Added files to interface
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
+  // Using Record<string, BinaryFileData> for better file typing
+  initialExcalidrawData?: { elements: ExcalidrawElement[]; appState: AppState; files?: Record<string, BinaryFileData> }; 
   isModalOpen?: boolean;
   setIsModalOpen?: (open: boolean) => void;
 }
 
-// Helper: Recursive deep clone to ensure full mutability (fixes read-only errors)
-// Helper: Recursive deep clone to ensure full mutability (fixes read-only errors)
-const deepCloneMutable = (obj: any): any => {
+// Helper: Recursive deep clone
+const deepCloneMutable = <T,>(obj: T): T => {  // ✅ FIXED: Added comma after <T> to avoid JSX confusion
   if (obj === null || typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(deepCloneMutable);
-  const cloned: any = {}; // ✅ Fixed: Explicitly type as 'any' to allow string indexing
+  if (Array.isArray(obj)) return obj.map(deepCloneMutable) as T;  // ✅ FIXED: Changed 'as any' to 'as T' for better typing (avoids ESLint 'no-explicit-any')
+  const cloned = {} as T;  // ✅ FIXED: Ensured 'cloned' is properly declared
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) { 
       cloned[key] = deepCloneMutable(obj[key]);
     }
   }
@@ -49,41 +61,98 @@ const deepCloneMutable = (obj: any): any => {
 };
 
 
-// Helper: Convert React Flow nodes/edges to Excalidraw elements (basic mapping)
-const convertToExcalidrawElements = (nodes: any[], edges: any[]): ExcalidrawElement[] => {
+// Define types for your input React Flow data
+interface RFNodeData {
+  label: string;
+  color?: string;
+}
+
+interface RFNode {
+  id: string;
+  type?: "circle" | "rect" | "diamond" | "text" | string;  // Made optional to match Node
+  position: { x: number; y: number };
+  data: RFNodeData;
+}
+
+interface RFEdge {
+  id: string;
+  source: string;
+  target: string;
+}
+
+// Updated helper: index is now a string (FractionalIndex)
+const getBaseExcalidrawProps = (node: RFNode) => ({
+  id: node.id,
+  x: node.position.x,
+  y: node.position.y,
+  strokeColor: node.data.color || "#000000",
+  backgroundColor: "transparent",
+  fillStyle: "solid" as const,
+  strokeWidth: 2,
+  strokeStyle: "solid" as const,
+  roughness: 1,
+  opacity: 100,
+  groupIds: [],
+  seed: Math.floor(Math.random() * 1000000),
+  angle: 0,
+  boundElements: null,
+  updated: Date.now(),
+  isDeleted: false,
+  version: 1,
+  versionNonce: Math.floor(Math.random() * 1000000),
+  index: "a0" as FractionalIndex,
+  frameId: null,
+  link: null,
+  locked: false,
+  roundness: null,
+});
+
+
+const convertToExcalidrawElements = (nodes: RFNode[], edges: RFEdge[]): ExcalidrawElement[] => {
   const elements: ExcalidrawElement[] = [];
-  nodes.forEach((node, index) => {
-    let shape: ExcalidrawElement;
-    const baseProps = {
-      id: node.id,
-      x: node.position.x,
-      y: node.position.y,
-      width: 100,
-      height: 50,
-      strokeColor: node.data.color || "#000",
-      backgroundColor: "transparent",
-      fillStyle: "solid" as const,
-    };
-    switch (node.type) {
+
+  nodes.forEach((node) => {
+    const nodeType = node.type || "rect";  // ✅ FIXED: Provide default for optional type
+    let shape: ExcalidrawBindableElement; 
+    const baseProps = getBaseExcalidrawProps(node);
+
+    switch (nodeType) {
       case "circle":
-        shape = { ...baseProps, type: "ellipse", width: 80, height: 80 };
+        shape = { ...baseProps, type: "ellipse", width: 80, height: 80, roundness: { type: 2 } };  // ✅ FIXED: Removed 'as const' for roundness
         break;
       case "rect":
-        shape = { ...baseProps, type: "rectangle" };
+        shape = { ...baseProps, type: "rectangle", width: 100, height: 50, roundness: null };
         break;
       case "diamond":
-        shape = { ...baseProps, type: "diamond" };
+        shape = { ...baseProps, type: "diamond", width: 100, height: 50, roundness: { type: 3 } };
         break;
       case "text":
-        shape = { ...baseProps, type: "text", text: node.data.label };
+        const textProps: ExcalidrawTextElement = {
+          ...baseProps, 
+          type: "text", 
+          text: node.data.label, 
+          width: 100, 
+          height: 50,
+          fontSize: 14,
+          textAlign: "center" as const,  // ✅ FIXED: Added 'as const' for exact type
+          verticalAlign: "middle" as const,  // ✅ FIXED: Ensured valid value
+          containerId: null,
+          // ✅ FIXED: Add missing required properties
+          fontFamily: 1,  // Default font family ID
+          originalText: node.data.label,  // Usually same as text
+          autoResize: true,  // Allow auto-resizing
+          lineHeight: 1.25 as number & { _brand: "unitlessLineHeight"; },  // Default line height
+        };
+        shape = textProps;
         break;
       default:
-        shape = { ...baseProps, type: "rectangle" };
+        shape = { ...baseProps, type: "rectangle", width: 100, height: 50, roundness: null };
     }
     elements.push(shape);
-    // Add text label as separate element if not text node
-    if (node.type !== "text") {
-      elements.push({
+
+    if (nodeType !== "text") {
+      const textLabel: ExcalidrawTextElement = {
+        ...getBaseExcalidrawProps(node), 
         id: `${node.id}-text`,
         type: "text",
         x: node.position.x + 10,
@@ -92,28 +161,49 @@ const convertToExcalidrawElements = (nodes: any[], edges: any[]): ExcalidrawElem
         height: 20,
         text: node.data.label,
         fontSize: 14,
-      });
+        textAlign: "left" as const,  // ✅ FIXED: Added 'as const'
+        verticalAlign: "top" as const,  // ✅ FIXED: Ensured valid value
+        containerId: null,
+         // ✅ FIXED: Add missing required properties
+        fontFamily: 1,  // Default font family ID
+        originalText: node.data.label,  // Usually same as text
+        autoResize: true,  // Allow auto-resizing
+        lineHeight: 1.25 as number & { _brand: "unitlessLineHeight"; },   // Default line height
+      };
+      elements.push(textLabel);
     }
   });
-  // Convert edges to arrows
+
   edges.forEach((edge) => {
     const sourceNode = nodes.find(n => n.id === edge.source);
     const targetNode = nodes.find(n => n.id === edge.target);
+
     if (sourceNode && targetNode) {
-      elements.push({
+      const arrow: ExcalidrawArrowElement = {
+        ...getBaseExcalidrawProps(sourceNode), 
         id: edge.id,
         type: "arrow",
         x: sourceNode.position.x + 50,
         y: sourceNode.position.y + 25,
         width: targetNode.position.x - sourceNode.position.x,
         height: targetNode.position.y - sourceNode.position.y,
-        points: [[0, 0], [targetNode.position.x - sourceNode.position.x, targetNode.position.y - sourceNode.position.y]],
+        points: [[0, 0], [targetNode.position.x - sourceNode.position.x, targetNode.position.y - sourceNode.position.y]] as const,  // ✅ FIXED: Added 'as const' for readonly tuples
         strokeColor: "#000",
-      });
+        roundness: { type: 2 },  // ✅ FIXED: Removed 'as const'
+        startBinding: null,
+        endBinding: null,
+        lastCommittedPoint: null,
+        startArrowhead: null,
+        endArrowhead: "arrow",
+        elbowed: false,  // For straight arrows
+      };
+      elements.push(arrow);
     }
   });
+
   return elements;
 };
+
 
 // -----------------------------
 // Mindmap Component (updated for Excalidraw)
@@ -154,8 +244,9 @@ function MindmapContent({
   // Initialize state with initialData to keep local state in sync from the start
   const [excalidrawElements, setExcalidrawElements] = useState<ExcalidrawElement[]>(initialData.elements);
   const [appState, setAppState] = useState<AppState>(initialData.appState);
-  const [files, setFiles] = useState<any>(initialData.files || {});
-  const excalidrawRef = useRef<any>(null); // Ref for Excalidraw API
+  const [files, setFiles] = useState<Record<string, BinaryFileData>>(initialData.files || {});
+  const excalidrawRef = useRef<ExcalidrawImperativeAPI | null>(null);
+
 
   // Removed: useEffect for setting state based on initialExcalidrawData (no longer needed)
   // Removed: useEffect for syncing state back to Excalidraw (unnecessary, as Excalidraw manages its own scene)
@@ -220,58 +311,13 @@ function MindmapContent({
 
   // -----------------------------
   // Excalidraw Handlers
-  const onChange = useCallback((elements: readonly ExcalidrawElement[], state: AppState, files: any) => { // ✅ Fixed: Accept files parameter
+  const onChange = useCallback((elements: readonly ExcalidrawElement[], state: AppState, files: Record<string, BinaryFileData>) => { // ✅ Fixed: Accept files parameter
     setExcalidrawElements([...elements]);
     setAppState(state);
     setFiles(files); // ✅ Fixed: Update files state
   }, []);
 
-  // Add Node Helpers (use Excalidraw's API to add elements)
-  const addNode = useCallback((type: "ellipse" | "rectangle" | "diamond" | "text") => {
-    if (!excalidrawRef.current) return;
-    const api = excalidrawRef.current;
-    const newElement: ExcalidrawElement = {
-      id: `${type}-${Date.now()}`,
-      type,
-      x: Math.random() * 200 + 100,
-      y: Math.random() * 200 + 100,
-      width: type === "ellipse" ? 80 : 100,
-      height: type === "ellipse" ? 80 : 50,
-      strokeColor: "#000",
-      backgroundColor: "transparent",
-      fillStyle: "solid",
-      ...(type === "text" ? { text: "New Text" } : {}),
-    };
-    api.updateScene({ elements: [...excalidrawElements, newElement] });
-  }, [excalidrawElements]);
-
-  const changeColor = useCallback((color: string) => {
-    if (!excalidrawRef.current) return;
-    const api = excalidrawRef.current;
-    const selectedElements = excalidrawElements.filter(el => appState.selectedElementIds?.includes(el.id));
-    const updatedElements = selectedElements.map(el => ({ ...el, strokeColor: color, backgroundColor: color }));
-    api.updateScene({ elements: excalidrawElements.map(el => updatedElements.find(u => u.id === el.id) || el) });
-  }, [excalidrawElements, appState]);
-
-  const renameNode = useCallback(() => {
-    if (!excalidrawRef.current) return;
-    const api = excalidrawRef.current;
-    const selectedElements = excalidrawElements.filter(el => appState.selectedElementIds?.includes(el.id) && el.type === "text");
-    if (selectedElements.length > 0) {
-      const newLabel = prompt("Enter new label:");
-      if (newLabel) {
-        const updatedElements = selectedElements.map(el => ({ ...el, text: newLabel }));
-        api.updateScene({ elements: excalidrawElements.map(el => updatedElements.find(u => u.id === el.id) || el) });
-      }
-    }
-  }, [excalidrawElements, appState]);
-
-  const deleteNode = useCallback(() => {
-    if (!excalidrawRef.current) return;
-    const api = excalidrawRef.current;
-    const remainingElements = excalidrawElements.filter(el => !appState.selectedElementIds?.includes(el.id));
-    api.updateScene({ elements: remainingElements });
-  }, [excalidrawElements, appState]);
+  
 
   // -----------------------------
   // Save Mindmap (Updated for Excalidraw)

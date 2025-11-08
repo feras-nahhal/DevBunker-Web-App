@@ -1,21 +1,15 @@
 "use client";
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useReferences } from "@/hooks/useReferences";
 import { useContentTags } from "@/hooks/useContentTags";
-import ReactFlow, {
-  Handle,
-  Controls,
-  Background,
-  Position,
-  NodeProps,
-  StraightEdge,
-  StepEdge,
-  SmoothStepEdge,
-  BezierEdge
-} from "reactflow";
-import "reactflow/dist/style.css";
+import React from "react";
+
+// ✅ Add Excalidraw imports for viewing mindmaps
+import "@excalidraw/excalidraw/index.css";
+import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import type { AppState, BinaryFileData } from "@excalidraw/excalidraw/types";
+import dynamic from 'next/dynamic';
 
 
 type ApiComment = {
@@ -55,6 +49,9 @@ export default function CommentsPopup({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeReplies, setActiveReplies] = useState<{ [key: string]: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (id) fetchTags(id);
+  }, [id]);
 
   const { references, loading: refsLoading, error: refsError } = useReferences(id);
   const { tags, loading: tagsLoading, error: tagsError, fetchTags } = useContentTags();
@@ -269,8 +266,8 @@ export default function CommentsPopup({
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       >
         <div
-          className="relative custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto"
-          style={{ width: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
+          className="relative custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto overflow-x-hidden"
+          style={{ width: "95%", maxWidth: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
         >
           {/* Close button */}
           <button
@@ -280,182 +277,126 @@ export default function CommentsPopup({
             ×
           </button>
 
-          {/* Title */}
+           {/* Title */}
           <div className="flex justify-center items-center mb-4 w-full">
             <h2
-            className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-left text-left"
-            style={{
-              width: "100%",
-              maxWidth: "853px",
-              background:
-                "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              fontWeight: 700,
-              fontSize: "24px",
-              lineHeight: "36px",
-              fontFamily: "'Public Sans', sans-serif",
+              className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-left text-left"
+              style={{
+                width: "100%",
+                maxWidth: "853px",
+                background:
+                  "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                fontWeight: 700,
+                fontSize: "24px",
+                lineHeight: "36px",
+                fontFamily: "'Public Sans', sans-serif",
               }}
             >
               {title}
             </h2>
-
           </div>
 
-          {/* 🧠 Mind Map Viewer */}
-            {excalidraw_data && (
-            <div
-                style={{
-                width: "100%",
-                maxWidth: "855px",
-                height: "450px",
-                border: "1px solid rgba(80, 80, 80, 0.24)",
-                borderRadius: "16px",
-                background: "rgba(255, 255, 255, 0.02)",
-                padding: "8px",
-                marginBottom: "8px",
-                }}
-            >
-                <label
-                style={{
-                    fontSize: "16px",
-                    fontWeight: 500,
-                    color: "white",
-                    display: "block",
-                    marginBottom: "6px",
-                }}
-                >
-                Mind Map
-                </label>
-
-                <div style={{ width: "100%", height: "400px" }}>
-                {(() => {
-                    try {
-                    const data =
-                        typeof excalidraw_data === "string"
-                        ? JSON.parse(excalidraw_data)
-                        : excalidraw_data;
-
-                    const nodes = Array.isArray(data?.nodes) ? data.nodes : [];
-                    const edges = Array.isArray(data?.edges) ? data.edges : [];
-
-                    // ✅ Node types (same as before)
-                    const nodeTypes = {
-                        circle: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            width: 60,
-                            height: 60,
-                            borderRadius: "50%",
-                            backgroundColor: data.color || "#fff",
-                            border: "2px solid #aaa",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#000",
-                            fontWeight: 500,
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
-                            {data.label}
-                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
-                        </div>
-                        ),
-
-                        rect: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            padding: "10px 16px",
-                            borderRadius: "8px",
-                            backgroundColor: data.color || "#fff",
-                            border: "2px solid #aaa",
-                            color: "#000",
-                            textAlign: "center",
-                            fontWeight: 500,
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
-                            {data.label}
-                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
-                        </div>
-                        ),
-
-                        diamond: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            width: 70,
-                            height: 70,
-                            backgroundColor: data.color || "#fff",
-                            transform: "rotate(45deg)",
-                            border: "2px solid #aaa",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#000",
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
-                            <span style={{ transform: "rotate(-45deg)" }}>{data.label}</span>
-                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
-                        </div>
-                        ),
-
-                        text: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            fontSize: "14px",
-                            color: data.color || "#fff",
-                            background: "transparent",
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Top} style={{ background: "#888" }} />
-                            {data.label}
-                            <Handle type="source" position={Position.Bottom} style={{ background: "#888" }} />
-                        </div>
-                        ),
-                    };
-
-                    // ✅ Register edge types
-                    const edgeTypes = {
-                        default: BezierEdge,
-                        straight: StraightEdge,
-                        step: StepEdge,
-                        smoothstep: SmoothStepEdge,
-                    };
-
-                    return (
-                        <ReactFlow
-                        nodes={nodes}
-                        edges={edges}
-                        nodeTypes={nodeTypes}
-                        edgeTypes={edgeTypes}
-                        fitView
-                        defaultEdgeOptions={{
-                            type: "default", // fallback
-                            style: { stroke: "#999", strokeWidth: 1.5 },
+           {/* 🧠 Mind Map Viewer (Replaced ReactFlow with Excalidraw) */}
+          
+                    {excalidraw_data && (
+                    <div
+                      style={{
+                        width: "100%",
+                        maxWidth: "855px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start", // ✅ ensures label + box align left
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: 500,
+                          color: "white",
+                          marginBottom: "6px",
+                          textAlign: "left",
                         }}
-                        >
-                        <Background />
-                        <Controls />
-                        </ReactFlow>
-                    );
-                    } catch (e) {
-                    console.error("Invalid excalidraw_data format:", e);
-                    return (
-                        <div className="text-red-400 text-sm">
-                        ⚠️ Invalid mindmap data format
+                      >
+                        Mindmap
+                      </label>
+              
+                      <div
+                        style={{
+                          width: "100%",
+                          maxWidth: "855px",
+                          height: "415px",
+                          border: "1px solid rgba(80, 80, 80, 0.24)",
+                          borderRadius: "16px",
+                          background: "rgba(255, 255, 255, 0.02)",
+                          padding: "8px",
+                          marginBottom: "8px",
+                        }}
+                        
+                      >
+                 
+          
+                        <div style={{ width: "100%", height: "400px" }}>
+                          <React.Suspense fallback={<div className="text-white text-sm">Loading mind map...</div>}>
+                            {useMemo(() => {  // ✅ REPLACED: Wrapped in useMemo to prevent flicker
+                              try {
+                                // ✅ FIXED: Clone and then deep freeze the data to prevent modifications
+                                const rawData = JSON.parse(JSON.stringify(excalidraw_data));
+                                const Excalidraw = dynamic(() => import('@excalidraw/excalidraw').then(mod => mod.Excalidraw), { ssr: false });
+          
+                                // Ensure it's in Excalidraw format
+                                if (!rawData || typeof rawData !== "object" || !Array.isArray(rawData.elements)) {
+                                  throw new Error("Invalid Excalidraw data structure");
+                                }
+          
+                                // Deep freeze the data to make it immutable
+                                const deepFreeze = (obj: any): any => {
+                                  if (obj === null || typeof obj !== 'object') return obj;
+                                  if (Array.isArray(obj)) {
+                                    obj.forEach(deepFreeze);
+                                  } else {
+                                    Object.getOwnPropertyNames(obj).forEach(key => {
+                                      if (obj[key] && typeof obj[key] === 'object') {
+                                        deepFreeze(obj[key]);
+                                      }
+                                    });
+                                  }
+                                  return Object.freeze(obj);
+                                };
+          
+                                const initialData = {
+                                  elements: deepFreeze(rawData.elements) as ExcalidrawElement[],
+                                  appState: deepFreeze(rawData.appState || {}) as AppState,
+                                  files: deepFreeze(rawData.files || {}) as Record<string, BinaryFileData>,
+                                };
+          
+                                return (
+                                  <Excalidraw
+                                    initialData={initialData}
+                                    viewModeEnabled={true}
+                                    theme="dark"
+                                    UIOptions={{
+                                      canvasActions: { export: false },
+                                      tools: { image: false },
+                                    }}
+                                  />
+                                );
+                              } catch (e) {
+                                console.error("Error rendering mindmap:", e);
+                                return (
+                                  <div className="text-red-400 text-sm">
+                                    ⚠️ Unable to display mindmap due to data compatibility issues. Error: {e instanceof Error ? e.message : 'Unknown error'}
+                                  </div>
+                                );
+                              }
+                            }, [excalidraw_data])}  {/* ✅ Memoize based on excalidraw_data */}
+                          </React.Suspense>
                         </div>
-                    );
-                    }
-                })()}
-                </div>
-            </div>
-            )}
+                      </div>
+                       </div>
+                    )}
 
           {/* Content Body */}
           {content_body && (

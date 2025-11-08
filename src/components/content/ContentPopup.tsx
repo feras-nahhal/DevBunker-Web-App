@@ -1,24 +1,16 @@
 // ContentPopup.tsx
 "use client";
-
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";  // ✅ ADDED: useMemo import
 import { useReferences } from "@/hooks/useReferences";
 import { useContentTags } from "@/hooks/useContentTags";
 import { CONTENT_STATUS } from "@/lib/enums"; // NEW
 import React from "react";
-import ReactFlow, {
-  Handle,
-  Controls,
-  Background,
-  Position,
-  NodeProps,
-  StraightEdge,
-  StepEdge,
-  SmoothStepEdge,
-  BezierEdge
-} from "reactflow";
-import "reactflow/dist/style.css";
 
+// ✅ Add Excalidraw imports for viewing mindmaps
+import "@excalidraw/excalidraw/index.css";
+import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import type { AppState, BinaryFileData } from "@excalidraw/excalidraw/types";
+import dynamic from 'next/dynamic';
 
 interface ContentPopupProps {
   id: string;
@@ -30,7 +22,6 @@ interface ContentPopupProps {
   updated_at?: string;
   status?: CONTENT_STATUS;
   excalidraw_data?: Record<string, unknown>;
-
 }
 
 export default function ContentPopup({
@@ -46,14 +37,12 @@ export default function ContentPopup({
 }: ContentPopupProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  
-
   const { references = [], loading: refsLoading, error: refsError } = useReferences(id) ?? {};
   const { tags, loading: tagsLoading, error: tagsError, fetchTags } = useContentTags();
 
-    useEffect(() => {
-      if (id) fetchTags(id);
-    }, [id]);
+  useEffect(() => {
+    if (id) fetchTags(id);
+  }, [id]);
 
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
@@ -78,8 +67,8 @@ export default function ContentPopup({
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       >
         <div
-          className="relative custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto"
-          style={{ width: "100%", maxWidth: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
+          className="relative custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto overflow-x-hidden"
+          style={{ width: "95%", maxWidth: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
         >
           {/* Close button */}
           <button
@@ -92,185 +81,123 @@ export default function ContentPopup({
           {/* Title */}
           <div className="flex justify-center items-center mb-4 w-full">
             <h2
-            className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-left text-left"
-            style={{
-              width: "100%",
-              maxWidth: "853px",
-              background:
-                "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              fontWeight: 700,
-              fontSize: "24px",
-              lineHeight: "36px",
-              fontFamily: "'Public Sans', sans-serif",
-            }}
-          >
-            {title}
-          </h2>
-
+              className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-left text-left"
+              style={{
+                width: "100%",
+                maxWidth: "853px",
+                background:
+                  "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                fontWeight: 700,
+                fontSize: "24px",
+                lineHeight: "36px",
+                fontFamily: "'Public Sans', sans-serif",
+              }}
+            >
+              {title}
+            </h2>
           </div>
 
-        
-           {/* 🧠 Mind Map Viewer */}
-            {excalidraw_data && (
+          {/* 🧠 Mind Map Viewer (Replaced ReactFlow with Excalidraw) */}
+          {excalidraw_data && (
+             <div
+                      style={{
+                        width: "100%",
+                        maxWidth: "855px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start", // ✅ ensures label + box align left
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: 500,
+                          color: "white",
+                          marginBottom: "6px",
+                          textAlign: "left",
+                        }}
+                      >
+                        Mindmap
+                      </label>
             <div
-                style={{
+              style={{
                 width: "100%",
                 maxWidth: "855px",
-                height: "450px",
+                height: "415px",
                 border: "1px solid rgba(80, 80, 80, 0.24)",
                 borderRadius: "16px",
                 background: "rgba(255, 255, 255, 0.02)",
                 padding: "8px",
                 marginBottom: "8px",
-                }}
+              }}
             >
-                <label
-                style={{
-                    fontSize: "16px",
-                    fontWeight: 500,
-                    color: "white",
-                    display: "block",
-                    marginBottom: "6px",
-                }}
-                >
-                Mind Map
-                </label>
-
-                <div style={{ width: "100%", height: "400px" }}>
-                {(() => {
+              <div style={{ width: "100%", height: "400px" }}>
+                <React.Suspense fallback={<div className="text-white text-sm">Loading mind map...</div>}>
+                  {useMemo(() => {  // ✅ REPLACED: Wrapped in useMemo to prevent flicker
                     try {
-                    const data =
-                        typeof excalidraw_data === "string"
-                        ? JSON.parse(excalidraw_data)
-                        : excalidraw_data;
+                      // ✅ FIXED: Clone and then deep freeze the data to prevent modifications
+                      const rawData = JSON.parse(JSON.stringify(excalidraw_data));
+                      const Excalidraw = dynamic(() => import('@excalidraw/excalidraw').then(mod => mod.Excalidraw), { ssr: false });
 
-                    const nodes = Array.isArray(data?.nodes) ? data.nodes : [];
-                    const edges = Array.isArray(data?.edges) ? data.edges : [];
+                      // Ensure it's in Excalidraw format
+                      if (!rawData || typeof rawData !== "object" || !Array.isArray(rawData.elements)) {
+                        throw new Error("Invalid Excalidraw data structure");
+                      }
 
-                    // ✅ Node types (same as before)
-                    const nodeTypes = {
-                        circle: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            width: 60,
-                            height: 60,
-                            borderRadius: "50%",
-                            backgroundColor: data.color || "#fff",
-                            border: "2px solid #aaa",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#000",
-                            fontWeight: 500,
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
-                            {data.label}
-                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
-                        </div>
-                        ),
+                      // Deep freeze the data to make it immutable
+                      const deepFreeze = (obj: any): any => {
+                        if (obj === null || typeof obj !== 'object') return obj;
+                        if (Array.isArray(obj)) {
+                          obj.forEach(deepFreeze);
+                        } else {
+                          Object.getOwnPropertyNames(obj).forEach(key => {
+                            if (obj[key] && typeof obj[key] === 'object') {
+                              deepFreeze(obj[key]);
+                            }
+                          });
+                        }
+                        return Object.freeze(obj);
+                      };
 
-                        rect: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            padding: "10px 16px",
-                            borderRadius: "8px",
-                            backgroundColor: data.color || "#fff",
-                            border: "2px solid #aaa",
-                            color: "#000",
-                            textAlign: "center",
-                            fontWeight: 500,
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
-                            {data.label}
-                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
-                        </div>
-                        ),
+                      const initialData = {
+                        elements: deepFreeze(rawData.elements) as ExcalidrawElement[],
+                        appState: deepFreeze(rawData.appState || {}) as AppState,
+                        files: deepFreeze(rawData.files || {}) as Record<string, BinaryFileData>,
+                      };
 
-                        diamond: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            width: 70,
-                            height: 70,
-                            backgroundColor: data.color || "#fff",
-                            transform: "rotate(45deg)",
-                            border: "2px solid #aaa",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#000",
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Left} style={{ background: "#888" }} />
-                            <span style={{ transform: "rotate(-45deg)" }}>{data.label}</span>
-                            <Handle type="source" position={Position.Right} style={{ background: "#888" }} />
-                        </div>
-                        ),
-
-                        text: ({ data }: NodeProps<{ label: string; color?: string }>) => (
-                        <div
-                            style={{
-                            fontSize: "14px",
-                            color: data.color || "#fff",
-                            background: "transparent",
-                            position: "relative",
-                            }}
-                        >
-                            <Handle type="target" position={Position.Top} style={{ background: "#888" }} />
-                            {data.label}
-                            <Handle type="source" position={Position.Bottom} style={{ background: "#888" }} />
-                        </div>
-                        ),
-                    };
-
-                    // ✅ Register edge types
-                    const edgeTypes = {
-                        default: BezierEdge,
-                        straight: StraightEdge,
-                        step: StepEdge,
-                        smoothstep: SmoothStepEdge,
-                    };
-
-                    return (
-                        <ReactFlow
-                        nodes={nodes}
-                        edges={edges}
-                        nodeTypes={nodeTypes}
-                        edgeTypes={edgeTypes}
-                        fitView
-                        defaultEdgeOptions={{
-                            type: "default", // fallback
-                            style: { stroke: "#999", strokeWidth: 1.5 },
-                        }}
-                        >
-                        <Background />
-                        <Controls />
-                        </ReactFlow>
-                    );
+                      return (
+                        <Excalidraw
+                          initialData={initialData}
+                          viewModeEnabled={true}
+                          theme="dark"
+                          UIOptions={{
+                            canvasActions: { export: false },
+                            tools: { image: false },
+                          }}
+                        />
+                      );
                     } catch (e) {
-                    console.error("Invalid excalidraw_data format:", e);
-                    return (
+                      console.error("Error rendering mindmap:", e);
+                      return (
                         <div className="text-red-400 text-sm">
-                        ⚠️ Invalid mindmap data format
+                          ⚠️ Unable to display mindmap due to data compatibility issues. Error: {e instanceof Error ? e.message : 'Unknown error'}
                         </div>
-                    );
+                      );
                     }
-                })()}
-                </div>
+                  }, [excalidraw_data])}  {/* ✅ Memoize based on excalidraw_data */}
+                </React.Suspense>
+              </div>
             </div>
-            )}
+            </div>
+          )}
 
-           {/* Content Body */}
+          {/* Content Body */}
           {content_body && (
             <div
-              style={{ maxWidth: "853px", width: "100%"}}
+              style={{ maxWidth: "853px", width: "100%" }}
               dangerouslySetInnerHTML={{ __html: content_body }}
             />
           )}
@@ -338,162 +265,157 @@ export default function ContentPopup({
             </div>
           )}
 
-         {/* 🗂️ Info Row: Category + Dates + Status */}
-        {(categoryName || created_at || updated_at || status) && (
-        <div
-            style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "6px",
-            width: "100%",
-            maxWidth: "855px",
-            }}
-        >
-            <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>
-            Info
-            </label>
-
+          {/* 🗂️ Info Row: Category + Dates + Status */}
+          {(categoryName || created_at || updated_at || status) && (
             <div
-            style={{
-                position: "relative",
-                width: "100%",
-                border: "1px solid rgba(80, 80, 80, 0.24)",
-                borderRadius: "16px",
-                background: "rgba(255, 255, 255, 0.05)",
-                padding: "8px 12px",
+              style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                color: "white",
-                fontSize: "13px",
-                fontWeight: 500,
-                flexWrap: "wrap",
-                gap: "8px",
-            }}
+                flexDirection: "column",
+                gap: "6px",
+                width: "100%",
+                maxWidth: "855px",
+              }}
             >
-            {/* Category */}
-            {categoryName && categoryName.length > 0 && (
-                <div
+              <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>
+                Info
+              </label>
+
+              <div
                 style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    color: "#5BE49B",
-                    minWidth: "150px",
+                  position: "relative",
+                  width: "100%",
+                  border: "1px solid rgba(80, 80, 80, 0.24)",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "8px 12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  color: "white",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  flexWrap: "wrap",
+                  gap: "8px",
                 }}
-                >
-                <span style={{ opacity: 0.8 }}>Category:</span>
-                <span
+              >
+                {/* Category */}
+                {categoryName && categoryName.length > 0 && (
+                  <div
                     style={{
-                    fontWeight: 600,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      color: "#5BE49B",
+                      minWidth: "150px",
                     }}
-                >
-                    {categoryName.join(", ")}
-                </span>
-                </div>
-            )}
-
-            {/* Created Date */}
-            {created_at && (
-                <div style={{ color: "#5BE49B", minWidth: "150px" }}>
-                <span style={{ opacity: 0.8 }}>Created:</span>{" "}
-                {new Date(created_at).toLocaleDateString()}
-                </div>
-            )}
-
-            {/* Updated Date */}
-            {updated_at && (
-                <div style={{ color: "#5BE49B", minWidth: "150px" }}>
-                <span style={{ opacity: 0.8 }}>Updated:</span>{" "}
-                {new Date(updated_at).toLocaleDateString()}
-                </div>
-            )}
-
-            {/* Status */}
-            {status && (
-                <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    color:
-                    status.toLowerCase() === "published"
-                        ? "#5BE49B"
-                        : status.toLowerCase() === "draft"
-                        ? "#FFC107"
-                        : "#E57373",
-                    minWidth: "100px",
-                    textTransform: "capitalize",
-                }}
-                >
-                <span style={{ opacity: 0.8 }}>Status:</span>
-                <span style={{ fontWeight: 600 }}>{status}</span>
-                </div>
-            )}
-            </div>
-        </div>
-        )}
-
-
-           {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
-            {references.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
-                <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
-
-                <div
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    border: "1px solid rgba(80, 80, 80, 0.24)",
-                    borderRadius: "16px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    padding: "8px",
-                    minHeight: "44px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                    marginBottom: "8px",
-                  }}
-                >
-                  {references.map((ref) => (
-                    <div
-                      key={ref.id}
+                  >
+                    <span style={{ opacity: 0.8 }}>Category:</span>
+                    <span
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "6px 10px",
-                        borderRadius: "16px", // keep pill shape
-                        background: "transparent", // transparent background
-                        border: "1px solid rgba(80, 80, 80, 0.24)", // ⚪ soft white border
-                        color: "#5BE49B", // 🟢 green text
-                        height: "32px",
-                        fontSize: "12px",
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                       }}
                     >
-                      <span
-                        style={{
-                          flex: 1,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {ref.text}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                      {categoryName.join(", ")}
+                    </span>
+                  </div>
+                )}
+
+                {/* Created Date */}
+                {created_at && (
+                  <div style={{ color: "#5BE49B", minWidth: "150px" }}>
+                    <span style={{ opacity: 0.8 }}>Created:</span>{" "}
+                    {new Date(created_at).toLocaleDateString()}
+                  </div>
+                )}
+
+                {/* Updated Date */}
+                {updated_at && (
+                  <div style={{ color: "#5BE49B", minWidth: "150px" }}>
+                    <span style={{ opacity: 0.8 }}>Updated:</span>{" "}
+                    {new Date(updated_at).toLocaleDateString()}
+                  </div>
+                )}
+
+                {/* Status */}
+                {status && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      color:
+                        status.toLowerCase() === "published"
+                          ? "#5BE49B"
+                          : status.toLowerCase() === "draft"
+                          ? "#FFC107"
+                          : "#E57373",
+                      minWidth: "100px",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    <span style={{ opacity: 0.8 }}>Status:</span>
+                    <span style={{ fontWeight: 600 }}>{status}</span>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-       
+          {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
+          {references.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
+              <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
 
-
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  border: "1px solid rgba(80, 80, 80, 0.24)",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "8px",
+                  minHeight: "44px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  marginBottom: "8px",
+                }}
+              >
+                {references.map((ref) => (
+                  <div
+                    key={ref.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "6px 10px",
+                      borderRadius: "16px",
+                      background: "transparent",
+                      border: "1px solid rgba(80, 80, 80, 0.24)",
+                      color: "#5BE49B",
+                      height: "32px",
+                      fontSize: "12px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    <span
+                      style={{
+                        flex: 1,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {ref.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -518,7 +440,7 @@ export default function ContentPopup({
           list-style-type: decimal;
           padding-left: 1.5rem;
         }
-         div :global(h1) {
+        div :global(h1) {
           font-size: 1.5rem;
           font-weight: bold;
         }
@@ -530,7 +452,7 @@ export default function ContentPopup({
           font-size: 1.1rem;
           font-weight: bold;
         }
-         div :global(a.custom-link) {
+        div :global(a.custom-link) {
           color: #105d81ff;
           text-decoration: underline;
           font-weight: 500;
