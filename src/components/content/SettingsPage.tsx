@@ -1,4 +1,5 @@
 "use client";
+import { useAuthContext } from "@/hooks/AuthProvider";
 import { useState, useEffect, useRef } from "react";
 
 export default function SettingsPage() {
@@ -9,7 +10,60 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(""); // For success message
   const [showPassword, setShowPassword] = useState({ old: false, new: false, confirm: false });
+  const { profileImage } = useAuthContext(); // user contains the id
+  const { refreshProfileImage } = useAuthContext();
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+    // -----------------------------
+  // Handle file selection
+  // -----------------------------
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // -----------------------------
+  // Upload image
+  // -----------------------------
+  const upload = async () => {
+    if (!image) return;
+    try {
+      setUploading(true);
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("image", image);
+
+      const res = await fetch("/api/upload-profile", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        await refreshProfileImage();
+        setSuccess("Profile image updated!");
+        setPreview(data.url);
+      } else {
+        setError(data.error || "Upload failed");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Upload failed. Try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+
 
   // Handle Enter key to submit (if focused on inputs)
   useEffect(() => {
@@ -119,30 +173,27 @@ export default function SettingsPage() {
       className="custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto w-full max-w-[920px]"  
       style={{ maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
     >
-      {/* Title */}
+       {/* Title */}
       <div className="flex justify-center items-center mb-4 w-full">
         <h2
-          className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-center w-full max-w-[853px]"  
+          className="font-publicSans font-bold text-[24px] leading-[36px] flex items-left justify-left w-full max-w-[853px]"  
           style={{
-            height: "72px",
+            height: "30px",
             background: "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
             fontWeight: 700,
-            fontSize: "24px",
+            fontSize: "20px",
             lineHeight: "36px",
-            textAlign: "center",
+            textAlign: "left",
             fontFamily: "'Public Sans', sans-serif",
           }}
         >
-          Change Password
+          Image Upload 
         </h2>
       </div>
-
-      {/* Form */}
-      <form ref={formRef} className="w-full flex flex-col items-center gap-6">
-        {/* Success Message */}
+      {/* Success Message */}
         {success && (
           <div className="w-full max-w-[855px] p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-300 text-sm">  
             {success}
@@ -155,6 +206,53 @@ export default function SettingsPage() {
             {error}
           </div>
         )}
+  {/* Profile Image Upload */}
+      <div className="flex flex-col items-center gap-2 w-full max-w-[300px]">
+        <div className="w-[150px] h-[150px] rounded-full overflow-hidden border border-white/20 relative">
+          {profileImage ? (
+            <img src={profileImage} alt="Preview" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-white/10 text-white/50">No Image</div>
+          )}
+          <input type="file" accept="image/*" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" />
+        </div>
+        <button
+  onClick={upload}
+  disabled={!image || uploading}
+  className="relative w-[200px] h-[45px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+  <span className="relative z-10">{uploading ? "Uploading..." : "Upload Image"}</span>
+</button>
+
+      </div>
+
+       {/* Title */}
+      <div className="flex justify-center items-center mb-4 w-full">
+        <h2
+          className="font-publicSans font-bold text-[24px] leading-[36px] flex items-left justify-left w-full max-w-[853px]"  
+          style={{
+            height: "30px",
+            background: "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            fontWeight: 700,
+            fontSize: "20px",
+            lineHeight: "36px",
+            textAlign: "left",
+            fontFamily: "'Public Sans', sans-serif",
+          }}
+        >
+          Password Change  
+        </h2>
+      </div>
+
+     
+
+      {/* Form */}
+      <form ref={formRef} className="w-full flex flex-col items-center gap-6">
+        
 
         {/* Old Password Input */}
         <div className="w-full max-w-[855px] flex flex-col gap-2">  

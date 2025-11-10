@@ -13,7 +13,7 @@ import { useAuthContext } from "@/hooks/AuthProvider";
 export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
-  const { user, token, loading, isAuthenticated } = useAuthContext();
+  const { token, loading, profileImage } = useAuthContext();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
 
@@ -38,6 +38,7 @@ export default function ExplorePage() {
         collapsed={sidebarCollapsed}
         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        profileImage={profileImage}
          />
 
           <div className="explore-container">
@@ -82,6 +83,7 @@ export default function ExplorePage() {
         collapsed={sidebarCollapsed}
         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        profileImage={profileImage}
          />
 
         <div className="explore-container">

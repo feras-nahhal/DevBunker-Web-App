@@ -6,6 +6,7 @@ import { USER_ROLES, USER_STATUS, CONTENT_TYPES, CONTENT_STATUS, TAG_CATEGORY_ST
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: varchar("email", { length: 255 }).notNull(),
+  profile_image: varchar("profile_image", { length: 255 }),
   password_hash: varchar("password_hash", { length: 255 }).notNull(),
   role: varchar("role", { length: 20 }).default(USER_ROLES.CONSUMER).notNull(),
   status: varchar("status", { length: 20 }).default(USER_STATUS.PENDING).notNull(),

@@ -13,12 +13,14 @@ import { useAuthContext } from "@/hooks/AuthProvider";
 interface HeaderOtherProps {
   isMobileOpen?: boolean; // NEW: For mobile sidebar state
   onMobileToggle?: (open: boolean) => void; // NEW: For toggling mobile sidebar
+  profileImage?: string | null;
 }
 
 export default function HeaderOther({
   collapsed = false, // ✅ NEW PROP
   isMobileOpen = false, // NEW: Default false
   onMobileToggle, // NEW: Handler
+  profileImage, // NEW: Destructure the prop
 }: HeaderOtherProps & { collapsed?: boolean }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -152,7 +154,14 @@ export default function HeaderOther({
         {/* Right: Avatar */}
         <div className="avatar-wrapper" ref={menuRef}>
           <div className="avatar" onClick={handleAvatarClick} style={{ cursor: "pointer" }}>
-            <img src="/person.jpg" alt="User Avatar" />
+            <img
+              src={ profileImage|| "/person.jpg"} // fallback if no profile image
+              alt="User Avatar"
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
+
             <span className="status"></span>
           </div>
 
