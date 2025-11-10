@@ -1,5 +1,5 @@
 import { authMiddleware } from "@/lib/authMiddleware";
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from "cloudinary";
 import { db } from "@/lib/db";
 import { users } from "@/lib/tables";
 import { eq } from "drizzle-orm";
@@ -25,13 +25,14 @@ export async function POST(req: NextRequest) {
 
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  // ✅ Use upload_stream inside a promise
-  const uploaded = await new Promise((resolve, reject) => {
+  // ✅ Typed upload_stream with proper result type
+  const uploaded: UploadApiResponse = await new Promise((resolve, reject) => {
     const upload = cloudinary.uploader.upload_stream(
       { folder: "profile_pics" },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
+      (error?: UploadApiErrorResponse, result?: UploadApiResponse) => {
+        if (error) return reject(error);
+        if (!result) return reject(new Error("Upload failed with no result"));
+        resolve(result);
       }
     );
 
@@ -41,12 +42,12 @@ export async function POST(req: NextRequest) {
   // ✅ Save URL to DB
   await db
     .update(users)
-    .set({ profile_image: (uploaded as any).secure_url })
+    .set({ profile_image: uploaded.secure_url })
     .where(eq(users.id, user.id));
 
   return NextResponse.json({
     success: true,
-    url: (uploaded as any).secure_url,
+    url: uploaded.secure_url,
   });
 }
 
