@@ -1,19 +1,17 @@
-// File: src/app/api/profile-image/[id]/route.ts
 import { db } from "@/lib/db";
 import { users } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const userId = params.id?.trim(); // removes whitespace/newlines
-
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params; // 👈 await the params object
+  const userId = id?.trim();
 
   if (!userId) {
     return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 });
   }
 
   try {
-    
     const userData = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { profile_image: true },
