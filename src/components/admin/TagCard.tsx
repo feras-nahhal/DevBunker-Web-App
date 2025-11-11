@@ -66,7 +66,9 @@ export default function TagCard({
 
   // NEW: Tag request menu items (admin-focused, call parent props – no direct API)
   const menuItems = [
-    {
+      ...(status === TAG_CATEGORY_STATUS.PENDING
+    ? [
+        {
       name: "Approve Request",
       icon: "/approve.png", // Your approve icon (add asset if needed)
       action: () => {
@@ -74,16 +76,45 @@ export default function TagCard({
         setMenuOpen(false);
         onApprove?.(); // FIXED: Call parent hook (handles API + reload)
       },
-    },
-    {
-      name: "Reject Request",
-      icon: "/reject.png", // Your reject icon (add asset if needed)
+        },
+        {
+          name: "Reject Request",
+          icon: "/reject.png", // Your reject icon (add asset if needed)
+          action: () => {
+            console.log("Reject clicked for tag request ID:", id); // Debug (remove in prod)
+            setMenuOpen(false);
+            onReject?.(); // FIXED: Call parent hook (handles API + reload)
+          },
+        },
+      ]
+    : []),
+    ...(status === TAG_CATEGORY_STATUS.APPROVED
+    ? [
+        {
+          name: "Reject Request",
+          icon: "/reject.png", // Your reject icon (add asset if needed)
+          action: () => {
+            console.log("Reject clicked for tag request ID:", id); // Debug (remove in prod)
+            setMenuOpen(false);
+            onReject?.(); // FIXED: Call parent hook (handles API + reload)
+          },
+        },
+      ]
+    : []),
+    ...(status === TAG_CATEGORY_STATUS.REJECTED
+    ? [
+        {
+      name: "Approve Request",
+      icon: "/approve.png", // Your approve icon (add asset if needed)
       action: () => {
-        console.log("Reject clicked for tag request ID:", id); // Debug (remove in prod)
+        console.log("Approve clicked for tag request ID:", id); // Debug (remove in prod)
         setMenuOpen(false);
-        onReject?.(); // FIXED: Call parent hook (handles API + reload)
+        onApprove?.(); // FIXED: Call parent hook (handles API + reload)
       },
-    },
+        },
+      ]
+    : []),
+    
     
   ];
 

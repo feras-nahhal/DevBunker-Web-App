@@ -64,26 +64,59 @@ export default function CategoryCard({
   }, []);
 
   // NEW: Category request menu items (admin-focused, call parent props – no direct API)
-  const menuItems = [
-    {
-      name: "Approve Request",
-      icon: "/approve.png", // Your approve icon (add asset if needed)
-      action: () => {
-        console.log("Approve clicked for category request ID:", id); // FIXED: "category request" (debug, remove in prod)
-        setMenuOpen(false);
-        onApprove?.(); // FIXED: Call parent hook (handles API + reload)
-      },
-    },
-    {
-      name: "Reject Request",
-      icon: "/reject.png", // Your reject icon (add asset if needed)
-      action: () => {
-        console.log("Reject clicked for category request ID:", id); // FIXED: "category request" (debug, remove in prod)
-        setMenuOpen(false);
-        onReject?.(); // FIXED: Call parent hook (handles API + reload)
-      },
-    },
-  ];
+// Only show approve/reject if status is PENDING
+const menuItems = [
+  ...(status === TAG_CATEGORY_STATUS.PENDING
+    ? [
+        {
+          name: "Approve Request",
+          icon: "/approve.png", // Your approve icon
+          action: () => {
+            console.log("Approve clicked for category request ID:", id); // Debug (remove in prod)
+            setMenuOpen(false);
+            onApprove?.(); // Call parent hook (handles API + reload)
+          },
+        },
+        {
+          name: "Reject Request",
+          icon: "/reject.png", // Your reject icon
+          action: () => {
+            console.log("Reject clicked for category request ID:", id); // Debug (remove in prod)
+            setMenuOpen(false);
+            onReject?.(); // Call parent hook (handles API + reload)
+          },
+        },
+      ]
+    : []),
+    ...(status === TAG_CATEGORY_STATUS.APPROVED
+    ? [
+        {
+          name: "Reject Request",
+          icon: "/reject.png", // Your reject icon
+          action: () => {
+            console.log("Reject clicked for category request ID:", id); // Debug (remove in prod)
+            setMenuOpen(false);
+            onReject?.(); // Call parent hook (handles API + reload)
+          },
+        },
+      ]
+    : []),
+      ...(status === TAG_CATEGORY_STATUS.REJECTED
+    ? [
+        {
+          name: "Approve Request",
+          icon: "/approve.png", // Your approve icon
+          action: () => {
+            console.log("Approve clicked for category request ID:", id); // Debug (remove in prod)
+            setMenuOpen(false);
+            onApprove?.(); // Call parent hook (handles API + reload)
+          },
+        }
+      ]
+    : []),
+     // If not PENDING, show no menu items (or add others like "View" if needed)
+];
+
 
   const handleCheckboxChange = (checked: boolean) => {
     onSelect?.(id, checked);

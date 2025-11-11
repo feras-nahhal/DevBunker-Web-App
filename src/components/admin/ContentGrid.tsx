@@ -11,6 +11,7 @@ import Image from "next/image";
 import CategoryGridSkeleton from "./CategoryGridSkeleton";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; 
+import SharePopup from "../content/SharePopup";
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
 }
@@ -26,6 +27,11 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [statusSearch, setStatusSearch] = useState("");
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+   const [selectedShareData, setSelectedShareData] = useState<{
+    id: string;
+    title: string;
+    type: "post" | "mindmap" | "research";
+  } | null>(null);
 
   // Category multi-select
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -696,6 +702,7 @@ const clearAllFilters = () => {
                 onDelete={() => handleDelete(card.id, card.content_type)}
                 onOpenComments={() => handleOpenComments(card)}
                 commentCount={commentCounts[card.id] || 0}// ✅ pass count
+                onOpenShare={(data) => setSelectedShareData(data)}
               />
             ))
           )}
@@ -863,6 +870,18 @@ const clearAllFilters = () => {
           onAddComment={handleAddComment}
         />
       )}
+
+      {/* Share Popup */}
+            {selectedShareData && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+                <SharePopup
+                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/explore?id=${selectedShareData.id}`}
+                  title={selectedShareData.title}
+                  type={selectedShareData.type}
+                  onClose={() => setSelectedShareData(null)}
+                />
+              </div>
+            )}
     </>
   );
 }

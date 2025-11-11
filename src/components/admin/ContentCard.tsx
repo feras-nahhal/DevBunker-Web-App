@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useBookmarksAndReadLater } from "@/hooks/useBookmarksAndReadLater";
-import { useComments } from "@/hooks/useComments";
+import { CONTENT_STATUS } from "@/lib/enums"; // Add this import if not present
 import Image from "next/image";
 
 interface ContentCardProps {
@@ -20,6 +20,7 @@ interface ContentCardProps {
   onSelect?: (id: string, checked: boolean) => void;
   onDelete?: () => void;
   onOpenComments?: () => void;
+  onOpenShare?: (data: { id: string; title: string; type: "post" | "mindmap" | "research" }) => void;
   commentCount?: number;
 }
 
@@ -38,6 +39,7 @@ export default function ContentCard({
   onDelete,
   onOpenComments,
   commentCount = 0,
+  onOpenShare,
 }: ContentCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -67,72 +69,133 @@ export default function ContentCard({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const menuItems = [
-        {
-      name: `View Research  ${commentCount}`, // FIXED: Fallback to 0 if no comments
-      icon: "/reserchlogo.png",
-      action: () => {
-        console.log('Comments clicked for ID:', id); // FIXED: Debug log
-        setMenuOpen(false); // FIXED: Close menu
-        onOpenComments?.(); // FIXED: Safe call (opens popup if provided)
-      },
-    },
-    
-    { name: "Share", icon: "/sharelogo.png", action: () => {} },
-    // ✅ NEW: Approve content
-  {
-  name: "Approve Content",
-  icon: "/approve.png", // ✅ your approve icon
-  action: async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      await fetch(`/api/admin/content/${id}/approve`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      window.location.reload();
-    } catch {
-      // no console or alert
-    }
-    setMenuOpen(false);
-  },
-},
-{
-  name: "Reject Content",
-  icon: "/reject.png", // ✅ your reject icon
-  action: async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      await fetch(`/api/admin/content/${id}/reject`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      window.location.reload();
-    } catch {
-      // no console or alert
-    }
-    setMenuOpen(false);
-  },
-},
+  const handleShareClick = () => {
+    if (onOpenShare) onOpenShare({ id, title, type });
+  };
 
-    {
-      name: "Delete",
-      icon: "/deletelogo.png",
-      action: () => {
-        console.log('Delete clicked for ID:', id); // FIXED: Debug log
-        setMenuOpen(false); // FIXED: Close menu
-        onDelete?.(); // FIXED: Safe call (deletes via parent)
-      },
+ 
+
+// ... (rest of your component code)
+
+const menuItems = [
+  {
+    name: `View Research ${commentCount}`, // Always show
+    icon: "/reserchlogo.png",
+    action: () => {
+      console.log('Comments clicked for ID:', id);
+      setMenuOpen(false);
+      onOpenComments?.();
     },
-  ];
+  },
+  { name: "Share",
+      icon: "/sharelogo.png",
+      action: handleShareClick, }, // Always show
+  // Conditionally show approve/reject based on status
+  ...(status === CONTENT_STATUS.PENDING_APPROVAL
+    ? [
+        {
+          name: "Approve Content",
+          icon: "/approve.png",
+          action: async () => {
+            try {
+              const token = localStorage.getItem("token");
+              if (!token) return;
+              await fetch(`/api/admin/content/${id}/approve`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              window.location.reload();
+            } catch {
+              // No console or alert
+            }
+            setMenuOpen(false);
+          },
+        },
+        {
+          name: "Reject Content",
+          icon: "/reject.png",
+          action: async () => {
+            try {
+              const token = localStorage.getItem("token");
+              if (!token) return;
+              await fetch(`/api/admin/content/${id}/reject`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              window.location.reload();
+            } catch {
+              // No console or alert
+            }
+            setMenuOpen(false);
+          },
+        },
+      ]
+    : status === CONTENT_STATUS.PUBLISHED
+    ? [
+        {
+          name: "Reject Content",
+          icon: "/reject.png",
+          action: async () => {
+            try {
+              const token = localStorage.getItem("token");
+              if (!token) return;
+              await fetch(`/api/admin/content/${id}/reject`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              window.location.reload();
+            } catch {
+              // No console or alert
+            }
+            setMenuOpen(false);
+          },
+        },
+      ]
+    : status === CONTENT_STATUS.REJECTED
+    ? [
+        {
+          name: "Approve Content",
+          icon: "/approve.png",
+          action: async () => {
+            try {
+              const token = localStorage.getItem("token");
+              if (!token) return;
+              await fetch(`/api/admin/content/${id}/approve`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              window.location.reload();
+            } catch {
+              // No console or alert
+            }
+            setMenuOpen(false);
+          },
+        },
+      ]
+    : []), // Fallback: no approve/reject if status is invalid
+  {
+    name: "Delete",
+    icon: "/deletelogo.png",
+    action: () => {
+      console.log('Delete clicked for ID:', id);
+      setMenuOpen(false);
+      onDelete?.();
+    },
+  },
+];
+
 
   const handleCheckboxChange = (checked: boolean) => {
     onSelect?.(id, checked);
