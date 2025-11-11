@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-
+import { Bell } from "lucide-react";
 interface NotificationsCardProps {
   id: string;
   title: string;
@@ -72,15 +72,9 @@ export default function NotificationsCard({
           boxSizing: "border-box",
         }}
       >
-        {/* ✅ Avatar */}
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-400 shrink-0 flex items-center justify-center relative">
-          <Image
-            src="/person.jpg"
-            alt="Avatar"
-            width={40}
-            height={40}
-            className="w-full h-full object-cover"
-          />
+        {/* ✅ Bell Icon */}
+        <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0">
+          <Bell className="w-5 h-5 text-white" />
         </div>
 
         {/* ✅ Main Content */}

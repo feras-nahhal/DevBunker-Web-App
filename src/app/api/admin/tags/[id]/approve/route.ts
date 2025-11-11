@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { tags, tag_requests } from "@/lib/tables";
+import { tags, tag_requests, notifications } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
@@ -44,6 +44,14 @@ export async function PUT(req: NextRequest, context: RouteParams): Promise<NextR
       created_by: request.user_id,
       status: "approved",
     }).returning();
+
+    // 4️. Send a notification to the requester
+    await db.insert(notifications).values({
+      user_id: request.user_id,
+      title: "Your tag request has been approved",
+      message: `Your tag request for "${request.tag_name}" has been approved and added to the platform.`,
+      type: "TAG_APPROVAL",
+    });
 
     return NextResponse.json({ success: true, message: "Tag approved and created", tag });
   } catch (err: unknown) {

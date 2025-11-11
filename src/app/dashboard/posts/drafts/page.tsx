@@ -14,7 +14,7 @@ import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll o
 
 export default function PostDraftPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuthContext();
+  const { user, loading, isAuthenticated, profileImage } = useAuthContext();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
 
@@ -195,6 +195,7 @@ export default function PostDraftPage() {
             collapsed={sidebarCollapsed}
             isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
             onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+            profileImage={profileImage}  // NEW: Pass profile image
           />
   
           {/* Mindmap / Draft header */}
@@ -266,6 +267,7 @@ export default function PostDraftPage() {
                 collapsed={sidebarCollapsed}
                 isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
                 onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                profileImage={profileImage}  // NEW: Pass profile image
               />
 
         <div className="post-container">

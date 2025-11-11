@@ -11,7 +11,6 @@ import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import type { AppState, BinaryFileData } from "@excalidraw/excalidraw/types";
 import dynamic from 'next/dynamic';
 
-
 type ApiComment = {
   id: string;
   text: string;
@@ -23,7 +22,6 @@ type ApiComment = {
   replies?: ApiComment[];
   author?: string | null;
   date?: string | null;
- 
 };
 
 interface CommentsPopupProps {
@@ -49,54 +47,58 @@ export default function CommentsPopup({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeReplies, setActiveReplies] = useState<{ [key: string]: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  // ✅ New state for comment author profile images
+  const [commentAuthorImages, setCommentAuthorImages] = useState<Record<string, string>>({});
+
   const memoizedMindmap = useMemo(() => {
-  if (!excalidraw_data) return null;
-  try {
-    const rawData = JSON.parse(JSON.stringify(excalidraw_data));
-    const Excalidraw = dynamic(
-      () => import('@excalidraw/excalidraw').then((mod) => mod.Excalidraw),
-      { ssr: false }
-    );
+    if (!excalidraw_data) return null;
+    try {
+      const rawData = JSON.parse(JSON.stringify(excalidraw_data));
+      const Excalidraw = dynamic(
+        () => import('@excalidraw/excalidraw').then((mod) => mod.Excalidraw),
+        { ssr: false }
+      );
 
-    const deepCloneMutable = <T,>(obj: T): T => {
-      if (obj === null || typeof obj !== 'object') return obj;
-      if (Array.isArray(obj)) return obj.map(deepCloneMutable) as T;
-      const cloned = {} as T;
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          cloned[key] = deepCloneMutable(obj[key]);
+      const deepCloneMutable = <T,>(obj: T): T => {
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(deepCloneMutable) as T;
+        const cloned = {} as T;
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            cloned[key] = deepCloneMutable(obj[key]);
+          }
         }
-      }
-      return cloned;
-    };
+        return cloned;
+      };
 
-    const initialData = {
-      elements: deepCloneMutable(rawData.elements) as ExcalidrawElement[],
-      appState: deepCloneMutable(rawData.appState || {}) as AppState,
-      files: deepCloneMutable(rawData.files || {}) as Record<string, BinaryFileData>,
-    };
+      const initialData = {
+        elements: deepCloneMutable(rawData.elements) as ExcalidrawElement[],
+        appState: deepCloneMutable(rawData.appState || {}) as AppState,
+        files: deepCloneMutable(rawData.files || {}) as Record<string, BinaryFileData>,
+      };
 
-    return (
-      <Excalidraw
-        initialData={initialData}
-        viewModeEnabled={true}
-        theme="dark"
-        UIOptions={{
-          canvasActions: { export: false },
-          tools: { image: false },
-        }}
-      />
-    );
-  } catch (e) {
-    console.error("Error rendering mindmap:", e);
-    return (
-      <div className="text-red-400 text-sm">
-        ⚠️ Unable to display mindmap due to data compatibility issues.
-        Error: {e instanceof Error ? e.message : 'Unknown error'}
-      </div>
-    );
-  }
-}, [excalidraw_data]);
+      return (
+        <Excalidraw
+          initialData={initialData}
+          viewModeEnabled={true}
+          theme="dark"
+          UIOptions={{
+            canvasActions: { export: false },
+            tools: { image: false },
+          }}
+        />
+      );
+    } catch (e) {
+      console.error("Error rendering mindmap:", e);
+      return (
+        <div className="text-red-400 text-sm">
+          ⚠️ Unable to display mindmap due to data compatibility issues.
+          Error: {e instanceof Error ? e.message : 'Unknown error'}
+        </div>
+      );
+    }
+  }, [excalidraw_data]);
 
   useEffect(() => {
     if (id) fetchTags(id);
@@ -105,11 +107,48 @@ export default function CommentsPopup({
   const { references, loading: refsLoading, error: refsError } = useReferences(id);
   const { tags, loading: tagsLoading, error: tagsError, fetchTags } = useContentTags();
 
-    useEffect(() => {
-      if (id) fetchTags(id);
-    }, [id]);
+  useEffect(() => {
+    if (id) fetchTags(id);
+  }, [id]);
 
+  // ✅ New useEffect: Fetch profile images for comment authors after comments are loaded
+  useEffect(() => {
+    console.log("useEffect triggered: comments =", comments);
+    if (comments.length === 0) {
+      console.log("No comments, skipping fetch");
+      return;
+    }
 
+    const extractAuthorIds = (comments: ApiComment[]): string[] => {
+      const ids: string[] = [];
+      comments.forEach((comment) => {
+        console.log("Processing comment:", comment.id, "user_id:", comment.user_id);
+        if (comment.user_id) ids.push(comment.user_id);
+        if (comment.replies) ids.push(...extractAuthorIds(comment.replies));
+      });
+      return Array.from(new Set(ids)); // Remove duplicates
+    };
+
+    const authorIds = extractAuthorIds(comments);
+    console.log("Extracted authorIds:", authorIds);
+    if (authorIds.length === 0) {
+      console.log("No author IDs found, skipping fetch");
+      return;
+    }
+
+    console.log("Fetching profile images for IDs:", authorIds);
+    fetch(`/api/profile-images?ids=${authorIds.join(",")}`)
+      .then((res) => res.json())
+      .then((json) => {
+        console.log("Profile images response:", json);
+        if (json.success) setCommentAuthorImages(json.images);
+        else setCommentAuthorImages({});
+      })
+      .catch((err) => {
+        console.error("Failed to fetch comment author profile images:", err);
+        setCommentAuthorImages({});
+      });
+  }, [comments]); // Re-run when comments change
 
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
@@ -207,11 +246,11 @@ export default function CommentsPopup({
     const isActive = activeReplies[comment.id] !== undefined;
     const [replyText, setReplyText] = useState(activeReplies[comment.id] || "");
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  
+
     useEffect(() => {
       setReplyText(activeReplies[comment.id] || "");
     }, [activeReplies[comment.id], comment.id]);
-  
+
     useEffect(() => {
       if (isActive && textareaRef.current) {
         textareaRef.current.focus();
@@ -219,17 +258,21 @@ export default function CommentsPopup({
         textareaRef.current.selectionEnd = textareaRef.current.value.length;
       }
     }, [isActive]);
-  
+
     return (
       <div className={`flex gap-1 p-2 bg-transparent border-b border-[#918AAB26]`}>
-        <Image
-          src={comment.authorAvatar || "/person.jpg"}
+        <img
+          src={
+            commentAuthorImages[comment.user_id || ""] || // ✅ Use comment author's image
+            comment.authorAvatar || // Fallback to comment's authorAvatar if available
+            "/person.jpg" // Final fallback
+          }
           alt={getAuthorDisplay(comment)}
           width={40}
           height={40}
           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
         />
-  
+
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start flex-wrap gap-2">
             <div>
@@ -242,7 +285,7 @@ export default function CommentsPopup({
                 </span>
               </div>
             </div>
-  
+
             {/* 🟢 Show Reply button only for top-level comments */}
             {level === 0 && (
               <button
@@ -255,9 +298,9 @@ export default function CommentsPopup({
               </button>
             )}
           </div>
-  
+
           <p className="text-white text-sm mt-1 mb-2">{comment.text}</p>
-  
+
           {/* 🟢 Reply input only for top-level */}
           {level === 0 && isActive && (
             <div className="flex flex-col w-full gap-2 mt-2 p-3 bg-transparent rounded-lg">
@@ -293,7 +336,7 @@ export default function CommentsPopup({
               </div>
             </div>
           )}
-  
+
           {/* 🔁 Nested replies (keep showing them, just no reply button inside) */}
           {(comment.replies ?? []).length > 0 && (
             <div className={`mt-3 ${level > 0 ? "ml-3" : "ml-6"}`}>
@@ -306,7 +349,6 @@ export default function CommentsPopup({
       </div>
     );
   };
-  
 
   return (
     <>
@@ -326,7 +368,7 @@ export default function CommentsPopup({
             ×
           </button>
 
-           {/* Title */}
+          {/* Title */}
           <div className="flex justify-center items-center mb-4 w-full">
             <h2
               className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-left text-left"
@@ -348,128 +390,125 @@ export default function CommentsPopup({
             </h2>
           </div>
 
-           {/* 🧠 Mind Map Viewer (Replaced ReactFlow with Excalidraw) */}
-          
-                    {excalidraw_data && (
-                    <div
-                      style={{
-                        width: "100%",
-                        maxWidth: "855px",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start", // ✅ ensures label + box align left
-                      }}
-                    >
-                      <label
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: 500,
-                          color: "white",
-                          marginBottom: "6px",
-                          textAlign: "left",
-                        }}
-                      >
-                        Mindmap
-                      </label>
-              
-                      <div
-                        style={{
-                          width: "100%",
-                          maxWidth: "855px",
-                          height: "415px",
-                          border: "1px solid rgba(80, 80, 80, 0.24)",
-                          borderRadius: "16px",
-                          background: "rgba(255, 255, 255, 0.02)",
-                          padding: "8px",
-                          marginBottom: "8px",
-                        }}
-                        
-                      >
-                 
-          
-                        <div style={{ width: "100%", height: "400px" }}>
-                          <React.Suspense fallback={<div className="text-white text-sm">Loading mind map...</div>}>
-                            {memoizedMindmap}
-                          </React.Suspense>
-                        </div>
-                      </div>
-                       </div>
-                    )}
+          {/* 🧠 Mind Map Viewer (Replaced ReactFlow with Excalidraw) */}
+          {excalidraw_data && (
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "855px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start", // ✅ ensures label + box align left
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  color: "white",
+                  marginBottom: "6px",
+                  textAlign: "left",
+                }}
+              >
+                Mindmap
+              </label>
+
+              <div
+                style={{
+                  width: "100%",
+                  maxWidth: "855px",
+                  height: "415px",
+                  border: "1px solid rgba(80, 80, 80, 0.24)",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  padding: "8px",
+                  marginBottom: "8px",
+                }}
+              >
+                <div style={{ width: "100%", height: "400px" }}>
+                  <React.Suspense fallback={<div className="text-white text-sm">Loading mind map...</div>}>
+                    {memoizedMindmap}
+                  </React.Suspense>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {/* Content Body */}
           {content_body && (
             <div
-              style={{ maxWidth: "853px", width: "100%"}}
+              style={{ maxWidth: "853px", width: "100%" }}
               dangerouslySetInnerHTML={{ __html: content_body }}
             />
           )}
 
           {/* New Comment */}
           <div className="w-full mb-4 flex flex-col items-center">
+            {/* Tags section */}
+            {tags && tags.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
+                <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>Tags</label>
 
-
-             {/* Tags section */}
-          {tags && tags.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
-              <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>Tags</label>
-
-              <div
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  border: "1px solid rgba(80, 80, 80, 0.24)",
-                  borderRadius: "16px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  padding: "8px",
-                  height: "64px",
-                  minHeight: "44px",
-                  display: "flex",
-                  flexDirection: "column",
-                  marginBottom: "8px",
-                }}
-              >
                 <div
                   style={{
+                    position: "relative",
+                    width: "100%",
+                    border: "1px solid rgba(80, 80, 80, 0.24)",
+                    borderRadius: "16px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    padding: "8px",
+                    height: "64px",
+                    minHeight: "44px",
                     display: "flex",
-                    flexWrap: "wrap",
-                    gap: "4px",
-                    alignItems: "center",
-                    flex: 1,
+                    flexDirection: "column",
+                    marginBottom: "8px",
                   }}
                 >
-                  {tags.map((tag) => (
-                    <div
-                      key={tag.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "4px 8px",
-                        borderRadius: "99px",
-                        background: "rgba(145, 158, 171, 0.12)",
-                        color: "white",
-                        height: "32px",
-                        fontSize: "12px",
-                        maxWidth: "150px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      <span
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px",
+                      alignItems: "center",
+                      flex: 1,
+                    }}
+                  >
+                    {tags.map((tag) => (
+                      <div
+                        key={tag.id}
                         style={{
-                          flex: 1,
-                          whiteSpace: "nowrap",
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "4px 8px",
+                          borderRadius: "99px",
+                          background: "rgba(145, 158, 171, 0.12)",
+                          color: "white",
+                          height: "32px",
+                          fontSize: "12px",
+                          maxWidth: "150px",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }}
                       >
-                        {tag.name}
-                      </span>
-                    </div>
-                  ))}
+                        <span
+                          style={{
+                            flex: 1,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {tag.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+
 
                 {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
             {references.length > 0 && (

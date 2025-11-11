@@ -1,10 +1,15 @@
 "use client";
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useReferences } from "@/hooks/useReferences";
 import { useContentTags } from "@/hooks/useContentTags";
+import React from "react";
 
+// ✅ Add Excalidraw imports for viewing mindmaps
+import "@excalidraw/excalidraw/index.css";
+import type { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import type { AppState, BinaryFileData } from "@excalidraw/excalidraw/types";
+import dynamic from 'next/dynamic';
 
 type ApiComment = {
   id: string;
@@ -24,7 +29,7 @@ interface CommentsPopupProps {
   title: string;
   content_body: string;
   comments: ApiComment[];
-  
+  excalidraw_data?: Record<string, unknown>;
   onClose: () => void;
   onAddComment: (text: string, parentId?: string) => Promise<void>;
 }
@@ -34,7 +39,7 @@ export default function CommentsPopup({
   title,
   content_body,
   comments = [],
-  
+  excalidraw_data,
   onClose,
   onAddComment,
 }: CommentsPopupProps) {
@@ -43,14 +48,107 @@ export default function CommentsPopup({
   const [activeReplies, setActiveReplies] = useState<{ [key: string]: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
 
+  // ✅ New state for comment author profile images
+  const [commentAuthorImages, setCommentAuthorImages] = useState<Record<string, string>>({});
+
+  const memoizedMindmap = useMemo(() => {
+    if (!excalidraw_data) return null;
+    try {
+      const rawData = JSON.parse(JSON.stringify(excalidraw_data));
+      const Excalidraw = dynamic(
+        () => import('@excalidraw/excalidraw').then((mod) => mod.Excalidraw),
+        { ssr: false }
+      );
+
+      const deepCloneMutable = <T,>(obj: T): T => {
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(deepCloneMutable) as T;
+        const cloned = {} as T;
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            cloned[key] = deepCloneMutable(obj[key]);
+          }
+        }
+        return cloned;
+      };
+
+      const initialData = {
+        elements: deepCloneMutable(rawData.elements) as ExcalidrawElement[],
+        appState: deepCloneMutable(rawData.appState || {}) as AppState,
+        files: deepCloneMutable(rawData.files || {}) as Record<string, BinaryFileData>,
+      };
+
+      return (
+        <Excalidraw
+          initialData={initialData}
+          viewModeEnabled={true}
+          theme="dark"
+          UIOptions={{
+            canvasActions: { export: false },
+            tools: { image: false },
+          }}
+        />
+      );
+    } catch (e) {
+      console.error("Error rendering mindmap:", e);
+      return (
+        <div className="text-red-400 text-sm">
+          ⚠️ Unable to display mindmap due to data compatibility issues.
+          Error: {e instanceof Error ? e.message : 'Unknown error'}
+        </div>
+      );
+    }
+  }, [excalidraw_data]);
+
+  useEffect(() => {
+    if (id) fetchTags(id);
+  }, [id]);
+
   const { references, loading: refsLoading, error: refsError } = useReferences(id);
   const { tags, loading: tagsLoading, error: tagsError, fetchTags } = useContentTags();
 
-    useEffect(() => {
-      if (id) fetchTags(id);
-    }, [id]);
+  useEffect(() => {
+    if (id) fetchTags(id);
+  }, [id]);
 
+  // ✅ New useEffect: Fetch profile images for comment authors after comments are loaded
+  useEffect(() => {
+    console.log("useEffect triggered: comments =", comments);
+    if (comments.length === 0) {
+      console.log("No comments, skipping fetch");
+      return;
+    }
 
+    const extractAuthorIds = (comments: ApiComment[]): string[] => {
+      const ids: string[] = [];
+      comments.forEach((comment) => {
+        console.log("Processing comment:", comment.id, "user_id:", comment.user_id);
+        if (comment.user_id) ids.push(comment.user_id);
+        if (comment.replies) ids.push(...extractAuthorIds(comment.replies));
+      });
+      return Array.from(new Set(ids)); // Remove duplicates
+    };
+
+    const authorIds = extractAuthorIds(comments);
+    console.log("Extracted authorIds:", authorIds);
+    if (authorIds.length === 0) {
+      console.log("No author IDs found, skipping fetch");
+      return;
+    }
+
+    console.log("Fetching profile images for IDs:", authorIds);
+    fetch(`/api/profile-images?ids=${authorIds.join(",")}`)
+      .then((res) => res.json())
+      .then((json) => {
+        console.log("Profile images response:", json);
+        if (json.success) setCommentAuthorImages(json.images);
+        else setCommentAuthorImages({});
+      })
+      .catch((err) => {
+        console.error("Failed to fetch comment author profile images:", err);
+        setCommentAuthorImages({});
+      });
+  }, [comments]); // Re-run when comments change
 
   useEffect(() => {
     const handleOverlayClick = (e: MouseEvent) => {
@@ -145,109 +243,112 @@ export default function CommentsPopup({
   };
 
   const CommentItem = ({ comment, level = 0 }: { comment: ApiComment; level?: number }) => {
-  const isActive = activeReplies[comment.id] !== undefined;
-  const [replyText, setReplyText] = useState(activeReplies[comment.id] || "");
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const isActive = activeReplies[comment.id] !== undefined;
+    const [replyText, setReplyText] = useState(activeReplies[comment.id] || "");
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useEffect(() => {
-    setReplyText(activeReplies[comment.id] || "");
-  }, [activeReplies[comment.id], comment.id]);
+    useEffect(() => {
+      setReplyText(activeReplies[comment.id] || "");
+    }, [activeReplies[comment.id], comment.id]);
 
-  useEffect(() => {
-    if (isActive && textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.selectionStart = textareaRef.current.value.length;
-      textareaRef.current.selectionEnd = textareaRef.current.value.length;
-    }
-  }, [isActive]);
+    useEffect(() => {
+      if (isActive && textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.selectionStart = textareaRef.current.value.length;
+        textareaRef.current.selectionEnd = textareaRef.current.value.length;
+      }
+    }, [isActive]);
 
-  return (
-    <div className={`flex gap-1 p-2 bg-transparent border-b border-[#918AAB26]`}>
-      <Image
-        src={comment.authorAvatar || "/person.jpg"}
-        alt={getAuthorDisplay(comment)}
-        width={40}
-        height={40}
-        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-      />
+    return (
+      <div className={`flex gap-1 p-2 bg-transparent border-b border-[#918AAB26]`}>
+        <img
+          src={
+            commentAuthorImages[comment.user_id || ""] || // ✅ Use comment author's image
+            comment.authorAvatar || // Fallback to comment's authorAvatar if available
+            "/person.jpg" // Final fallback
+          }
+          alt={getAuthorDisplay(comment)}
+          width={40}
+          height={40}
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        />
 
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start flex-wrap gap-2">
-          <div>
-            <div className="flex flex-col gap-0">
-              <span className="text-white font-semibold text-sm">
-                {getAuthorDisplay(comment)}
-              </span>
-              <span className="text-gray-400 text-xs">
-                • {formatDate(comment.created_at ?? comment.date)}
-              </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start flex-wrap gap-2">
+            <div>
+              <div className="flex flex-col gap-0">
+                <span className="text-white font-semibold text-sm">
+                  {getAuthorDisplay(comment)}
+                </span>
+                <span className="text-gray-400 text-xs">
+                  • {formatDate(comment.created_at ?? comment.date)}
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* 🟢 Show Reply button only for top-level comments */}
-          {level === 0 && (
-            <button
-              onClick={() => toggleReplyInput(comment.id)}
-              className="relative w-[80px] h-[24px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-              disabled={isSubmitting}
-            >
-              <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.5)_0%,transparent_70%)] blur-md" />
-              <span className="relative z-10">Reply</span>
-            </button>
-          )}
-        </div>
-
-        <p className="text-white text-sm mt-1 mb-2">{comment.text}</p>
-
-        {/* 🟢 Reply input only for top-level */}
-        {level === 0 && isActive && (
-          <div className="flex flex-col w-full gap-2 mt-2 p-3 bg-transparent rounded-lg">
-            <textarea
-              ref={textareaRef}
-              value={replyText}
-              onChange={(e) => {
-                const val = e.target.value;
-                setReplyText(val);
-                setActiveReplies((prev) => ({ ...prev, [comment.id]: val }));
-              }}
-              placeholder={`Reply to ${getAuthorDisplay(comment)}...`}
-              className="w-full h-[60px] p-2 bg-transparent border border-[#918AAB26] rounded-[4px] text-white text-sm resize-vertical focus:outline-none"
-              rows={2}
-              maxLength={200}
-              disabled={isSubmitting}
-            />
-            <div className="flex justify-end gap-2">
+            {/* 🟢 Show Reply button only for top-level comments */}
+            {level === 0 && (
               <button
                 onClick={() => toggleReplyInput(comment.id)}
-                className="text-gray-400 text-xs hover:text-white"
+                className="relative w-[80px] h-[24px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
                 disabled={isSubmitting}
               >
-                Cancel
+                <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.5)_0%,transparent_70%)] blur-md" />
+                <span className="relative z-10">Reply</span>
               </button>
-              <button
-                onClick={() => handleReplySubmit(comment.id)}
-                className="w-[80px] h-[28px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02]"
-                disabled={isSubmitting || !replyText.trim()}
-              >
-                {isSubmitting ? "..." : "Post Reply"}
-              </button>
+            )}
+          </div>
+
+          <p className="text-white text-sm mt-1 mb-2">{comment.text}</p>
+
+          {/* 🟢 Reply input only for top-level */}
+          {level === 0 && isActive && (
+            <div className="flex flex-col w-full gap-2 mt-2 p-3 bg-transparent rounded-lg">
+              <textarea
+                ref={textareaRef}
+                value={replyText}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setReplyText(val);
+                  setActiveReplies((prev) => ({ ...prev, [comment.id]: val }));
+                }}
+                placeholder={`Reply to ${getAuthorDisplay(comment)}...`}
+                className="w-full h-[60px] p-2 bg-transparent border border-[#918AAB26] rounded-[4px] text-white text-sm resize-vertical focus:outline-none"
+                rows={2}
+                maxLength={200}
+                disabled={isSubmitting}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => toggleReplyInput(comment.id)}
+                  className="text-gray-400 text-xs hover:text-white"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleReplySubmit(comment.id)}
+                  className="w-[80px] h-[28px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02]"
+                  disabled={isSubmitting || !replyText.trim()}
+                >
+                  {isSubmitting ? "..." : "Post Reply"}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 🔁 Nested replies (keep showing them, just no reply button inside) */}
-        {(comment.replies ?? []).length > 0 && (
-          <div className={`mt-3 ${level > 0 ? "ml-3" : "ml-6"}`}>
-            {(comment.replies ?? []).map((r) => (
-              <CommentItem key={r.id} comment={r} level={level + 1} />
-            ))}
-          </div>
-        )}
+          {/* 🔁 Nested replies (keep showing them, just no reply button inside) */}
+          {(comment.replies ?? []).length > 0 && (
+            <div className={`mt-3 ${level > 0 ? "ml-3" : "ml-6"}`}>
+              {(comment.replies ?? []).map((r) => (
+                <CommentItem key={r.id} comment={r} level={level + 1} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
-
+    );
+  };
 
   return (
     <>
@@ -256,8 +357,8 @@ export default function CommentsPopup({
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       >
         <div
-          className="relative custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto"
-          style={{ width: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
+          className="relative custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto overflow-x-hidden"
+          style={{ width: "95%", maxWidth: "920px", maxHeight: "90vh", boxSizing: "border-box", paddingRight: "12px" }}
         >
           {/* Close button */}
           <button
@@ -272,16 +373,16 @@ export default function CommentsPopup({
             <h2
               className="font-publicSans font-bold text-[24px] leading-[36px] flex items-center justify-left text-left"
               style={{
-                width: "853px",
-                height: "72px",
-                background: "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
+                width: "100%",
+                maxWidth: "853px",
+                background:
+                  "radial-gradient(137.85% 214.06% at 50% 50%, #FFFFFF 0%, #5BE49B 50%, rgba(255, 255, 255, 0.4) 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
                 fontWeight: 700,
                 fontSize: "24px",
                 lineHeight: "36px",
-                textAlign: "center",
                 fontFamily: "'Public Sans', sans-serif",
               }}
             >
@@ -289,46 +390,90 @@ export default function CommentsPopup({
             </h2>
           </div>
 
+          {/* 🧠 Mind Map Viewer (Replaced ReactFlow with Excalidraw) */}
+          {excalidraw_data && (
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "855px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start", // ✅ ensures label + box align left
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  color: "white",
+                  marginBottom: "6px",
+                  textAlign: "left",
+                }}
+              >
+                Mindmap
+              </label>
+
+              <div
+                style={{
+                  width: "100%",
+                  maxWidth: "855px",
+                  height: "415px",
+                  border: "1px solid rgba(80, 80, 80, 0.24)",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  padding: "8px",
+                  marginBottom: "8px",
+                }}
+              >
+                <div style={{ width: "100%", height: "400px" }}>
+                  <React.Suspense fallback={<div className="text-white text-sm">Loading mind map...</div>}>
+                    {memoizedMindmap}
+                  </React.Suspense>
+                </div>
+              </div>
+            </div>
+          )}
+
+
           {/* Content Body */}
           {content_body && (
             <div
-              style={{ maxWidth: "853px", width: "100%"}}
+              style={{ maxWidth: "853px", width: "100%" }}
               dangerouslySetInnerHTML={{ __html: content_body }}
             />
           )}
 
           {/* New Comment */}
           <div className="w-full mb-4 flex flex-col items-center">
-
-
-            {/* ✅ Tags section (before comment input box, with label and pill container design) */}
-            {tags.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+            {/* Tags section */}
+            {tags && tags.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
                 <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>Tags</label>
 
-                {/* Unified tag display container (pills in box, no input/dropdown since view-only) */}
-                <div style={{ 
-                  position: "relative", 
-                  width: "855px",
-                  border: "1px solid rgba(80, 80, 80, 0.24)",
-                  borderRadius: "16px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  padding: "8px",
-                  height: "64px",
-                  minHeight: "44px",
-                  display: "flex",
-                  flexDirection: "column",
-                  marginBottom: "8px",
-                }}>
-                  {/* Pills Row (flex wrap for multi-line if many pills) */}
-                  <div style={{ 
-                    display: "flex", 
-                    flexWrap: "wrap", 
-                    gap: "4px", 
-                    alignItems: "center",
-                    flex: 1,
-                  }}>
-                    {/* Display tags as pills (no remove ×, just design) */}
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    border: "1px solid rgba(80, 80, 80, 0.24)",
+                    borderRadius: "16px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    padding: "8px",
+                    height: "64px",
+                    minHeight: "44px",
+                    display: "flex",
+                    flexDirection: "column",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px",
+                      alignItems: "center",
+                      flex: 1,
+                    }}
+                  >
                     {tags.map((tag) => (
                       <div
                         key={tag.id}
@@ -346,8 +491,15 @@ export default function CommentsPopup({
                           textOverflow: "ellipsis",
                         }}
                       >
-                        <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                         {tag.name}
+                        <span
+                          style={{
+                            flex: 1,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {tag.name}
                         </span>
                       </div>
                     ))}
@@ -356,15 +508,17 @@ export default function CommentsPopup({
               </div>
             )}
 
+
+
                 {/* 🟢 References section (below tags, styled like a vertical list of transparent pills) */}
             {references.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "855px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", maxWidth: "855px" }}>
                 <label style={{ fontSize: "16px", fontWeight: 500, color: "white" }}>References</label>
 
                 <div
                   style={{
                     position: "relative",
-                    width: "855px",
+                    width: "100%",
                     border: "1px solid rgba(80, 80, 80, 0.24)",
                     borderRadius: "16px",
                     background: "rgba(255, 255, 255, 0.05)",
@@ -409,63 +563,52 @@ export default function CommentsPopup({
               </div>
             )}
 
-            {refsLoading && <p style={{ color: "gray", fontSize: "12px" }}>Loading references...</p>}
-            {refsError && <p style={{ color: "red", fontSize: "12px" }}>{refsError}</p>}
-            {!refsLoading && references.length === 0 && (
-              <p style={{ color: "gray", fontSize: "12px" }}>No references found.</p>
-            )}
-
-
-
-
-
-
-
+           
             {/* Label with superscript counter */}
-            <div className="w-[855px] flex justify-start items-center mb-2">
-              <label className="text-white font-bold text-[20px] leading-[22px] font-public-sans">
-                Comments
-                <sup className="text-gray-400 text-xs ml-1">{200 - newCommentText.length}</sup>
-              </label>
-            </div>
+          <div className="w-full max-w-[855px] flex justify-start items-center mb-2 px-2 sm:px-0">
+            <label className="text-white font-bold text-[18px] sm:text-[20px] leading-[22px] font-public-sans">
+              Comments
+              <sup className="text-gray-400 text-xs ml-1">{200 - newCommentText.length}</sup>
+            </label>
+          </div>
 
             
 
             {/* Textarea */}
             <textarea
               value={newCommentText}
-              onChange={(e) => setNewCommentText(e.target.value)}
-              placeholder="Write your comment..."
-              className="w-[855px] h-[120px] p-3 bg-transparent border border-[#918AAB26] rounded text-white text-sm resize-none focus:outline-none"
-              maxLength={220}
-              disabled={isSubmitting}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                placeholder="Write your comment..."
+                className="w-full max-w-[855px] h-[120px] p-3 bg-transparent border border-[#918AAB26] rounded text-white text-sm resize-none focus:outline-none disabled:opacity-50"
+                maxLength={220}
+                disabled={isSubmitting}
             />
 
             {/* Submit button */}
-            <div className="flex justify-start mt-2 w-[855px]">
-              <button
-                onClick={handleSubmitComment}
-                disabled={isSubmitting || !newCommentText.trim()}
-                className="relative w-[120px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-              >
+           <div className="flex justify-start mt-2 w-full max-w-[855px] px-2 sm:px-0">
+            <button
+              onClick={handleSubmitComment}
+              disabled={isSubmitting || !newCommentText.trim()}
+              className="relative w-[120px] h-[36px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden disabled:opacity-50"
+                        >
                 <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
                 <span className="relative z-10">{isSubmitting ? "..." : "Post Comment"}</span>
               </button>
             </div>
           </div>
 
-          {/* Comments List */}
-          <div className="flex flex-col items-center w-full">
-            {comments.length > 0 ? (
-              comments.map((c) => (
-                <div key={c.id} className="w-full max-w-[853px]">
-                  <CommentItem comment={c} />
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-400">No comments yet.</p>
-            )}
-          </div>
+         {/* Comments List */}
+            <div className="flex flex-col items-center w-full px-2 sm:px-0">
+              {comments.length > 0 ? (
+                comments.map((c) => (
+                  <div key={c.id} className="w-full max-w-[853px]">
+                    <CommentItem comment={c} />
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400">No comments yet.</p>
+              )}
+            </div>
         </div>
       </div>
 
@@ -482,7 +625,7 @@ export default function CommentsPopup({
           background: rgba(255, 255, 255, 0.12);
           border-radius: 3px;
         }
-        div :global(ul) {
+          div :global(ul) {
           list-style-type: disc;
           padding-left: 1.5rem;
         }

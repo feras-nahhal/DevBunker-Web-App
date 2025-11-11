@@ -16,7 +16,7 @@ import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll o
 export default function ResearchPage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
-  const { user,token, loading, isAuthenticated } = useAuthContext();
+  const { user,token, loading, isAuthenticated, profileImage } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
@@ -220,6 +220,7 @@ const handleReferenceTextChange = (value: string) => {
             onFiltersChange={handleFiltersChange}
             isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
             onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+            profileImage={profileImage}  // NEW: Pass profile image
           />
           <div className="explore-container">
             <div className="flex items-center mb-4">
@@ -272,6 +273,7 @@ const handleReferenceTextChange = (value: string) => {
               onFiltersChange={handleFiltersChange}
               isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
               onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+              profileImage={profileImage}  // NEW: Pass profile image
             />
 
         <div className="Research-container">
@@ -609,6 +611,7 @@ const handleReferenceTextChange = (value: string) => {
             type="research"
             searchQuery={searchQuery}
             filters={filters}
+            profileImage={profileImage}  // NEW: Pass profile image
           />
         </div>
       </div>

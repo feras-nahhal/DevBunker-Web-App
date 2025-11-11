@@ -45,6 +45,8 @@ interface MindmapContentProps {
   initialExcalidrawData?: { elements: ExcalidrawElement[]; appState: AppState; files?: Record<string, BinaryFileData> }; 
   isModalOpen?: boolean;
   setIsModalOpen?: (open: boolean) => void;
+  onSaveSuccess?: () => void; // ✅ ADDED: Callback to reset initial values after save
+  onExcalidrawChange?: (data: { elements: ExcalidrawElement[]; appState: AppState; files?: Record<string, BinaryFileData> }) => void; // ✅ ADDED
 }
 
 // Helper: Recursive deep clone
@@ -218,6 +220,8 @@ function MindmapContent({
   initialExcalidrawData, // New prop
   isModalOpen: externalIsModalOpen,
   setIsModalOpen: externalSetIsModalOpen,
+  onSaveSuccess,
+  onExcalidrawChange,
 }: MindmapContentProps) {
   // ✅ Fixed: Deep clone and normalize initialData to ensure mutability and correct types
   const initialData = initialExcalidrawData 
@@ -311,12 +315,18 @@ function MindmapContent({
 
   // -----------------------------
   // Excalidraw Handlers
-  const onChange = useCallback((elements: readonly ExcalidrawElement[], state: AppState, files: Record<string, BinaryFileData>) => { // ✅ Fixed: Accept files parameter
-    setExcalidrawElements([...elements]);
-    setAppState(state);
-    setFiles(files); // ✅ Fixed: Update files state
-  }, []);
+const prevDataRef = useRef<{ elements: ExcalidrawElement[]; appState: AppState; files?: Record<string, BinaryFileData> } | null>(null);  // ✅ ADDED
 
+const onChange = useCallback((elements: readonly ExcalidrawElement[], state: AppState, files: Record<string, BinaryFileData>) => {
+  setExcalidrawElements([...elements]);
+  setAppState(state);
+  setFiles(files);
+  const newData = { elements: [...elements], appState: state, files };
+  if (JSON.stringify(newData) !== JSON.stringify(prevDataRef.current)) {  // ✅ ADDED: Check if data changed
+    prevDataRef.current = newData;
+    onExcalidrawChange?.(newData);
+  }
+}, [onExcalidrawChange]);
   
 
   // -----------------------------
@@ -343,6 +353,7 @@ function MindmapContent({
         await createContent(dataToSend, token);
       }
       router.push("/dashboard/mindmaps");
+      onSaveSuccess?.();  // ✅ ADDED: Reset initial values after save
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
       alert(`Error: ${message}`);
@@ -374,6 +385,7 @@ function MindmapContent({
         await createContent(dataToSend, token);
       }
       router.push("/dashboard/mindmaps/drafts");
+      onSaveSuccess?.();  // ✅ ADDED: Reset initial values after save
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
       alert(`Error: ${message}`);

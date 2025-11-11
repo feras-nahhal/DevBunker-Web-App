@@ -15,6 +15,7 @@ interface UserCardProps {
   onSelect?: (id: string, checked: boolean) => void;
   onDelete?: () => void; // Calls parent delete (via useUsers hook)
   onOpenComments?: () => void; // Optional: If user comments needed
+  authorImage?: string; // new prop for author's profile image
 }
 
 export default function UserCard({
@@ -27,6 +28,7 @@ export default function UserCard({
   onSelect,
   onDelete,
   onOpenComments,
+  authorImage, // default image
 }: UserCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -60,82 +62,98 @@ export default function UserCard({
 
   // NEW: User management menu items (admin-focused, using your APIs)
   const menuItems = [
-    
-    {
-      name: "Approve User",
-      icon: "/approve.png", // Your approve icon
-      action: async () => {
-        try {
-          if (typeof window === "undefined") return; // FIXED: SSR-safe
-          const token = localStorage.getItem("token");
-          if (!token) return alert("Login required (admin only)");
-          const res = await fetch(`/api/admin/users/${id}/status`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ status: "active" }), // FIXED: Use your API (sets status="active")
-          });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const json = await res.json();
-          if (!json.success) throw new Error(json.error || "Failed to approve");
-          console.log("User approved:", id); // Debug
-          window.location.reload(); // FIXED: Refresh grid (or use refetch from parent if passed)
-        } catch (err: unknown) {
-          console.error("Approve error:", err);
+  // Show "Approve User" only if user is not active
+  ...(status !== USER_STATUS.ACTIVE
+    ? [
+        {
+          name: "Approve User",
+          icon: "/approve.png",
+          action: async () => {
+            try {
+              if (typeof window === "undefined") return; // SSR-safe
+              const token = localStorage.getItem("token");
+              if (!token) return alert("Login required (admin only)");
 
-          const errorMessage =
-            err instanceof Error
-              ? err.message
-              : "Failed to approve user";
+              const res = await fetch(`/api/admin/users/${id}/status`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: "active" }),
+              });
 
-          alert(errorMessage);
-        }
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const json = await res.json();
+              if (!json.success) throw new Error(json.error || "Failed to approve");
 
-        setMenuOpen(false);
-      },
+              console.log("User approved:", id);
+              window.location.reload(); // Refresh grid
+            } catch (err: unknown) {
+              console.error("Approve error:", err);
+              const errorMessage =
+                err instanceof Error ? err.message : "Failed to approve user";
+              alert(errorMessage);
+            }
+
+            setMenuOpen(false);
+          },
+        },
+      ]
+    : []),
+
+  // Show "Ban User" only if user is not banned
+  ...(status !== USER_STATUS.BANNED
+    ? [
+        {
+          name: "Ban User",
+          icon: "/reject.png",
+          action: async () => {
+            try {
+              if (typeof window === "undefined") return; // SSR-safe
+              const token = localStorage.getItem("token");
+              if (!token) return alert("Login required (admin only)");
+
+              const res = await fetch(`/api/admin/users/${id}/status`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: "banned" }),
+              });
+
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const json = await res.json();
+              if (!json.success) throw new Error(json.error || "Failed to ban");
+
+              console.log("User banned:", id);
+              window.location.reload(); // Refresh grid
+            } catch (err: unknown) {
+              console.error("Ban error:", err);
+              const message =
+                err instanceof Error ? err.message : "Failed to ban user";
+              alert(message);
+            }
+
+            setMenuOpen(false);
+          },
+        },
+      ]
+    : []),
+
+  // Always show delete
+  {
+    name: "Delete",
+    icon: "/deletelogo.png",
+    action: () => {
+      console.log("Delete clicked for user ID:", id);
+      setMenuOpen(false);
+      onDelete?.();
     },
-    {
-      name: "Ban User",
-      icon: "/reject.png", // Your ban/reject icon
-      action: async () => {
-        try {
-          if (typeof window === "undefined") return; // FIXED: SSR-safe
-          const token = localStorage.getItem("token");
-          if (!token) return alert("Login required (admin only)");
-          const res = await fetch(`/api/admin/users/${id}/status`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ status: "banned" }), // FIXED: Use your API (sets status="banned")
-          });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const json = await res.json();
-          if (!json.success) throw new Error(json.error || "Failed to ban");
-          console.log("User banned:", id); // Debug
-          window.location.reload(); // FIXED: Refresh grid
-        } catch (err: unknown) {
-          console.error("Ban error:", err);
-          const message =
-            err instanceof Error ? err.message : "Failed to ban user";
-          alert(message);
-        }
-        setMenuOpen(false);
-      },
-    },
-    {
-      name: "Delete",
-      icon: "/deletelogo.png",
-      action: () => {
-        console.log("Delete clicked for user ID:", id); // FIXED: Debug
-        setMenuOpen(false);
-        onDelete?.(); // FIXED: Calls parent (UserGrid's handleDelete → useUsers deleteUser)
-      },
-    },
-  ];
+  },
+];
+
 
   const handleCheckboxChange = (checked: boolean) => {
     onSelect?.(id, checked);
@@ -201,8 +219,8 @@ export default function UserCard({
         <div className="flex flex-row items-center flex-1 gap-12 min-w-0">
           {/* Avatar (placeholder) */}
           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-400 shrink-0">
-                          <Image
-                            src="/person.jpg"
+                          <img
+                            src= { authorImage|| "/person.jpg"}
                             alt="Avatar"
                             width={40}
                             height={40}

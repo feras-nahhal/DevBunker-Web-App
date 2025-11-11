@@ -14,7 +14,7 @@ import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll o
 
 export default function MindmapPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuthContext(); // ✅ check auth state
+  const { user, loading, isAuthenticated, profileImage } = useAuthContext(); // ✅ check auth state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
@@ -197,6 +197,7 @@ export default function MindmapPage() {
             onFiltersChange={handleFiltersChange}
             isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
             onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+            profileImage={profileImage}  // NEW: Pass profile image
           />
           <div className="explore-container">
             <div className="flex items-center mb-4">
@@ -248,6 +249,7 @@ export default function MindmapPage() {
                   onFiltersChange={handleFiltersChange}
                   isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
                   onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                  profileImage={profileImage}  // NEW: Pass profile image
                 />
 
         <div className="mindmap-container">
@@ -511,6 +513,7 @@ export default function MindmapPage() {
             type="mindmap"
             searchQuery={searchQuery}
             filters={filters}
+            profileImage={profileImage}  // NEW: Pass profile image
           />
         </div>
       </div>

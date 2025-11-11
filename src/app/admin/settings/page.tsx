@@ -1,96 +1,115 @@
 "use client";
+import { useRouter } from "next/navigation";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import Header from "@/components/admin/Header";
 import Sidebar from "@/components/admin/Sidebar";
-import SettingsPage from "@/components/admin/SettingsPage";
 import "./ExplorePage.css";
-import { useAuthContext } from "@/hooks/AuthProvider";
+import SettingsPage from "@/components/content/SettingsPage";
 import SettingsPageSkeleton from "@/components/content/SettingsPageSkeleton";
+import { useAuthContext } from "@/hooks/AuthProvider";
 
 export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
-  const { user, loading, token, isAuthenticated } = useAuthContext();
-
+  const { token, loading, profileImage } = useAuthContext();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true); // NEW: Local loading state for skeleton on page load
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
 
-  // Load sidebar state from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved === "true") setSidebarCollapsed(true);
-  }, []);
-
-  // NEW: Simulate initial load delay to show skeleton on every page visit
-  useEffect(() => {
-    const timer = setTimeout(() => setInitialLoad(false), 500); // Show skeleton for 500ms on load
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Redirect if not logged in
   useEffect(() => {
     if (!loading && !token) {
       router.push("/auth/login");
     }
   }, [loading, token, router]);
 
-  // 🛑 While loading, no token, or initial load — show skeleton
-  if (loading || !token || initialLoad) {
+  // 🛑 Don’t render CategoryGrid until we know user is logged in
+
+  if (loading || !token) {
     return (
       <div className="dashboard">
-        <Sidebar onToggle={setSidebarCollapsed} />
+        <Sidebar 
+                           onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                           isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                           onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                         />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <Header collapsed={sidebarCollapsed} />
+          <Header
+        collapsed={sidebarCollapsed}
+        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        profileImage={profileImage}
+         />
 
           <div className="explore-container">
-            {/* 🔹 Breadcrumb / Title */}
+            {/* 🔹 Menu / Settings Title Row */}
             <div className="flex items-center mb-4">
               <Image
                 src="/setting.svg"
                 alt="Menu Icon"
                 width={25}
                 height={25}
+                className="object-contain mr-[4px] relative top-[1px]"
               />
-              <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
-                Update/ Settings
+              <h2
+                className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+                style={{ fontFamily: "'Public Sans', sans-serif" }}
+              >
+                Menu / Settings
               </h2>
             </div>
-          </div>
-          <div className="flex justify-center items-start mt-8">
-            <SettingsPageSkeleton />
+
+            {/* 🧩 Centered Skeleton Card */}
+            <div className="flex justify-center items-start mt-8">
+              <SettingsPageSkeleton />
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // ✅ Main content (once logged in and initial load done)
+  if (!token) return null; // ✅ Prevents unauthorized API call before redirect
+
   return (
     <div className="dashboard">
-      <Sidebar onToggle={setSidebarCollapsed} />
+      <Sidebar 
+                         onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                       />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <Header collapsed={sidebarCollapsed} />
+        <Header 
+        collapsed={sidebarCollapsed}
+        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        profileImage={profileImage}
+         />
 
         <div className="explore-container">
-          {/* 🔹 Breadcrumb / Title */}
+          {/* 🔹 Menu / Explore Title Row */}
           <div className="flex items-center mb-4">
             <Image
-              src="/setting.svg"
+              src="/setting.svg" // ✅ make sure image path is correct
               alt="Menu Icon"
-              width={25}
+              width={25} // Figma-like size (clean & aligned)
               height={25}
+              className="object-contain mr-[4px] relative top-[1px]" // 👈 tight spacing & perfect vertical alignment
             />
-            <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
-              Update/ Settings
+            <h2
+              className="font-[400] text-[14px] leading-[22px] text-[#707070]"
+              style={{
+                fontFamily: "'Public Sans', sans-serif",
+              }}
+            >
+              Menu/ Settings
             </h2>
           </div>
 
-          {/* 🔹 Settings Page */}
-          <SettingsPage />
+          {/* Centered Settings Card */}
+          <div className="flex justify-center items-start mt-8"> {/* Wrapper for centering */}
+            <SettingsPage />
+          </div>
         </div>
       </div>
     </div>

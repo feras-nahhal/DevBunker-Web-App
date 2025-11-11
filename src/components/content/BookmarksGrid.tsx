@@ -53,6 +53,34 @@ export default function BookmarksGrid({
       ? localStorage.getItem("token") || undefined
       : undefined;
 
+  // new state
+  const [profileImages, setProfileImages] = useState<Record<string, string>>({});
+  // Fetch profile images for authors
+    useEffect(() => {
+  if (!bookmarks || bookmarks.length === 0 || !allContent || allContent.length === 0) return;
+
+  // Match bookmarked content to get author IDs
+  const bookmarkedContent = allContent.filter((content) =>
+    bookmarks.some((b) => b.content_id === content.id)
+  );
+
+  // Collect unique author IDs
+  const authorIds = Array.from(new Set(bookmarkedContent.map((c) => c.author_id))).join(",");
+
+  if (!authorIds) return;
+
+  fetch(`/api/profile-images?ids=${authorIds}`)
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) setProfileImages(json.images);
+      else setProfileImages({});
+    })
+    .catch((err) => {
+      console.error("Failed to fetch profile images:", err);
+      setProfileImages({});
+    });
+  }, [bookmarks, allContent]);
+
   // New part
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
@@ -77,21 +105,21 @@ export default function BookmarksGrid({
   const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dislikes: number }>>({});
 
   // Fetch vote counts for all cards
-const fetchVoteCounts = async () => {
-  if (bookmarks.length === 0) return;
+  const fetchVoteCounts = async () => {
+    if (bookmarks.length === 0) return;
 
   const contentIds = bookmarks.map((c) => c.content_id).join(",");  // FIXED: Use content_id instead of id
 
-  try {
-    const res = await fetch(`/api/vote/counts?content_ids=${contentIds}`);
-    const json = await res.json();
-    if (json.success) setVoteCounts(json.counts);
-    else setVoteCounts({});
-  } catch (err) {
-    console.error("Failed to fetch vote counts:", err);
-    setVoteCounts({});
-  }
-};
+    try {
+      const res = await fetch(`/api/vote/counts?content_ids=${contentIds}`);
+      const json = await res.json();
+      if (json.success) setVoteCounts(json.counts);
+      else setVoteCounts({});
+    } catch (err) {
+      console.error("Failed to fetch vote counts:", err);
+      setVoteCounts({});
+    }
+  };
 
 
   useEffect(() => {
@@ -332,6 +360,7 @@ const fetchVoteCounts = async () => {
                     likes={voteCounts[card.id]?.likes || 0} // Pass from grid's state
                     dislikes={voteCounts[card.id]?.dislikes || 0} // Pass from grid's state
                     onVote={(voteType) => handleVote(card.id, voteType)} // Pass vote handler
+                    authorImage={profileImages[card.author_id] || "/person.jpg"} // ✅ new prop
                   />
                 </div>
               );

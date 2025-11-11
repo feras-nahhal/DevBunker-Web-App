@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { content, users, categories, tags, content_tags, references_link } from "@/lib/tables";
+import { content, users, categories, tags, content_tags, references_link, notifications } from "@/lib/tables";
 import { eq, like, sql, gte, lte } from "drizzle-orm";  // Added gte, lte for date comparisons
 import { authMiddleware } from "@/lib/authMiddleware";
-import { CONTENT_STATUS } from "@/lib/enums";
+import { CONTENT_STATUS, NOTIFICATION_TYPES, USER_ROLES } from "@/lib/enums";
 
 // GET /api/content/research?q=&status=&category=&tag=&author_email=&created_after=&created_before=&updated_after=&updated_before=&has_references=&reference_text=
 export async function GET(req: NextRequest) {
@@ -278,6 +278,29 @@ export async function POST(req: NextRequest) {
       await db.insert(references_link).values(referenceRows).onConflictDoNothing(); // Avoid duplicates (e.g., by unique text/content_id if schema has constraint)
     }
 
+  // ✅ Send notifications if status = pending_approval
+    if (status === CONTENT_STATUS.PENDING_APPROVAL) {
+      const adminUsers = await db.select().from(users).where(eq(users.role, USER_ROLES.ADMIN));
+
+      if (adminUsers.length > 0) {
+        const notificationsData = adminUsers.map((admin) => ({
+          user_id: admin.id,
+          title: "New Research Awaiting Approval",
+          message: `${user.email} submitted a new research titled "${body.title}".`,
+          type: NOTIFICATION_TYPES.APPROVAL,
+        }));
+
+        await db.insert(notifications).values(notificationsData);
+      }
+       // 2️⃣ Notify the author (confirmation)
+      await db.insert(notifications).values({
+        user_id: user.id,
+        title: "Research Submission Received",
+        message: `Your research titled "${body.title}" was submitted for review.`,
+        type: NOTIFICATION_TYPES.SYSTEM,
+      });
+    }
+   
     return NextResponse.json({ success: true, research: newResearch }); // FIXED: Return 'research' like post returns 'post'
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";

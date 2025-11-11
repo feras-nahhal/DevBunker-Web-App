@@ -14,7 +14,7 @@ import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll o
 
 export default function PostPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuthContext(); // ✅ check authentication state
+  const { user, loading, isAuthenticated, profileImage } = useAuthContext(); // ✅ check authentication state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
@@ -197,6 +197,7 @@ export default function PostPage() {
              onFiltersChange={handleFiltersChange}
             isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
             onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+            profileImage={profileImage}  // NEW: Pass profile image
            />
            <div className="explore-container">
              <div className="flex items-center mb-4">
@@ -248,6 +249,7 @@ export default function PostPage() {
                         onFiltersChange={handleFiltersChange}
                         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
                         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                        profileImage={profileImage}  // NEW: Pass profile image
                       />
 
         <div className="post-container">
@@ -506,7 +508,7 @@ export default function PostPage() {
           </div>
 
           {/* 🔹 Grid Section */}
-          <ContentGrid1 type="post" searchQuery={searchQuery} filters={filters} />
+          <ContentGrid1 type="post" searchQuery={searchQuery} filters={filters} profileImage={profileImage}  />
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll o
 export default function ReadLaterPage() {
   // 🔐 Auth
   const router = useRouter();
-  const { token, loading, isAuthenticated } = useAuthContext(); // ✅ check authentication state
+  const { token, loading, isAuthenticated, profileImage } = useAuthContext(); // ✅ check authentication state
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
@@ -189,6 +189,7 @@ export default function ReadLaterPage() {
             onFiltersChange={handleFiltersChange}
             isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
             onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+            profileImage={profileImage}  // NEW: Pass profile image
           />
           <div className="explore-container">
             <div className="flex items-center mb-4">
@@ -240,6 +241,7 @@ export default function ReadLaterPage() {
                       onFiltersChange={handleFiltersChange}
                       isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
                       onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                      profileImage={profileImage}  // NEW: Pass profile image
                     />
 
         <div className="explore-container">

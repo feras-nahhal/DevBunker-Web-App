@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { comments, users } from "@/lib/tables";
+import { comments, users,content, notifications } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // 1️⃣ Add the comment
     const [newComment] = await db
       .insert(comments)
       .values({
@@ -97,9 +98,30 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    // 2️⃣ Get the content’s author and title
+    const [post] = await db
+      .select({
+        author_id: content.author_id,
+        title: content.title,
+      })
+      .from(content)
+      .where(eq(content.id, content_id));
+
+    // 3️⃣ Add a notification for the author (if not self-comment)
+    if (post?.author_id && post.author_id !== user.id) {
+      const snippet = text.length > 100 ? text.slice(0, 100) + "..." : text;
+
+      await db.insert(notifications).values({
+        user_id: post.author_id,
+        title: "New Comment 💬",
+        message: `${user.email} commented: "${snippet}" on "${post.title}"`,
+        type: "COMMENT",
+      });
+    }
+
     return NextResponse.json({ success: true, comment: newComment });
-  } catch (err: unknown) {
-    console.error("Add comment error:", err);
+  } catch (err) {
+    console.error("Error adding comment:", err);
     return NextResponse.json(
       { success: false, error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 }

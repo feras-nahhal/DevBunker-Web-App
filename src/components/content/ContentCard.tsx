@@ -22,6 +22,7 @@ interface ContentCardProps {
   likes?: number; // Now used directly from props
   dislikes?: number; // Now used directly from props
   onVote?: (voteType: "like" | "dislike") => void; // New: Callback to grid for voting
+  authorImage?: string; // new prop for author's profile image
 }
 
 export default function ContentCard({
@@ -40,6 +41,7 @@ export default function ContentCard({
   likes = 0, // Use directly from props
   dislikes = 0, // Use directly from props
   onVote, // Use this to handle votes
+  authorImage
 }: ContentCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -147,8 +149,19 @@ export default function ContentCard({
         <div className="flex flex-row justify-between items-start w-[309px] h-[66px] px-4 pt-4 gap-[45px]">
           <div className="flex flex-row items-center min-w-0">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-400 shrink-0">
-              <Image src="/person.jpg" alt="Avatar" width={40} height={40} className="w-full h-full object-cover" />
-            </div>
+        <img
+              src={authorImage && authorImage.trim() !== "" ? authorImage : "/person.jpg"}
+              alt="Avatar"
+              width={40}
+              height={40}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.onerror = null; // prevent infinite loop
+                target.src = "/person.jpg";
+              }}
+            />
+              </div>
             <div className="flex flex-col justify-center items-start pl-[16px]">
               <span className="text-white text-[14px] font-['Public Sans'] leading-[22px]">{authorName}</span>
               <span className="text-[12px] text-[rgba(204,204,204,0.5)] leading-[18px] font-['Public Sans']">

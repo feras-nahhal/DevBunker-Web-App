@@ -22,6 +22,7 @@ import type {
 } from "@excalidraw/excalidraw/element/types";
 import type { AppState } from "@excalidraw/excalidraw/types";
 import type { BinaryFileData } from "@excalidraw/excalidraw/types";
+import UnsavedChangesPopup from "@/components/content/UnsavedChangesPopup";
 
 
 interface Tag {
@@ -50,6 +51,21 @@ export default function PostPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
+
+  // ✅ ADDED: Track initial values for unsaved changes detection
+  const [initialTitle, setInitialTitle] = useState("");
+  const [initialBody, setInitialBody] = useState("");
+  const [initialTags, setInitialTags] = useState<Tag[]>([]);
+  const [initialCategoryId, setInitialCategoryId] = useState<string | null>(null);
+  const [initialExcalidrawData, setInitialExcalidrawData] = useState<ExcalidrawData>({
+    elements: [],
+    appState: {} as AppState,
+    files: {}
+  });
+  // ✅ ADDED: States for unsaved changes modal
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
   // Dynamically import MindmapContent with SSR disabled
   const MindmapContent = useMemo(() => dynamic(
   () => import("@/components/content/MindmapContent"),
@@ -73,7 +89,7 @@ const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData>({
 
   // ✅ Get query param
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") {  // ✅ FIXED: Was !== ""
       const params = new URLSearchParams(window.location.search);
       setMindmapId(params.get("id"));
     }
@@ -111,6 +127,12 @@ useEffect(() => {
           return cloned;
         })() : { elements: [], appState: {}, files: {} };
         setExcalidrawData(excalidrawData);
+        // ✅ ADDED: Set initial values for edits (this was missing!)
+        setInitialTitle(data.title || "");
+        setInitialBody(data.content_body || "");
+        setInitialCategoryId(data.category_id || null);
+        setInitialTags(data.tags || []);
+        setInitialExcalidrawData(excalidrawData);
       }
     } catch (err) {
       alert(`Error fetching mindmap: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -119,6 +141,79 @@ useEffect(() => {
 
   fetchMindmap();
 }, [mindmapId, ready, getContentById]);
+
+// ✅ ADDED: Set initial values for new mindmaps
+useEffect(() => {
+  if (!mindmapId && ready) {
+    setInitialTitle("");
+    setInitialBody("");
+    setInitialCategoryId(null);
+    setInitialTags([]);
+    setInitialExcalidrawData({ elements: [], appState: {} as AppState, files: {} });
+  }
+}, [mindmapId, ready]);
+
+// ✅ ADDED: Compute if there are unsaved changes
+const hasUnsavedChanges =
+  title !== initialTitle ||
+  contentBody !== initialBody ||
+  selectedCategoryId !== initialCategoryId ||
+  JSON.stringify(selectedTags) !== JSON.stringify(initialTags) ||
+  JSON.stringify(excalidrawData) !== JSON.stringify(initialExcalidrawData);
+
+  // ✅ ADDED: Add beforeunload listener to warn on unsaved changes (for browser-level navigation)
+useEffect(() => {
+  const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+    if (hasUnsavedChanges) {
+      event.preventDefault();
+      event.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+    }
+  };
+
+  if (hasUnsavedChanges) {
+    window.addEventListener("beforeunload", handleBeforeUnload);
+  }
+
+  return () => {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+  };
+}, [hasUnsavedChanges]);
+
+// ✅ ADDED: Function to check before navigation (returns true to proceed, false to prevent)
+const handleBeforeNavigate = (href: string) => {
+  if (hasUnsavedChanges) {
+    setPendingHref(href);
+    setShowUnsavedModal(true);
+    return false; // Prevent navigation and show modal
+  }
+  return true; // Allow navigation
+};
+
+// ✅ ADDED: Handlers for modal buttons
+const handleLeave = () => {
+  if (pendingHref) {
+    router.push(pendingHref);
+  }
+  setShowUnsavedModal(false);
+  setPendingHref(null);
+};
+
+const handleStay = () => {
+  setShowUnsavedModal(false);
+  setPendingHref(null);
+};
+
+// ✅ ADDED: Callback to reset initial values after save (called from MindmapContent)
+const resetInitialValues = () => {
+  setInitialTitle(title);
+  setInitialBody(contentBody);
+  setInitialCategoryId(selectedCategoryId);
+  setInitialTags(selectedTags);
+  setInitialExcalidrawData(excalidrawData);
+};
+
+
+
 
 
   const isLoading = authLoading || contentLoading || saving;
@@ -136,9 +231,9 @@ useEffect(() => {
   };
 
   // ✅ Updated: Use Excalidraw data for initial props
-  const initialTags = useMemo(() => selectedTags, [selectedTags]);
-  const initialCategoryId = useMemo(() => selectedCategoryId || "", [selectedCategoryId]);
-  const initialExcalidrawData = useMemo(() => excalidrawData, [excalidrawData]);
+  const initialTags1 = useMemo(() => selectedTags, [selectedTags]);
+  const initialCategoryId1 = useMemo(() => selectedCategoryId || "", [selectedCategoryId]);
+  const initialExcalidrawData1 = useMemo(() => excalidrawData, [excalidrawData]);
 
   if (!ready || contentLoading) {
     return (
@@ -147,6 +242,7 @@ useEffect(() => {
           onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
           isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
           onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+          onBeforeNavigate={handleBeforeNavigate}  // ✅ ADDED: Pass navigation guard
         />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           <CreateMinemapHeader
@@ -177,6 +273,7 @@ useEffect(() => {
         onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        onBeforeNavigate={handleBeforeNavigate}  // ✅ ADDED: Pass navigation guard
       />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <CreateMinemapHeader
@@ -187,7 +284,7 @@ useEffect(() => {
           isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
           onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
         />
-        <div className="post-container">
+        <div className="post1-container">
           <div className="flex items-center mb-4">
             <Image src="/pen.svg" alt="Menu Icon" width={25} height={25} className="object-contain mr-[4px]" />
             <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]" style={{ fontFamily: "'Public Sans', sans-serif" }}>
@@ -195,26 +292,38 @@ useEffect(() => {
             </h2>
           </div>
 
-          <div className="editor-container">
+          <div className="editor1-container">
             {/* ✅ Removed: <ReactFlowProvider> (not needed for Excalidraw) */}
             <MindmapContent
               mindmapId={mindmapId}
               initialTitle={title}
               initialContentBody={contentBody}
-              initialCategoryId={initialCategoryId}
-              initialTags={initialTags}
+              initialCategoryId={initialCategoryId1}
+              initialTags={initialTags1}
               // ✅ Removed: initialNodes and initialEdges
               // initialNodes={initialNodes}
               // initialEdges={initialEdges}
               // ✅ Added: Pass Excalidraw data
-              initialExcalidrawData={initialExcalidrawData}
+              initialExcalidrawData={initialExcalidrawData1}
               isModalOpen={isModalOpen} // ✅ New: Pass lifted state
               setIsModalOpen={setIsModalOpen} // ✅ New: Pass setter
+              onSaveSuccess={resetInitialValues}  // ✅ ADDED: Pass callback to reset initial values after save
+              onExcalidrawChange={(data) => setExcalidrawData(data)}  // ✅ ADDED
             />
             {/* ✅ Removed: </ReactFlowProvider> */}
           </div>
         </div>
       </div>
+      {/* ✅ ADDED: Unsaved Changes Modal */}
+{showUnsavedModal && (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+    <UnsavedChangesPopup
+      type="Mindmap"
+      onConfirm={handleLeave}
+      onClose={handleStay}
+    />
+  </div>
+)}
     </div>
   );
 }

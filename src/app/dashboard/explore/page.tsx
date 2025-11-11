@@ -15,7 +15,7 @@ import "./ExplorePage.css";
 
 export default function ExplorePage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated, ready } = useAuthContext();
+  const { user, loading, isAuthenticated, ready, profileImage } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -191,6 +191,7 @@ export default function ExplorePage() {
             onFiltersChange={handleFiltersChange}
             isMobileOpen={isMobileSidebarOpen}
             onMobileToggle={setIsMobileSidebarOpen}
+            profileImage={profileImage}  // NEW: Pass profile image
           />
 
           <div className="explore-container">
@@ -239,6 +240,7 @@ export default function ExplorePage() {
           onFiltersChange={handleFiltersChange}
           isMobileOpen={isMobileSidebarOpen}
           onMobileToggle={setIsMobileSidebarOpen}
+          profileImage={profileImage}  // NEW: Pass profile image
         />
 
         <div className="explore-container">

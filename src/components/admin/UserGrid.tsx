@@ -9,6 +9,7 @@ import Image from "next/image";
 import CategoryGridSkeleton from "./CategoryGridSkeleton";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; 
+import { User } from "lucide-react";
 
 export default function UserGrid() {
   const { users, loading, error, refetch, deleteUser } = useUsers(); // NEW: Hook fetches from /api/admin/users
@@ -32,6 +33,27 @@ export default function UserGrid() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // new state
+  const [profileImages, setProfileImages] = useState<Record<string, string>>({});
+  // Fetch profile images for authors
+useEffect(() => {
+  if (!users || users.length === 0) return;
+
+  const authorIds = Array.from(new Set(users.map((c) => c.id))).join(",");
+
+  fetch(`/api/profile-images?ids=${authorIds}`)
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) setProfileImages(json.images);
+      else setProfileImages({});
+    })
+    .catch((err) => {
+      console.error("Failed to fetch profile images:", err);
+      setProfileImages({});
+    });
+}, [users]);
+
 
   /** 🧠 Client-side filtering (updated for multi-select arrays and dates) */
   const filteredData = useMemo(() => {
@@ -560,6 +582,7 @@ if (createdFrom || createdTo) {
                 isSelected={selectedIds.includes(user.id)}
                 onSelect={handleSelect}
                 onDelete={() => handleDelete(user.id)}
+                authorImage={profileImages[user.id] || "/person.jpg"} // ✅ new prop
               />
             ))
           )}

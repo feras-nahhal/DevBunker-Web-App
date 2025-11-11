@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { categories } from "@/lib/tables";
+import { categories, category_requests } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 
 // POST /api/admin/categories → create new category (admin only)
@@ -25,6 +25,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         created_by: user.id,
       })
       .returning();
+
+    // 2️⃣ Insert a "request" record
+    await db.insert(category_requests).values({
+      user_id: user.id,
+      category_name: body.name,
+      description: body.description || null,
+      status: "approved", // admin-created → immediately approved
+    });
 
     return NextResponse.json({ success: true, category: createdCategory });
   } catch (err: unknown) {

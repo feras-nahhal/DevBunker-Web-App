@@ -206,24 +206,24 @@ export default function SettingsPage() {
             {error}
           </div>
         )}
-  {/* Profile Image Upload */}
-      <div className="flex flex-col items-center gap-2 w-full max-w-[300px]">
-        <div className="w-[150px] h-[150px] rounded-full overflow-hidden border border-white/20 relative">
-          {profileImage ? (
-            <img src={profileImage} alt="Preview" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-white/10 text-white/50">No Image</div>
-          )}
-          <input type="file" accept="image/*" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" />
-        </div>
-        <button
-  onClick={upload}
-  disabled={!image || uploading}
-  className="relative w-[200px] h-[45px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
->
-  <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
-  <span className="relative z-10">{uploading ? "Uploading..." : "Upload Image"}</span>
-</button>
+        {/* Profile Image Upload */}
+            <div className="flex flex-col items-center gap-2 w-full max-w-[300px]">
+              <div className="w-[150px] h-[150px] rounded-full overflow-hidden border border-white/20 relative">
+                {profileImage ? (
+                  <img src={profileImage} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-white/10 text-white/50">No Image</div>
+                )}
+                <input type="file" accept="image/*" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" />
+              </div>
+              <button
+        onClick={upload}
+        disabled={!image || uploading}
+        className="relative w-[200px] h-[45px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+        <span className="relative z-10">{uploading ? "Uploading..." : "Upload Image"}</span>
+      </button>
 
       </div>
 

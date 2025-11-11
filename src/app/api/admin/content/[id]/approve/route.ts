@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { content } from "@/lib/tables";
+import { content, notifications } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
@@ -28,6 +28,14 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    // 2️⃣ Create a notification for the author
+    await db.insert(notifications).values({
+      user_id: approved.author_id,
+      title: "Your Research has been approved",
+      message: `Your Research "${approved.title}" has been approved and published by the admin.`,
+      type: "Research_APPROVAL",
+    });
 
     return NextResponse.json({
       success: true,

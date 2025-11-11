@@ -4,17 +4,35 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
-import CreateUserPopup from "@/components/admin/CreateUserPopup";
-import CreateTagPopup from "@/components/admin/CreateTagPopup";
-import CreateCategoryPopup from "@/components/admin/CreateCategoryPopup";
 import "./Sidebar1.css";
+import CreateCategoryPopup from "./CreateCategoryPopup";
+import CreateTagPopup from "./CreateTagPopup";
+import CreateUserPopup from "./CreateUserPopup";
 
-export default function Sidebar({ onToggle }: { onToggle?: (collapsed: boolean) => void }) {
+export default function Sidebar({ 
+  onToggle, 
+  isMobileOpen = false, 
+  onMobileToggle 
+}: { 
+  onToggle?: (collapsed: boolean) => void; 
+  isMobileOpen?: boolean; 
+  onMobileToggle?: (open: boolean) => void; 
+}) {
   const pathname = usePathname();
   const glowRightRef = useRef<HTMLDivElement>(null);
   const glowLeftRef = useRef<HTMLDivElement>(null);
 
+  // Collapse state (for desktop)
   const [collapsed, setCollapsed] = useState(false);
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Load collapse state from localStorage
   useEffect(() => {
@@ -31,23 +49,24 @@ export default function Sidebar({ onToggle }: { onToggle?: (collapsed: boolean) 
   const [showCreateUserPopup, setShowCreateUserPopup] = useState(false);
   const [showCreateTagPopup, setShowCreateTagPopup] = useState(false);
   const [showCreateCategoryPopup, setShowCreateCategoryPopup] = useState(false);
+  
 
+  // Helper: determine active class
   const getClass = (path: string, baseClass: string = "menu-subitem") =>
     pathname === path ? `${baseClass} active` : baseClass;
 
-  // Helper — get icon version (normal or highlighted)
+  // Helper: get active/inactive icon
   const getIcon = (base: string, isActive: boolean) => {
     if (!isActive) return base;
     const parts = base.split(".");
-    return `${parts[0]}g.${parts[1]}`; // e.g. /user.svg → /user1.svg
+    return `${parts[0]}g.${parts[1]}`; // e.g. /post.svg → /postg.svg
   };
 
-  // Handle glowing effect movement
+  // Handle glowing effect
   useEffect(() => {
     const moveGlow = () => {
       const activeItem = document.querySelector(".menu-item.active, .menu-subitem.active");
       if (!activeItem) return;
-
       const rect = activeItem.getBoundingClientRect();
       const sidebarRect = activeItem.closest(".sidebar")!.getBoundingClientRect();
 
@@ -59,6 +78,25 @@ export default function Sidebar({ onToggle }: { onToggle?: (collapsed: boolean) 
     moveGlow();
   }, [pathname]);
 
+  // Recalculate glow when mobile sidebar opens
+useEffect(() => {
+  if (isMobile && isMobileOpen) {
+    // Wait for the slide-in transition (300ms)
+    setTimeout(() => {
+      const activeItem = document.querySelector(".menu-item.active, .menu-subitem.active");
+      if (!activeItem) return;
+      const rect = activeItem.getBoundingClientRect();
+      const sidebarRect = activeItem.closest(".sidebar")!.getBoundingClientRect();
+      if (glowRightRef.current)
+        glowRightRef.current.style.top = rect.top - sidebarRect.top + "px";
+      if (glowLeftRef.current)
+        glowLeftRef.current.style.top = rect.top - sidebarRect.top + "px";
+    }, 350); // Slightly longer than your CSS transition (300ms)
+  }
+}, [isMobileOpen, pathname]);
+
+
+  // Collapse toggle (desktop)
   const toggleCollapse = () => {
     const newState = !collapsed;
     setCollapsed(newState);
@@ -66,20 +104,50 @@ export default function Sidebar({ onToggle }: { onToggle?: (collapsed: boolean) 
     onToggle?.(newState);
   };
 
+  // Close mobile sidebar on link click
+  const handleLinkClick = () => {
+    if (isMobile && onMobileToggle) onMobileToggle(false);
+  };
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isMobile && isMobileOpen && onMobileToggle) {
+        onMobileToggle(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMobile, isMobileOpen, onMobileToggle]);
+
+  // Don't render sidebar on mobile unless open
+  if (isMobile && !isMobileOpen) return null;
+
   return (
     <>
-      <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-        {/* === COLLAPSE BUTTON === */}
-        <button
-          onClick={toggleCollapse}
-          className={`collapse-btn ${collapsed ? "collapsed" : ""}`}
-          aria-label="Toggle sidebar"
-        >
-          <span className="arrow" />
-        </button>
+      {/* Backdrop for mobile overlay */}
+      {isMobile && isMobileOpen && (
+        <div 
+          className="sidebar-backdrop" 
+          onClick={() => onMobileToggle?.(false)} 
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`sidebar ${collapsed && !isMobile ? "collapsed" : ""} ${isMobile ? "mobile" : ""} ${isMobile && isMobileOpen ? "open" : ""}`}>
+        {/* === COLLAPSE BUTTON (only on desktop) === */}
+        {!isMobile && (
+          <button
+            onClick={toggleCollapse}
+            className={`collapse-btn ${collapsed ? "collapsed" : ""}`}
+            aria-label="Toggle sidebar"
+          >
+            <span className="arrow" />
+          </button>
+        )}
 
         <nav className="menu">
-          {/* === MANAGEMENT === */}
+ {/* === MANAGEMENT === */}
           <div className="menu-block">
             <div className="menu-label">Management</div>
 
@@ -209,25 +277,26 @@ export default function Sidebar({ onToggle }: { onToggle?: (collapsed: boolean) 
         <div className="sidebar-glow" ref={glowRightRef}></div>
         <div className="sidebar-glow-left" ref={glowLeftRef}></div>
       </aside>
-
+      
       {/* POPUPS */}
       {showCreateUserPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <CreateUserPopup onClose={() => setShowCreateUserPopup(false)} />
         </div>
       )}
 
       {showCreateTagPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <CreateTagPopup onClose={() => setShowCreateTagPopup(false)} />
         </div>
       )}
 
       {showCreateCategoryPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <CreateCategoryPopup onClose={() => setShowCreateCategoryPopup(false)} />
         </div>
       )}
+
     </>
   );
 }

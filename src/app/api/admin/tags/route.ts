@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { tags } from "@/lib/tables";
+import { tag_requests, tags } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -23,6 +23,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         created_by: user.id,
       })
       .returning();
+
+    // 2️⃣ Insert a "request" record
+    await db.insert(tag_requests).values({
+      user_id: user.id,
+      tag_name: body.name,
+      description: body.description || null,
+      status: "approved", // admin-created → immediately approved
+    });
 
     return NextResponse.json({ success: true, tag: createdTag });
   } catch (err: unknown) {

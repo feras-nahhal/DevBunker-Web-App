@@ -16,6 +16,7 @@ interface ResearchGridProps {
   searchQuery?: string;
   filters?: Record<string, string>;
   selectedContentId?: string | null;  // NEW: For opening popup from URL
+  profileImage?: string | null; // User profile image URL
 }
 
 export default function ResearchGrid({
@@ -23,6 +24,7 @@ export default function ResearchGrid({
   searchQuery = "",
   filters = {},
   selectedContentId,
+  profileImage,
 }: ResearchGridProps) {
   const { data, loading, error, refetch } = useContent({ type, filters });
   const { user} = useAuthContext();
@@ -322,6 +324,7 @@ const [voteCounts, setVoteCounts] = useState<Record<string, { likes: number; dis
                 likes={voteCounts[card.id]?.likes || 0} // Pass from grid's state
                 dislikes={voteCounts[card.id]?.dislikes || 0} // Pass from grid's state
                 onVote={(voteType) => handleVote(card.id, voteType)} // Pass vote handler
+                profileImage={profileImage}
               />
             </div>
           );

@@ -13,6 +13,8 @@ import { CONTENT_STATUS } from "@/lib/enums";
 import "./PostPage.css";
 import CreateResearchSkeleton from "@/components/content/CreateResearchSkeleton";
 import { useAuthContext } from "@/hooks/AuthProvider";
+import UnsavedChangesPopup from "@/components/content/UnsavedChangesPopup";
+import { set } from "zod";
 
 interface Tag {
   id: string;
@@ -38,6 +40,17 @@ export default function CreateResearchPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   const [ready, setReady] = useState(false);
+
+  // Track initial values for unsaved changes detection
+  const [initialTitle, setInitialTitle] = useState("");
+  const [initialBody, setInitialBody] = useState("");
+  const [initialTags, setInitialTags] = useState<Tag[]>([]);
+  const [initialCategoryId, setInitialCategoryId] = useState<string | null>(null);
+  const [initialReferences, setInitialReferences] = useState<string[]>([]);
+
+  // States for unsaved changes modal
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const {
     getContentById,
@@ -94,11 +107,76 @@ export default function CreateResearchPage() {
     fetchResearch();
   }, [researchId, ready, getContentById, token]);
 
+  
+  // Set initial values for new posts
+  useEffect(() => {
+    if (!researchId && ready) {
+      setInitialTitle("");
+      setInitialBody("");
+      setInitialCategoryId(null);
+      setInitialTags([]);
+      setInitialReferences([]);
+    }
+  }, [researchId, ready]);
+
+    // Compute if there are unsaved changes
+  const hasUnsavedChanges =
+    title !== initialTitle ||
+    body !== initialBody ||
+    selectedCategoryId !== initialCategoryId ||
+    JSON.stringify(selectedTags) !== JSON.stringify(initialTags)||
+    JSON.stringify(selectedReferences) !== JSON.stringify(initialReferences);
+
+    // Add beforeunload listener to warn on unsaved changes (for browser-level navigation)
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        event.preventDefault();
+        event.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+      }
+    };
+
+    if (hasUnsavedChanges) {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+ 
+
+
   const isLoading = loading || contentLoading || saving;
 
   // -----------------------------
   // Handlers
   // -----------------------------
+
+  // Function to check before navigation (returns true to proceed, false to prevent)
+  const handleBeforeNavigate = (href: string) => {
+    if (hasUnsavedChanges) {
+      setPendingHref(href);
+      setShowUnsavedModal(true);
+      return false; // Prevent navigation and show modal
+    }
+    return true; // Allow navigation
+  };
+
+  // Handlers for modal buttons
+  const handleLeave = () => {
+    if (pendingHref) {
+      router.push(pendingHref);
+    }
+    setShowUnsavedModal(false);
+    setPendingHref(null);
+  };
+
+  const handleStay = () => {
+    setShowUnsavedModal(false);
+    setPendingHref(null);
+  };
   const handleCancel = () => {
     setTitle("");
     setBody("");
@@ -141,6 +219,14 @@ export default function CreateResearchPage() {
       if (!response) throw new Error("No response from API");
 
       refetch();
+
+      // Inside handleSave, after successful response:
+      setInitialTitle(title);
+      setInitialBody(body);
+      setInitialCategoryId(selectedCategoryId);
+      setInitialTags(selectedTags);
+      setInitialReferences(selectedReferences);
+
       router.push("/dashboard/research");
     } catch (err) {
       console.error("Save error:", err);
@@ -163,6 +249,7 @@ export default function CreateResearchPage() {
         onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        onBeforeNavigate={handleBeforeNavigate} // NEW: Pass navigation guard
       />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         {/* 🔹 Header */}
@@ -209,6 +296,7 @@ export default function CreateResearchPage() {
         onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+        onBeforeNavigate={handleBeforeNavigate} // NEW: Pass navigation guard
       />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <CreateReserchHeader
@@ -253,6 +341,17 @@ export default function CreateResearchPage() {
           />
         </div>
       </div>
+      {/* Unsaved Changes Modal */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex justify-center items-center">
+          <UnsavedChangesPopup
+          type="Research"
+            onConfirm={handleLeave}
+            onClose={handleStay}
+        
+          />
+        </div>
+      )}
     </div>
   );
 }

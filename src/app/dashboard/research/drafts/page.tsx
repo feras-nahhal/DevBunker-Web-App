@@ -14,7 +14,7 @@ import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll o
 
 export default function ResearchDraftPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuthContext();
+  const { user, loading, isAuthenticated, profileImage } = useAuthContext();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
   // Add to states:
@@ -222,6 +222,7 @@ const handleReferenceTextChange = (value: string) => {
           collapsed={sidebarCollapsed}
           isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
           onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+          profileImage={profileImage}  // NEW: Pass profile image
         />
 
         {/* Mindmap / Draft header */}
@@ -296,6 +297,7 @@ const handleReferenceTextChange = (value: string) => {
           collapsed={sidebarCollapsed}
           isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
           onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+          profileImage={profileImage}  // NEW: Pass profile image
         />
 
         <div className="research-container">

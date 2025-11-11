@@ -55,6 +55,34 @@ export default function ReadLaterGrid({
       ? localStorage.getItem("token") || undefined
       : undefined;
 
+  // new state
+  const [profileImages, setProfileImages] = useState<Record<string, string>>({});
+  // Fetch profile images for authors
+    useEffect(() => {
+  if (!readLater || readLater.length === 0 || !allContent || allContent.length === 0) return;
+
+  // Match bookmarked content to get author IDs
+  const bookmarkedContent = allContent.filter((content) =>
+    readLater.some((b) => b.content_id === content.id)
+  );
+
+  // Collect unique author IDs
+  const authorIds = Array.from(new Set(bookmarkedContent.map((c) => c.author_id))).join(",");
+
+  if (!authorIds) return;
+
+  fetch(`/api/profile-images?ids=${authorIds}`)
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) setProfileImages(json.images);
+      else setProfileImages({});
+    })
+    .catch((err) => {
+      console.error("Failed to fetch profile images:", err);
+      setProfileImages({});
+    });
+  }, [readLater, allContent]);
+
   // New part
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
@@ -393,6 +421,7 @@ const fetchVoteCounts = async () => {
                     likes={voteCounts[card.id]?.likes || 0} // Pass from grid's state
                     dislikes={voteCounts[card.id]?.dislikes || 0} // Pass from grid's state
                     onVote={(voteType) => handleVote(card.id, voteType)} // Pass vote handler
+                    authorImage={profileImages[card.author_id] || "/person.jpg"} // ✅ new prop
                   />
                 </div>
               );

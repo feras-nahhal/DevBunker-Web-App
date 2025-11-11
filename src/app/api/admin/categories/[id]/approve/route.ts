@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { categories, category_requests } from "@/lib/tables";
+import { categories, category_requests, notifications } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
@@ -36,6 +36,14 @@ export async function PUT(
       })
       .onConflictDoNothing({ target: categories.name })
       .returning();
+
+      // 3️⃣ Send a notification to the requester
+    await db.insert(notifications).values({
+      user_id: requestRow.user_id,
+      title: "Category Request Approved",
+      message: `Your category request for "${requestRow.category_name}" has been approved and added to the platform.`,
+      type: "CATEGORY_APPROVAL",
+    });
 
     return NextResponse.json({
       success: true,

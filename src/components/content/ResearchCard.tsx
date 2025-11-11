@@ -24,6 +24,7 @@ interface ResearchCardProps {
   likes?: number; // Now used directly from props
   dislikes?: number; // Now used directly from props
   onVote?: (voteType: "like" | "dislike") => void; // New: Callback to grid for voting
+  profileImage?: string | null; // User profile image URL
 }
 
 export default function ResearchCard({
@@ -44,6 +45,7 @@ export default function ResearchCard({
   likes = 0, // Use directly from props
   dislikes = 0, // Use directly from props
   onVote, // Use this to handle votes
+  profileImage
 }: ResearchCardProps) {
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -150,8 +152,8 @@ export default function ResearchCard({
           <div className="flex flex-row items-center min-w-0">
             <div className="flex items-center justify-center">
               <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-400 shrink-0">
-                <Image
-                  src="/person.jpg"
+                <img
+                  src={ profileImage|| "/person.jpg"}
                   alt="Avatar"
                   width={40}
                   height={40}

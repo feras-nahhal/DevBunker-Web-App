@@ -15,7 +15,7 @@ import "react-datepicker/dist/react-datepicker.css";  // Default styles (we'll o
 
 export default function ExplorePage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuthContext();
+  const { user, loading, isAuthenticated, profileImage } = useAuthContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // NEW: Separate state for mobile sidebar
@@ -202,6 +202,7 @@ export default function ExplorePage() {
             onFiltersChange={handleFiltersChange}
             isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
             onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+            profileImage={profileImage}  // NEW: Pass profile image
           />
 
           <div className="explore-container">
@@ -248,6 +249,7 @@ export default function ExplorePage() {
           onFiltersChange={handleFiltersChange}
           isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
           onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+          profileImage={profileImage}  // NEW: Pass profile image
         />
 
         <div className="explore-container">

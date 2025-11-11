@@ -7,11 +7,32 @@ import Image from "next/image";
 import "./Header1.css";
 import { useAuthContext } from "@/hooks/AuthProvider";
 
-export default function Header({ collapsed = false }: { collapsed?: boolean }) {
+interface HeaderProps {
+  isMobileOpen?: boolean; // NEW: For mobile sidebar state
+  onMobileToggle?: (open: boolean) => void; // NEW: For toggling mobile sidebar
+  profileImage?: string | null; // User profile image URL
+}
+
+export default function Header({
+  collapsed = false, // ✅ NEW PROP
+  isMobileOpen = false, // NEW: Default false
+  onMobileToggle, // NEW: Handler
+  profileImage, // NEW: Destructure the prop
+}: HeaderProps & { collapsed?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { logout } = useAuthContext();
+
+  // NEW: Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Close menu on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,14 +68,20 @@ export default function Header({ collapsed = false }: { collapsed?: boolean }) {
   };
 
   return (
-    <header
-      className={`header ${collapsed ? "collapsed" : ""}`}
-      style={{
-        left: collapsed ? "70px" : "260px", // Moves with sidebar
-        width: collapsed ? "calc(100% - 90px)" : "calc(100% - 270px)", // Adjusts width smoothly
-        transition: "all 0.3s ease",
-      }}
-    >
+       <header className={`header ${!isMobile && collapsed ? "collapsed" : ""}`}>
+        {/* NEW: Hamburger Button (only on mobile) */}
+        {isMobile && (
+          <button
+            className="hamburger-btn"
+            onClick={() => onMobileToggle?.(!isMobileOpen)}
+            aria-label="Toggle sidebar"
+          >
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+          </button>
+        )}
+
       {/* 🔹 Left: Logo / App Name */}
       <div className="header-left">
         <div className="dev">Dev</div>
@@ -68,8 +95,14 @@ export default function Header({ collapsed = false }: { collapsed?: boolean }) {
           onClick={handleAvatarClick}
           style={{ cursor: "pointer" }}
         >
-          <img src="/person.jpg" alt="User Avatar" />
-          <span className="status"></span>
+           <img
+              src={ profileImage|| "/person.jpg"} // fallback if no profile image
+              alt="User Avatar"
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
+         
         </div>
 
         {isMenuOpen && (

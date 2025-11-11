@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { content } from "@/lib/tables";
+import { content, notifications } from "@/lib/tables";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "@/lib/authMiddleware";
 
@@ -28,6 +28,13 @@ export async function PUT(
         { status: 404 }
       );
     }
+        // 2️⃣ Create a notification for the author
+    await db.insert(notifications).values({
+      user_id: rejected.author_id,
+      title: "Your Research has been rejected",
+      message: `Your Research "${rejected.title}" has been rejected by the admin.`,
+      type: "Research_Rejected",
+    });
 
     return NextResponse.json({
       success: true,

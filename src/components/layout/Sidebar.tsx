@@ -9,11 +9,13 @@ import "./Sidebar1.css";
 export default function Sidebar({ 
   onToggle, 
   isMobileOpen = false, 
-  onMobileToggle 
+  onMobileToggle,
+  onBeforeNavigate  // ADD THIS PROP
 }: { 
   onToggle?: (collapsed: boolean) => void; 
   isMobileOpen?: boolean; 
   onMobileToggle?: (open: boolean) => void; 
+  onBeforeNavigate?: (href: string) => boolean;  // ADD THIS TYPE
 }) {
   const pathname = usePathname();
   const glowRightRef = useRef<HTMLDivElement>(null);
@@ -97,9 +99,15 @@ useEffect(() => {
   };
 
   // Close mobile sidebar on link click
-  const handleLinkClick = () => {
-    if (isMobile && onMobileToggle) onMobileToggle(false);
-  };
+ // Close mobile sidebar on link click, check before navigating, and prevent if needed
+const handleLinkClick = (e: React.MouseEvent, href: string) => {
+  if (onBeforeNavigate && !onBeforeNavigate(href)) {
+    e.preventDefault();  // Prevent navigation if the function returns false
+  }
+  // Always close mobile sidebar if on mobile
+  if (isMobile && onMobileToggle) onMobileToggle(false);
+};
+
 
   // Close on Escape key
   useEffect(() => {
@@ -142,7 +150,7 @@ useEffect(() => {
           {/* === MENU === */}
           <div className="menu-block">
             <div className="menu-label">Menu</div>
-            <Link href="/dashboard/explore" className={getClass("/dashboard/explore")} onClick={handleLinkClick}>
+            <Link href="/dashboard/explore" className={getClass("/dashboard/explore")} onClick={(e) => handleLinkClick(e, "/dashboard/explore")}>
               <Image
                 src={getIcon("/explore.svg", pathname === "/dashboard/explore")}
                 alt="Explore"
@@ -156,7 +164,7 @@ useEffect(() => {
           {/* === POSTS === */}
           <div className="menu-block">
             <div className="menu-label">Posts</div>
-            <Link href="/dashboard/posts" className={getClass("/dashboard/posts")} onClick={handleLinkClick}>
+            <Link href="/dashboard/posts" className={getClass("/dashboard/posts")} onClick={(e) => handleLinkClick(e, "/dashboard/posts")}>
               <Image
                 src={getIcon("/post.svg", pathname === "/dashboard/posts")}
                 alt="Posts"
@@ -165,7 +173,7 @@ useEffect(() => {
               />
               <span>Post List</span>
             </Link>
-            <Link href="/dashboard/posts/drafts" className={getClass("/dashboard/posts/drafts")} onClick={handleLinkClick}>
+            <Link href="/dashboard/posts/drafts" className={getClass("/dashboard/posts/drafts")} onClick={(e) => handleLinkClick(e, "/dashboard/posts/drafts")}>
               <Image
                 src={getIcon("/draft.svg", pathname === "/dashboard/posts/drafts")}
                 alt="Drafts"
@@ -174,7 +182,7 @@ useEffect(() => {
               />
               <span>Draft</span>
             </Link>
-            <Link href="/dashboard/posts/create" className={getClass("/dashboard/posts/create")} onClick={handleLinkClick}>
+            <Link href="/dashboard/posts/create" className={getClass("/dashboard/posts/create")} onClick={(e) => handleLinkClick(e, "/dashboard/posts/create")}>
               <Image
                 src={getIcon("/plus.svg", pathname === "/dashboard/posts/create")}
                 alt="Add New"
@@ -188,7 +196,7 @@ useEffect(() => {
           {/* === MINDMAPS === */}
           <div className="menu-block">
             <div className="menu-label">Mindmaps</div>
-            <Link href="/dashboard/mindmaps" className={getClass("/dashboard/mindmaps")} onClick={handleLinkClick}>
+            <Link href="/dashboard/mindmaps" className={getClass("/dashboard/mindmaps")} onClick={(e) => handleLinkClick(e, "/dashboard/mindmaps")}>
               <Image
                 src={getIcon("/mindmap.svg", pathname === "/dashboard/mindmaps")}
                 alt="Mindmaps"
@@ -197,7 +205,7 @@ useEffect(() => {
               />
               <span>Mind List</span>
             </Link>
-            <Link href="/dashboard/mindmaps/drafts" className={getClass("/dashboard/mindmaps/drafts")} onClick={handleLinkClick}>
+            <Link href="/dashboard/mindmaps/drafts" className={getClass("/dashboard/mindmaps/drafts")} onClick={(e) => handleLinkClick(e, "/dashboard/mindmaps/drafts")}>
               <Image
                 src={getIcon("/draft.svg", pathname === "/dashboard/mindmaps/drafts")}
                 alt="Drafts"
@@ -206,7 +214,7 @@ useEffect(() => {
               />
               <span>Draft</span>
             </Link>
-            <Link href="/dashboard/mindmaps/create" className={getClass("/dashboard/mindmaps/create")} onClick={handleLinkClick}>
+            <Link href="/dashboard/mindmaps/create" className={getClass("/dashboard/mindmaps/create")} onClick={(e) => handleLinkClick(e, "/dashboard/mindmaps/create")}>
               <Image
                 src={getIcon("/plus.svg", pathname === "/dashboard/mindmaps/create")}
                 alt="Add New"
@@ -220,7 +228,7 @@ useEffect(() => {
           {/* === RESEARCH === */}
           <div className="menu-block">
             <div className="menu-label">Research</div>
-            <Link href="/dashboard/research" className={getClass("/dashboard/research")} onClick={handleLinkClick}>
+            <Link href="/dashboard/research" className={getClass("/dashboard/research")} onClick={(e) => handleLinkClick(e, "/dashboard/research")}>
               <Image
                 src={getIcon("/Research.svg", pathname === "/dashboard/research")}
                 alt="Research"
@@ -229,7 +237,7 @@ useEffect(() => {
               />
               <span>Research List</span>
             </Link>
-            <Link href="/dashboard/research/drafts" className={getClass("/dashboard/research/drafts")} onClick={handleLinkClick}>
+            <Link href="/dashboard/research/drafts" className={getClass("/dashboard/research/drafts")} onClick={(e) => handleLinkClick(e, "/dashboard/research/drafts")}>
               <Image
                 src={getIcon("/draft.svg", pathname === "/dashboard/research/drafts")}
                 alt="Drafts"
@@ -238,7 +246,7 @@ useEffect(() => {
               />
               <span>Draft</span>
             </Link>
-            <Link href="/dashboard/research/create" className={getClass("/dashboard/research/create")} onClick={handleLinkClick}>
+            <Link href="/dashboard/research/create" className={getClass("/dashboard/research/create")} onClick={(e) => handleLinkClick(e, "/dashboard/research/create")}>
               <Image
                 src={getIcon("/plus.svg", pathname === "/dashboard/research/create")}
                 alt="Add New"
@@ -252,7 +260,7 @@ useEffect(() => {
           {/* === DISCOVER === */}
           <div className="menu-block">
             <div className="menu-label">Discover</div>
-            <Link href="/dashboard/bookmarks" className={getClass("/dashboard/bookmarks", "menu-item")} onClick={handleLinkClick}>
+            <Link href="/dashboard/bookmarks" className={getClass("/dashboard/bookmarks", "menu-item")} onClick={(e) => handleLinkClick(e, "/dashboard/bookmarks")}>
               <Image
                 src={getIcon("/bookmark.svg", pathname === "/dashboard/bookmarks")}
                 alt="Bookmarks"
@@ -261,7 +269,7 @@ useEffect(() => {
               />
               <span>Bookmarks</span>
             </Link>
-            <Link href="/dashboard/read-later" className={getClass("/dashboard/read-later", "menu-item")} onClick={handleLinkClick}>
+            <Link href="/dashboard/read-later" className={getClass("/dashboard/read-later", "menu-item")} onClick={(e) => handleLinkClick(e, "/dashboard/read-later")}>
               <Image
                 src={getIcon("/readlater.svg", pathname === "/dashboard/read-later")}
                 alt="Read Later"
@@ -275,7 +283,7 @@ useEffect(() => {
           {/* === UPDATE === */}
           <div className="menu-block">
             <div className="menu-label">Update</div>
-            <Link href="/dashboard/notifications" className={getClass("/dashboard/notifications", "menu-item")} onClick={handleLinkClick}>
+            <Link href="/dashboard/notifications" className={getClass("/dashboard/notifications", "menu-item")} onClick={(e) => handleLinkClick(e, "/dashboard/notifications")}>
               <Image
                 src={getIcon("/notfication.svg", pathname === "/dashboard/notifications")}
                 alt="Notifications"
@@ -284,7 +292,7 @@ useEffect(() => {
               />
               <span>Notifications</span>
             </Link>
-            <Link href="/dashboard/settings" className={getClass("/dashboard/settings", "menu-item")} onClick={handleLinkClick}>
+            <Link href="/dashboard/settings" className={getClass("/dashboard/settings", "menu-item")} onClick={(e) => handleLinkClick(e, "/dashboard/settings")}>
               <Image
                 src={getIcon("/setting.svg", pathname === "/dashboard/settings")}
                 alt="Settings"

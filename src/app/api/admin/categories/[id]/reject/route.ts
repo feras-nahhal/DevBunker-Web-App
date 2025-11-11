@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { categories, category_requests, content } from "@/lib/tables";
+import { categories, category_requests, content, notifications } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
@@ -46,6 +46,14 @@ export async function PUT(
         await db.delete(categories).where(eq(categories.id, existingCategory.id));
       }
     }
+
+    // 3️⃣ Send notification to requester
+    await db.insert(notifications).values({
+      user_id: requestRow.user_id,
+      title: "Category Request Rejected",
+      message: `Your category request for "${requestRow.category_name}" has been rejected by the admin.`,
+      type: "CATEGORY_REJECTION",
+    });
 
     return NextResponse.json({
       success: true,

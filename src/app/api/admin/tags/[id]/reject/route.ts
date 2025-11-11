@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { tags, tag_requests, content_tags } from "@/lib/tables";
+import { tags, tag_requests, content_tags, notifications } from "@/lib/tables";
 import { authMiddleware } from "@/lib/authMiddleware";
 import { eq } from "drizzle-orm";
 
@@ -40,6 +40,14 @@ export async function PUT(
       // 4. Remove the tag itself
       await db.delete(tags).where(eq(tags.id, existingTag.id));
     }
+
+    // 5️⃣ Send a notification to the requester
+    await db.insert(notifications).values({
+      user_id: request.user_id,
+      title: "Tag Request Rejected",
+      message: `Your tag request for "${request.tag_name}" was rejected and deleted by the admin.`,
+      type: "TAG_REJECTION",
+    });
 
     return NextResponse.json({
       success: true,

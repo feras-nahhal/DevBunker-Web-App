@@ -13,8 +13,8 @@ import CategoryGridSkeleton from "@/components/admin/CategoryGridSkeleton";
 export default function ExplorePage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
-  const { user,token, loading, isAuthenticated } = useAuthContext();
-
+  const { user,token, loading, isAuthenticated,profileImage } = useAuthContext();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Load sidebar state from localStorage
@@ -34,9 +34,18 @@ export default function ExplorePage() {
   if (loading || !token) {
     return (
       <div className="dashboard">
-      <Sidebar onToggle={setSidebarCollapsed} />
-      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <Header collapsed={sidebarCollapsed}/>
+<Sidebar 
+                                  onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                                  isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                                  onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                                />
+       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+         <Header 
+                 collapsed={sidebarCollapsed}
+                 isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                 onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                 profileImage={profileImage}
+                  />
 
         <div className="explore-container">
           {/* 🔹 Breadcrumb / Title */}
@@ -63,9 +72,18 @@ export default function ExplorePage() {
   // ✅ Main content (once logged in)
   return (
     <div className="dashboard">
-      <Sidebar onToggle={setSidebarCollapsed} />
-      <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <Header collapsed={sidebarCollapsed}/>
+      <Sidebar 
+                                        onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                                        isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                                        onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                                      />
+             <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+               <Header 
+                       collapsed={sidebarCollapsed}
+                       isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                       onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                       profileImage={profileImage}
+                        />
 
         <div className="explore-container">
           {/* 🔹 Breadcrumb / Title */}
