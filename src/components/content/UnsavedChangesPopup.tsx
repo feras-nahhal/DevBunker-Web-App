@@ -31,7 +31,7 @@ export default function UnsavedChangesPopup({
       >
         ×
       </button>
-
+      {/* Title */}
       <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-red-400">
         Unsaved {type}
       </h1>
