@@ -6,11 +6,11 @@ import Image from "next/image";
 import Header from "@/components/admin/Header";
 import Sidebar from "@/components/admin/Sidebar";
 import CategoryGrid from "@/components/admin/CategoryGrid";
-import "./categoriesPage.css";
+import "./CategoriesPage.css";
 import { useAuthContext } from "@/hooks/AuthProvider";
 import CategoryGridSkeleton from "@/components/admin/CategoryGridSkeleton";
 
-export default function categoriesPage() {
+export default function CategoriesPage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
   const { user,token, loading, isAuthenticated,profileImage } = useAuthContext();
