@@ -210,7 +210,7 @@
 }
 
 .sidebar.collapsed .menu-label,
-.sidebar.collapsed span {
+.sidebar.collapsed span:not(.unread-badge) {
   display: none;
 }
 
@@ -266,6 +266,24 @@
   border-radius: 50%;
   z-index: 1;
 }
+
+/* ===============================
+   ICON SCALE IN COLLAPSED MODE
+=============================== */
+.sidebar.collapsed .menu-icon img {
+  transition: transform 0.25s ease;
+}
+
+.sidebar.collapsed .menu-item:hover .menu-icon img,
+.sidebar.collapsed .menu-subitem:hover .menu-icon img {
+  transform: scale(1.25);
+}
+
+.sidebar.collapsed .menu-item.active .menu-icon img,
+.sidebar.collapsed .menu-subitem.active .menu-icon img {
+  transform: scale(1.45); /* Bigger active icon */
+}
+
 
 
 

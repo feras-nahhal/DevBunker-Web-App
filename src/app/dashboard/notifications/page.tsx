@@ -59,17 +59,16 @@ export default function ExplorePage() {
 
           {/* 🔹 Skeleton Loading Grid */}
          <div
-      className="flex flex-col items-center justify-start mx-auto"
-      style={{
-        width: "1200px",
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderRadius: "10px",
-        border: "1px solid rgba(80,80,80,0.24)",
-        boxShadow: "inset 0 0 7px rgba(255,255,255,0.16)",
-        backdropFilter: "blur(12px)",
-        overflow: "hidden",
-      }}
-    >
+  className="flex flex-col items-center justify-start w-full max-w-[1200px] mx-auto px-2 sm:px-4"
+  style={{
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: "10px",
+    border: "1px solid rgba(80,80,80,0.24)",
+    boxShadow: "inset 0 0 7px rgba(255,255,255,0.16)",
+    backdropFilter: "blur(12px)",
+    overflow: "hidden",
+  }}
+>
             <div className="w-[1190px] h-[56px] bg-white/[0.05] border border-[rgba(145,158,171,0.2)] rounded-xl flex items-center justify-between px-2 mb-1 mt-1 gap-2">
         {[{ label: "All" }, { label: "Unread" }, { label: "Archived" }].map(
           (item) => (

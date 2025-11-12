@@ -8,6 +8,7 @@ import "./Sidebar1.css";
 import CreateCategoryPopup from "./CreateCategoryPopup";
 import CreateTagPopup from "./CreateTagPopup";
 import CreateUserPopup from "./CreateUserPopup";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export default function Sidebar({ 
   onToggle, 
@@ -21,6 +22,10 @@ export default function Sidebar({
   const pathname = usePathname();
   const glowRightRef = useRef<HTMLDivElement>(null);
   const glowLeftRef = useRef<HTMLDivElement>(null);
+// Notifications
+  const { notifications } = useNotifications();
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
 
   // Collapse state (for desktop)
   const [collapsed, setCollapsed] = useState(false);
@@ -248,16 +253,30 @@ useEffect(() => {
             <div className="menu-label">Update</div>
             <Link
               href="/admin/notifications"
-              className={getClass("/admin/notifications", "menu-item")}
+              className={`${getClass("/admin/notifications", "menu-item")} relative`}
             >
-              <Image
-                src={getIcon("/notfication.svg", pathname === "/admin/notifications")}
-                alt="Notifications"
-                width={24}
-                height={24}
-              />
+              <div className="relative">
+                <Image
+                  src={getIcon("/notfication.svg", pathname === "/admin/notifications")}
+                  alt="Notifications"
+                  width={24}
+                  height={24}
+                />
+
+                {/* 🔴 Badge for unread count */}
+                {unreadCount > 0 && (
+                 <span
+  className="unread-badge absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-semibold rounded-full min-w-[16px] h-[16px] flex items-center justify-center shadow-md"
+>
+  {unreadCount > 9 ? "9+" : unreadCount}
+</span>
+
+                )}
+              </div>
+
               <span>Notifications</span>
             </Link>
+
             <Link
               href="/admin/settings"
               className={getClass("/admin/settings", "menu-item")}

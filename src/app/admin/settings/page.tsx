@@ -1,16 +1,15 @@
 "use client";
 import { useRouter } from "next/navigation";
-
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Header from "@/components/admin/Header";
 import Sidebar from "@/components/admin/Sidebar";
 import "./ExplorePage.css";
 import SettingsPage from "@/components/content/SettingsPage";
 import SettingsPageSkeleton from "@/components/content/SettingsPageSkeleton";
 import { useAuthContext } from "@/hooks/AuthProvider";
+import Header from "@/components/admin/Header";
 
-export default function ExplorePage() {
+export default function SettingPage() {
   // 🔐 Auth & Redirect Logic
   const router = useRouter();
   const { token, loading, profileImage } = useAuthContext();
@@ -34,7 +33,7 @@ export default function ExplorePage() {
                            onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
                          />
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-          <Header
+          <Header 
         collapsed={sidebarCollapsed}
         isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
         onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
