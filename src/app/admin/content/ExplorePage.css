@@ -3,7 +3,6 @@
   display: flex;
   height: 100vh;
   width: 100%;
-
 }
 
 /* Main content wrapper */
@@ -12,11 +11,11 @@
   width: calc(100% - 248px);
   position: relative; /* makes Header absolute relative to this */
   min-height: 100vh;
+  transition: all 0.3s ease; /* Smooth transition for collapse */
 }
 
 .main-content.collapsed {
-  margin-left: 68px; /* collapsed sidebar width */
-  width: calc(100% - 68px);
+  margin-left: 68px;
   transition: all 0.3s ease;
 }
 

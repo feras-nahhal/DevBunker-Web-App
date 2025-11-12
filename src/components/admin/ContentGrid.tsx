@@ -57,7 +57,23 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
   // Selection + Pagination
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("category-items-per-page");
+    return saved ? Number(saved) : 5; // default 5 if none saved
+  }
+  return 5;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("category-items-per-page", itemsPerPage.toString());
+    }
+  }, [itemsPerPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage, search, selectedStatuses, selectedCategories, selectedAuthorEmails, createdAfter, createdBefore]);
 
   // Comments
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -309,9 +325,8 @@ const clearAllFilters = () => {
   return (
     <>
       <div
-        className="flex flex-col items-center justify-start mx-auto"
+        className="flex flex-col items-center justify-start mx-auto w-full max-w-[1200px]"
         style={{
-          width: "1200px",
           backgroundColor: "rgba(255,255,255,0.05)",
           borderRadius: "10px",
           border: "1px solid rgba(80,80,80,0.24)",
@@ -347,9 +362,9 @@ const clearAllFilters = () => {
 <div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
 
   {/* Top Row: Search + Filters (Fixed layout) */}
-  <div className="flex flex-wrap items-end gap-3 mb-3">
+  <div className="flex flex-col gap-4 mb-3 md:flex-row md:flex-wrap md:items-end md:gap-3">
     {/* 🔍 Main Search */}
-    <div className="flex-1 min-w-[250px]">
+    <div className="w-full md:w-[220px] relative">
       <label className="block text-white text-[12px] mb-1">Search</label>
       <input
         type="text"
@@ -361,7 +376,7 @@ const clearAllFilters = () => {
     </div>
 
     {/* 🚦 Statuses Dropdown */}
-    <div className="w-[200px] relative">
+    <div className="w-full md:w-[220px] relative">
       <label className="block text-white text-[12px] mb-1">Statuses</label>
       <input
         type="text"
@@ -401,7 +416,7 @@ const clearAllFilters = () => {
     </div>
 
     {/* 🏷️ Categories Dropdown */}
-    <div className="w-[200px] relative">
+    <div className="w-full md:w-[220px] relative">
       <label className="block text-white text-[12px] mb-1">Categories</label>
       <input
         type="text"
@@ -445,7 +460,7 @@ const clearAllFilters = () => {
             )}
     </div>
      {/* NEW: 👤 Author Emails Dropdown */}
-      <div className="w-[200px] relative">
+      <div className="w-full md:w-[220px] relative">
         <label className="block text-white text-[12px] mb-1">Author Emails</label>
         <input
           type="text"
@@ -494,7 +509,7 @@ const clearAllFilters = () => {
         )}
       </div>
                         {/* 📅 Created From */}
-                        <div className="w-[120px]">
+                        <div className="w-full md:w-[220px] relative">
                           <label className="block text-white text-[12px] mb-1">Created After</label>
                           <div className="relative">
                             <DatePicker
@@ -515,7 +530,7 @@ const clearAllFilters = () => {
                         </div>
       
                         {/* 📅 Created To */}
-                        <div className="w-[120px]">
+                        <div className="w-full md:w-[220px] relative">
                           <label className="block text-white text-[12px] mb-1">Created Before</label>
                           <div className="relative">
                             <DatePicker
@@ -552,6 +567,7 @@ const clearAllFilters = () => {
                 <button
                   onClick={() => removeFromArray(selectedStatuses, setSelectedStatuses, status)}
                   className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
+                  aria-label={`Remove status filter ${status}`}
                 >
                   ×
                 </button>
@@ -574,6 +590,7 @@ const clearAllFilters = () => {
                 <button
                   onClick={() => removeFromArray(selectedCategories, setSelectedCategories, cat)}
                   className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
+                  aria-label={`Remove status filter ${cat}`}
                 >
                   ×
                 </button>
@@ -596,6 +613,7 @@ const clearAllFilters = () => {
                 <button
                   onClick={() => removeFromArray(selectedAuthorEmails, setSelectedAuthorEmails, email)}
                   className="flex items-center justify-center w-[15px] h-[15px] rounded-full bg-white text-black text-[16px] cursor-pointer p-0 border-none hover:bg-gray-100 transition"
+                  aria-label={`Remove status filter ${email}`}
                 >
                   ×
                 </button>
@@ -623,7 +641,8 @@ const clearAllFilters = () => {
   )}
 </div>
 
-
+{/* Scrollable wrapper for header and cards */}
+<div className="w-full overflow-x-auto md:overflow-x-visible">
         {/* Header Row (checkbox + labels) */}
         <div
           className="relative flex flex-row items-center justify-between border-b border-[rgba(145,158,171,0.2)]"
@@ -686,7 +705,7 @@ const clearAllFilters = () => {
         </div>
 
         {/* 🧾 Content Cards */}
-        <div className="flex flex-col w-full items-center justify-start">
+        <div className="flex flex-col min-w-[1200px] items-center justify-start">
           {filteredData.length === 0 ? (
             <div className="text-gray-400 py-10 text-center text-sm">
               No {type} content found.
@@ -707,10 +726,11 @@ const clearAllFilters = () => {
             ))
           )}
         </div>
+        </div>
 
         {/* 🔢 Footer + Pagination */}
-        <div className="flex items-center justify-between w-full border-t border-[rgba(145,158,171,0.2)] py-3 px-5 bg-white/[0.05]">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full border-t border-[rgba(145,158,171,0.2)] py-3 px-5 bg-white/[0.05] gap-3">
+          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
             <span className="text-white text-[12px] opacity-80">
               {selectedIds.length} research{selectedIds.length !== 1 ? "s" : ""} selected
             </span>
@@ -718,26 +738,26 @@ const clearAllFilters = () => {
               <>
                 <button
                   onClick={handleDeleteSelected}
-                  className="relative w-[150px] h-[30px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
+                  className="relative w-[120px] h-[30px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
                 >
                   <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,99,99,0.5)_0%,transparent_70%)] blur-md" />
-                <span className="relative z-10">Delete Selected</span>
+                <span className="relative z-10">Delete</span>
                   
                 </button>
                 <button
-                  onClick={() => setSelectedIds([])}
-                  className="relative w-[150px] h-[30px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
-                >
-                  <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,99,99,0.5)_0%,transparent_70%)] blur-md" />
-                <span className="relative z-10"> Unselect All</span>
-                 
-                </button>
+                        onClick={() => setSelectedIds([])}
+                        className="relative w-[120px] h-[30px] rounded-full  border border-white/10  text-white font-bold text-sm flex items-center justify-center transition hover:scale-[1.02] overflow-hidden"
+                      >
+                         <span className="absolute inset-0 rounded-full bg-black blur-md" />
+                      <span className="relative z-10">Unselect All</span>
+                        
+                      </button>
               </>
             )}
           </div>
 
            {/* Pagination (right) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end mt-2 sm:mt-0">
             {/* Rows per page selector */}
             <div className="relative flex items-center gap-1">
               <span className="text-[12px] text-gray-300 whitespace-nowrap">

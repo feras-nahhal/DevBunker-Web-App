@@ -32,43 +32,45 @@ export default function ExplorePage() {
   }, [loading, token, router]);
 
   // 🛑 While loading or no token — show loader
-  if (loading || !token) {
-    return (
-      <div className="dashboard">
-      <Sidebar 
-                                       onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
-                                       isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
-                                       onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
-                                     />
-            <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
-              <Header
-                      collapsed={sidebarCollapsed}
-                      isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
-                      onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
-                      profileImage={profileImage}
-                       />
-
-        <div className="explore-container">
-          {/* 🔹 Breadcrumb / Title */}
-          <div className="flex items-center mb-4">
-            <Image
-              src="/Reserchnew.png"
-              alt="Menu Icon"
-              width={25}
-              height={25}
-            />
-            <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
-              Reserch/ Contant
-            </h2>
+    if (loading || !token) {
+      return (
+        <div className="dashboard">
+        <Sidebar 
+                                   onToggle={(collapsed) => setSidebarCollapsed(collapsed)} 
+                                   isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                                   onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                                 />
+        <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
+          <Header
+                  collapsed={sidebarCollapsed}
+                  isMobileOpen={isMobileSidebarOpen}  // NEW: Pass mobile props
+                  onMobileToggle={setIsMobileSidebarOpen}  // NEW: Pass mobile props
+                  profileImage={profileImage}
+                   />
+  
+  
+          <div className="explore-container">
+            {/* 🔹 Breadcrumb / Title */}
+            <div className="flex items-center mb-4">
+              <Image
+                src="/Reserchnew.png"
+                alt="Menu Icon"
+                width={25}
+                height={25}
+              />
+              <h2 className="font-[400] text-[14px] leading-[22px] text-[#707070]">
+                Reserch/ Contant
+              </h2>
+            </div>
+              {/* 🧩 Centered Skeleton Card */}
+                        <div className="flex justify-center items-start mt-8">
+                          <CategoryGridSkeleton />
+                        </div>
           </div>
-
-          {/* 🔹 Category Grid */}
-          <CategoryGridSkeleton/>
         </div>
       </div>
-    </div>
-    );
-  }
+      );
+    }
 
   // ✅ Main content (once logged in)
   return (
