@@ -6,7 +6,7 @@ import Image from "next/image";
 import Header from "@/components/admin/Header";
 import Sidebar from "@/components/admin/Sidebar";
 import CategoryGrid from "@/components/admin/CategoryGrid";
-import "./CategoriesPage.css";
+import "./ExplorePage.css";
 import { useAuthContext } from "@/hooks/AuthProvider";
 import CategoryGridSkeleton from "@/components/admin/CategoryGridSkeleton";
 
