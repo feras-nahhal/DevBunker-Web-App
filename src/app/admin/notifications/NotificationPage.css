@@ -15,8 +15,8 @@
 }
 
 .main-content.collapsed {
-  margin-left: 68px;
-  transition: all 0.3s ease;
+  margin-left: 68px; /* collapsed sidebar width */
+  width: calc(100% - 68px);
 }
 
 /* Explore page content */
@@ -40,6 +40,7 @@
   }
   .main-content.collapsed {
     margin-left: 0; /* Ensure no margin when collapsed on mobile */
+    width: 100%;
   }
   .explore-container {
     padding: 16px; /* Reduce padding on mobile */

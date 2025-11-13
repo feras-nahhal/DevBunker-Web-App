@@ -9,6 +9,7 @@ import Image from "next/image";
 import CategoryGridSkeleton from "./CategoryGridSkeleton";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; 
+import { usePathname } from "next/navigation";
 
 export default function UserGrid() {
   const { users, loading, error, refetch, deleteUser } = useUsers(); // NEW: Hook fetches from /api/admin/users
@@ -27,6 +28,15 @@ export default function UserGrid() {
   // NEW: Date filters
   const [createdFrom, setCreatedFrom] = useState<string>(""); // ISO date string (e.g., "2023-01-01")
   const [createdTo, setCreatedTo] = useState<string>(""); // ISO date string (e.g., "2023-12-31")
+
+  // 1️⃣ Add a new state for mobile collapse toggle
+  // 1️⃣ Add a new state for mobile collapse toggle
+    const pathname = usePathname();
+    const [filtersOpen, setFiltersOpen] = useState(false);
+  
+     useEffect(() => {
+      setFiltersOpen(false); // Reset filtersOpen whenever route changes
+    }, [pathname]);
 
   // Selection + Pagination
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -323,6 +333,17 @@ if (createdFrom || createdTo) {
                 className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
               />
             </div>
+            {/* Mobile Collapse Button */}
+            <button
+              className="md:hidden text-white text-sm font-medium px-2 py-1 border border-white/20 rounded-md"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              {filtersOpen ? "Hide Filters" : "Show Filters"}
+            </button>
+
+            
+            {/* 3️⃣ Filters container: collapsible on mobile, always visible on md+ */}
+            <div className={`${filtersOpen ? "flex" : "hidden"} flex-col md:flex md:flex-row md:gap-3 gap-4`}>
 
             {/* 🎭 Roles (Category) Dropdown */}
             <div className="w-full md:w-[220px] relative">
@@ -450,7 +471,8 @@ if (createdFrom || createdTo) {
               />
             </div>
           </div>
-          </div>
+      </div>
+    </div>
           
   {/* New Horizontal Row: Selected Pills Boxes (Appears below, fixed position) */}
 {(selectedRoles.length > 0 || selectedStatuses.length > 0) && (

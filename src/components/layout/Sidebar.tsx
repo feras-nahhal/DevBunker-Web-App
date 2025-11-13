@@ -291,12 +291,12 @@ const handleLinkClick = (e: React.MouseEvent, href: string) => {
           <div className="menu-block">
             <div className="menu-label">Update</div>
             <Link
-              href="/admin/notifications"
-              className={`${getClass("/admin/notifications", "menu-item")} relative`}
+              href="/dashboard/notifications"
+              className={`${getClass("/dashboard/notifications", "menu-item")} relative`}
             >
               <div className="relative">
                 <Image
-                  src={getIcon("/notfication.svg", pathname === "/admin/notifications")}
+                  src={getIcon("/notfication.svg", pathname === "/dashboard/notifications")}
                   alt="Notifications"
                   width={24}
                   height={24}

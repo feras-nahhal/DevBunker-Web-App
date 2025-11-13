@@ -12,6 +12,7 @@ import CategoryGridSkeleton from "./CategoryGridSkeleton";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; 
 import SharePopup from "../content/SharePopup";
+import { usePathname } from "next/navigation";
 interface ContentGridProps {
   type?: "all" | "post" | "research" | "mindmap";
 }
@@ -46,6 +47,16 @@ export default function ContentGrid({ type = "all" }: ContentGridProps) {
   // NEW: Created Date range
   const [createdAfter, setCreatedAfter] = useState("");
   const [createdBefore, setCreatedBefore] = useState("");
+
+  // 1️⃣ Add a new state for mobile collapse toggle
+  // 1️⃣ Add a new state for mobile collapse toggle
+  const pathname = usePathname();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+   useEffect(() => {
+    setFiltersOpen(false); // Reset filtersOpen whenever route changes
+  }, [pathname]);
+
 
   // Example categories list (you can replace with actual)
   const categoriesList = Array.from(new Set(data.map((d) => d.categoryName || d.category_id || "")));
@@ -336,7 +347,7 @@ const clearAllFilters = () => {
         }}
       >
         {/* 🧠 Stats Summary */}
-        <div className="flex flex-wrap gap-4 w-full px-5 py-4 border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05]">
+        <div className="flex flex-wrap gap-2 w-full px-5 py-4 border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05]">
           {[
             { label: "All", color: "#9CA3AF", count: filteredData.length },
             { label: "Published", color: "rgba(34,197,94,0.16)", count: filteredData.filter((i) => i.status === "published").length },
@@ -362,9 +373,9 @@ const clearAllFilters = () => {
 <div className="w-full border-b border-[rgba(145,158,171,0.2)] bg-white/[0.05] px-5 py-4">
 
   {/* Top Row: Search + Filters (Fixed layout) */}
-  <div className="flex flex-col gap-4 mb-3 md:flex-row md:flex-wrap md:items-end md:gap-3">
+  <div className="flex flex-col gap-4 mb-3 md:flex-row md:items-end md:gap-3 md:flex-wrap">
     {/* 🔍 Main Search */}
-    <div className="w-full md:w-[220px] relative">
+    <div className="w-full md:w-full mb-3">
       <label className="block text-white text-[12px] mb-1">Search</label>
       <input
         type="text"
@@ -374,6 +385,17 @@ const clearAllFilters = () => {
         className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
       />
     </div>
+  {/* Mobile Collapse Button */}
+            <button
+              className="md:hidden text-white text-sm font-medium px-2 py-1 border border-white/20 rounded-md"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              {filtersOpen ? "Hide Filters" : "Show Filters"}
+            </button>
+
+            
+            {/* 3️⃣ Filters container: collapsible on mobile, always visible on md+ */}
+            <div className={`${filtersOpen ? "flex" : "hidden"} flex-col md:flex md:flex-row md:gap-3 gap-4`}>
 
     {/* 🚦 Statuses Dropdown */}
     <div className="w-full md:w-[220px] relative">
@@ -549,11 +571,12 @@ const clearAllFilters = () => {
                             />
                           </div>
                         </div>
+                        </div>
   </div>
 
   {/* Bottom Row: Pills + Clear Button */}
   {(selectedStatuses.length > 0 || selectedCategories.length > 0 || selectedAuthorEmails.length > 0) && (
-    <div className="flex gap-3 items-start">
+    <div className="flex flex-row flex-wrap items-center gap-3">
       {/* Selected Statuses */}
       {selectedStatuses.length > 0 && (
         <div className="flex-shrink-0 bg-white/[0.08] border border-dashed border-[rgba(145,158,171,0.2)] rounded-md p-2 min-h-[40px] w-fit max-w-[450px]">

@@ -9,6 +9,7 @@ import Image from "next/image";
 import CategoryGridSkeleton from "./CategoryGridSkeleton";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; 
+import { usePathname } from "next/navigation";
 
 export default function CategoryGrid() {
   const { requests, loading, error, approveCategory, rejectCategory } = useAdminCategories(); // FIXED: Categories hook + renamed functions
@@ -26,6 +27,16 @@ export default function CategoryGrid() {
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]); // Multi-select for authors
   const [authorSearch, setAuthorSearch] = useState(""); // For dropdown input
   const [authorDropdownOpen, setAuthorDropdownOpen] = useState(false);
+
+  // 1️⃣ Add a new state for mobile collapse toggle
+  // 1️⃣ Add a new state for mobile collapse toggle
+    const pathname = usePathname();
+    const [filtersOpen, setFiltersOpen] = useState(false);
+  
+     useEffect(() => {
+      setFiltersOpen(false); // Reset filtersOpen whenever route changes
+    }, [pathname]);
+  
 
   const [statusSearch, setStatusSearch] = useState("");
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
@@ -344,6 +355,18 @@ export default function CategoryGrid() {
               />
             </div>
 
+            {/* Mobile Collapse Button */}
+            <button
+              className="md:hidden text-white text-sm font-medium px-2 py-1 border border-white/20 rounded-md"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              {filtersOpen ? "Hide Filters" : "Show Filters"}
+            </button>
+
+            
+            {/* 3️⃣ Filters container: collapsible on mobile, always visible on md+ */}
+            <div className={`${filtersOpen ? "flex" : "hidden"} flex-col md:flex md:flex-row md:gap-3 gap-4`}>
+
             {/* 👤 Author Dropdown */}
             <div className="w-full md:w-[220px] relative">
               <label className="block text-white text-[12px] mb-1">Author</label>
@@ -464,6 +487,7 @@ export default function CategoryGrid() {
                       />
                     </div>
                   </div>
+              </div>
           </div>
 
            {/* Bottom Row: Pills + Clear Button */}

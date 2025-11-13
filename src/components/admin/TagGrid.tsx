@@ -8,6 +8,7 @@ import Image from "next/image";
 import CategoryGridSkeleton from "./CategoryGridSkeleton";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; 
+import { usePathname } from "next/navigation";
 export default function TagGrid() {
   const { requests, loading, error, refetch, approveTag, rejectTag } = useAdminTags(); // NEW: Hook for tag requests
 
@@ -25,6 +26,14 @@ export default function TagGrid() {
   const [statusSearch, setStatusSearch] = useState("");
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [rowsDropdownOpen, setRowsDropdownOpen] = useState(false);
+
+  // 1️⃣ Add a new state for mobile collapse toggle
+  const pathname = usePathname();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+   useEffect(() => {
+    setFiltersOpen(false); // Reset filtersOpen whenever route changes
+  }, [pathname]);
 
   // Compute unique authors from requests
   const uniqueAuthors = useMemo(() => [...new Set(requests.map(r => r.authorEmail).filter((email): email is string => Boolean(email)))], [requests]);
@@ -335,6 +344,18 @@ const bulkRejectSelected = async () => {
                       className="w-full px-4 py-2 text-sm text-white bg-white/[0.08] border border-white/[0.15] rounded-md focus:outline-none focus:ring-1 focus:ring-white/[0.25] placeholder:text-gray-400"
                     />
                   </div>
+
+                   {/* Mobile Collapse Button */}
+            <button
+              className="md:hidden text-white text-sm font-medium px-2 py-1 border border-white/20 rounded-md"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              {filtersOpen ? "Hide Filters" : "Show Filters"}
+            </button>
+
+            
+            {/* 3️⃣ Filters container: collapsible on mobile, always visible on md+ */}
+            <div className={`${filtersOpen ? "flex" : "hidden"} flex-col md:flex md:flex-row md:gap-3 gap-4`}>
       
                  
       
@@ -458,6 +479,7 @@ const bulkRejectSelected = async () => {
                       />
                     </div>
                   </div>
+                </div>
                 </div>
       
                 {/* Bottom Row: Pills + Clear Button */}
