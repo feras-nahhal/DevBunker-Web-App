@@ -26,11 +26,13 @@ export default function CreateCategoryPopup({ onClose }: CreateCategoryPopupProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div
-        className="relative flex flex-col items-start p-[0_0_24px] gap-1.5 bg-white/5 border border-[rgba(80,80,80,0.24)]
-                   shadow-[inset_0_0_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px]"
-        style={{ width: "465px", height: "320px" }}
-      >
+       <div
+    className="relative flex flex-col items-start p-[0_0_24px] gap-1.5 
+               bg-white/5 border border-[rgba(80,80,80,0.24)] 
+               shadow-[inset_0_0_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] 
+               rounded-[16px] w-[90%] max-w-[465px] md:w-[465px]"
+    style={{ height: "320px" }}
+  >
         {/* Close button */}
         <button
           onClick={onClose}
