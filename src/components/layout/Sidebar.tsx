@@ -141,12 +141,15 @@ const handleLinkClick = (e: React.MouseEvent, href: string) => {
       <aside className={`sidebar ${collapsed && !isMobile ? "collapsed" : ""} ${isMobile ? "mobile" : ""} ${isMobile && isMobileOpen ? "open" : ""}`}>
         {/* === COLLAPSE BUTTON (only on desktop) === */}
         {!isMobile && (
-          <button
-            onClick={toggleCollapse}
-            className={`collapse-btn ${collapsed ? "collapsed" : ""}`}
-            aria-label="Toggle sidebar"
-          >
-            <span className="arrow" />
+          <button className={`collapse-btn ${collapsed ? "collapsed" : ""}`} onClick={toggleCollapse}>
+            <img
+              src={
+                collapsed
+                  ? "/ic-eva_arrow-ios-forward-fill.svg"
+                  : "/ic-eva_arrow-ios-back-fill.svg"
+              }
+              alt="Toggle sidebar"
+            />
           </button>
         )}
 

@@ -50,37 +50,39 @@
 }
 
 /* ===============================
-   COLLAPSE BUTTON ABOVE MANAGEMENT
+   COLLAPSE BUTTON (Floating Edge Style)
 =============================== */
 .collapse-btn {
-  align-self: flex-end;
-  background: rgba(255, 255, 255, 0.1); /* Light background for visibility */
-  border: 1px solid rgba(255, 255, 255, 0.486);
-  cursor: pointer;
-  position: relative;
-  width: 10px;  /* Larger for better click area */
-  height: 10px; /* Larger for better click area */
-  margin-bottom: 1px;
-  opacity: 0.6;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  border-radius: 50%; /* Make it a dot/circle */
+  position: absolute;
+  top: -5px; /* small top gap */
+  right: -12px; /* sticks slightly outside sidebar */
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px; 
+  backdrop-filter: blur(12px);
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start; /* horizontal left */
+  align-items: flex-end;       /* vertical bottom */
+  padding-left: 2px;           /* reduce left padding to move arrow left */
+  padding-bottom: 6px;         /* bottom padding remains */
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+  z-index: 1100;
 }
 
 .collapse-btn:hover {
-  opacity: 1;
-  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.16);
+  transform: scale(1.05);
 }
 
-/* Remove the arrow entirely */
-.collapse-btn .arrow {
-  display: none; /* Hide the arrow */
-}
-
-.collapse-btn.collapsed .arrow {
-  transform: translate(-50%, -50%) rotate(225deg);
+.collapse-btn img {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.25s ease;
+  margin-left: 0;       /* reset margin-left if any */
 }
 
 /* ===============================
@@ -91,6 +93,7 @@
   flex-direction: column;
   gap: 5px;
   width: 200px;
+  margin-top: 25px; /* Added top margin to push menu items down */
 }
 
 .menu-block {
