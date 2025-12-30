@@ -90,11 +90,20 @@ export async function PUT(req: NextRequest, context: RouteParams) {
      * 3️⃣ UPDATE DATA
      * ---------------------------------- */
 
-    const updateData: any = {
+    const updateData: {
+      title?: string;
+      description?: string;
+      content_body?: string;
+      content_type?: string;
+      status: "draft" | "published";
+      category_id?: string | null;
+      excalidraw_data?: string | null;
+      updated_at: Date;
+      visibility?: "private" | "public";
+    } = {
       title: body.title,
       description:
-        body.description ||
-        (body.title ? body.title.substring(0, 150) + "..." : undefined),
+        body.description || (body.title ? body.title.substring(0, 150) + "..." : undefined),
       content_body: body.body || body.content_body,
       content_type: body.content_type || "post",
       status,
@@ -103,10 +112,10 @@ export async function PUT(req: NextRequest, context: RouteParams) {
       updated_at: new Date(),
     };
 
-    // ✅ Only store visibility if published
     if (status === CONTENT_STATUS.PUBLISHED) {
       updateData.visibility = visibility;
     }
+
 
     // ✅ Update main content record
     const [updatedPost] = await db
