@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 interface CreatePageHeaderProps {
-  onSave?: () => void; 
+  onSave?: (visibility: "private" | "public") => void; // ✅ updated to accept visibility 
   onSaveAsDraft?: () => void; 
   onCancel?: () => void; 
   saving?: boolean;
@@ -22,12 +22,19 @@ export default function CreatePageHeader({
   onMobileToggle, // NEW: Handler
 }: CreatePageHeaderProps) {
   const [isMobile, setIsMobile] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // dropdown state
       useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         checkMobile();
         window.addEventListener("resize", checkMobile);
         return () => window.removeEventListener("resize", checkMobile);
       }, []);
+
+  const handlePublish = (visibility: "private" | "public") => {
+    onSave?.(visibility);
+    setMenuOpen(false); // close menu after selection
+  };
+
   return (
     <>
       <header className={`header ${!isMobile && collapsed ? "collapsed" : ""}`}>
@@ -57,10 +64,28 @@ export default function CreatePageHeader({
           <button className="button draft-btn" onClick={onSaveAsDraft} disabled={saving}>
             {saving ? "Saving..." : "Save as Draft"}
           </button>
-          <button className="button save-btn" onClick={onSave} disabled={saving}>
+         {/* Single Publish Button with Dropdown */}
+        <div className="publish-dropdown">
+          <button
+            className="button save-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            disabled={saving}
+          >
             <span className="glow-bg" />
             <span className="text">{saving ? "Publishing..." : "Publish"}</span>
           </button>
+
+          {menuOpen && (
+            <div className="dropdown-menu">
+              <button className="dropdown-item" onClick={() => handlePublish("private")}>
+                Private
+              </button>
+              <button className="dropdown-item" onClick={() => handlePublish("public")}>
+                Public
+              </button>
+            </div>
+          )}
+        </div>
         </div>
       </header>
 
@@ -261,6 +286,54 @@ export default function CreatePageHeader({
         .hamburger-btn:hover .hamburger-line:nth-child(3) {
           transform: rotate(-45deg) translate(7px, -6px);
         }
+
+
+       .publish-dropdown {
+          position: relative;
+          display: inline-block;
+        }
+
+        .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(80, 80, 80, 0.3);
+          border-radius: 8px;
+          display: flex;
+          flex-direction: column;
+          margin-top: 4px;
+          min-width: 80px; /* ensures consistent width */
+          overflow: hidden; /* so hover doesn't overflow rounded corners */
+          z-index: 20;
+        }
+
+        .dropdown-item {
+          padding: 8px 12px;
+          background: transparent;
+          border: none;
+          color: #fff;
+          text-align: left;
+          cursor: pointer;
+          width: 100%; /* fill full width */
+          border-radius: 0; /* reset inner border-radius */
+          transition: background 0.2s ease;
+        }
+
+        .dropdown-item:first-child {
+          border-top-left-radius: 8px;
+          border-top-right-radius: 8px;
+        }
+
+        .dropdown-item:last-child {
+          border-bottom-left-radius: 8px;
+          border-bottom-right-radius: 8px;
+        }
+
+        .dropdown-item:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+
       `}</style>
     </>
   );

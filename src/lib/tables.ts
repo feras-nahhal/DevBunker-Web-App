@@ -41,6 +41,7 @@ export const content = pgTable("content", {
   content_body: text("content_body"),
   content_type: varchar("content_type", { length: 20 }).notNull(),
   status: varchar("status", { length: 20 }).default(CONTENT_STATUS.DRAFT),
+  visibility: varchar("visibility", { length: 20 }).default("public"), // NEW: private/public
   author_id: uuid("author_id").references(() => users.id),
   category_id: uuid("category_id").references(() => categories.id),
   excalidraw_data: jsonb("excalidraw_data"),

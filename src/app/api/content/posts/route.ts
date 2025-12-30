@@ -19,21 +19,41 @@ export async function GET(req: NextRequest) {
     const createdBeforeParam = url.searchParams.get("created_before") || "";  // New: Created before date
     const updatedAfterParam = url.searchParams.get("updated_after") || "";  // New: Updated on/after date
     const updatedBeforeParam = url.searchParams.get("updated_before") || "";  // New: Updated before date
+    const visibilityParam = url.searchParams.get("visibility"); // 🆕
 
     const conditions = [eq(content.content_type, "post")];
 
-    // ✅ Handle multiple statuses (unchanged)
+    // ✅ Handle multiple statuses
     if (statusParam) {
       const statusList = statusParam.split(",").map((s) => s.trim());
       if (statusList.length > 1) {
-        conditions.push(sql`${content.status} IN (${sql.join(statusList, sql`, `)})`);
+        conditions.push(
+          sql`${content.status} IN (${sql.join(statusList, sql`, `)})`
+        );
       } else {
         conditions.push(eq(content.status, statusList[0]));
       }
     } else {
-      // Default if not specified
-      conditions.push(eq(content.status, "published"));
+      // Default → published only
+      conditions.push(eq(content.status, CONTENT_STATUS.PUBLISHED));
     }
+
+    // 🆕 Visibility filter (ONLY for published content)
+    if (visibilityParam) {
+      if (visibilityParam !== "public" && visibilityParam !== "private") {
+        return NextResponse.json(
+          { success: false, error: `Invalid visibility: ${visibilityParam}` },
+          { status: 400 }
+        );
+      }
+
+      // Visibility only makes sense for published posts
+      conditions.push(eq(content.visibility, visibilityParam));
+    } else {
+
+    }
+
+
 
     // ✅ Existing filters (unchanged)
     if (categoryId) conditions.push(eq(content.category_id, categoryId));
@@ -112,6 +132,7 @@ export async function GET(req: NextRequest) {
         content_body: content.content_body,
         content_type: content.content_type,
         status: content.status,
+        visibility: content.visibility, // 🆕
         author_id: content.author_id,
         category_id: content.category_id,
         excalidraw_data: content.excalidraw_data,
@@ -207,6 +228,19 @@ export async function POST(req: NextRequest) {
       status = body.status;
     }
 
+    // ✅ Validate and normalize visibility
+    let visibility = "public"; // default
+    if (body.visibility) {
+      const allowedVisibilities = ["private", "public"];
+      if (!allowedVisibilities.includes(body.visibility)) {
+        return NextResponse.json(
+          { success: false, error: `Invalid visibility: ${body.visibility}` },
+          { status: 400 }
+        );
+      }
+      visibility = body.visibility;
+    }
+
     // ✅ Prepare insert data for content
     const insertData = {
       title: body.title,
@@ -214,6 +248,7 @@ export async function POST(req: NextRequest) {
       content_body: body.body || body.content_body,
       content_type: "post",
       status,
+      visibility, // NEW
       author_id: user.id,
       category_id: body.category_id || null,
       excalidraw_data: body.excalidraw_data || null,

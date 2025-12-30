@@ -39,31 +39,74 @@ export async function PUT(req: NextRequest, context: RouteParams) {
   }
 
   try {
-    // ✅ Validate and normalize status (like POST)
-    let status: string = CONTENT_STATUS.DRAFT;
-    if (body.status) {
-      const allowedStatuses = [CONTENT_STATUS.DRAFT, CONTENT_STATUS.PUBLISHED];
+     /* ----------------------------------
+     * 1️⃣ STATUS (VISIBILITY OVERRIDES)
+     * ---------------------------------- */
+
+    let status: "draft" | "published" = CONTENT_STATUS.DRAFT;
+
+    // 🔥 If visibility is provided → ALWAYS published
+    if (body.visibility) {
+      status = CONTENT_STATUS.PUBLISHED;
+    } 
+    // Otherwise respect explicit status
+    else if (body.status) {
+      const allowedStatuses = [
+        CONTENT_STATUS.DRAFT,
+        CONTENT_STATUS.PUBLISHED,
+      ];
+
       if (!allowedStatuses.includes(body.status)) {
         return NextResponse.json(
           { success: false, error: `Invalid status: ${body.status}` },
           { status: 400 }
         );
       }
+
       status = body.status;
     }
 
-    // ✅ Prepare update data (no references)
-    const updateData = {
+    /* ----------------------------------
+     * 2️⃣ VISIBILITY (ONLY WHEN PUBLISHED)
+     * ---------------------------------- */
+
+    let visibility: "private" | "public" | undefined;
+
+    if (status === CONTENT_STATUS.PUBLISHED) {
+      if (body.visibility) {
+        if (body.visibility !== "private" && body.visibility !== "public") {
+          return NextResponse.json(
+            { success: false, error: `Invalid visibility: ${body.visibility}` },
+            { status: 400 }
+          );
+        }
+        visibility = body.visibility;
+      } else {
+        visibility = "public"; // default
+      }
+    }
+
+    /* ----------------------------------
+     * 3️⃣ UPDATE DATA
+     * ---------------------------------- */
+
+    const updateData: any = {
       title: body.title,
       description:
-        body.description || (body.title ? body.title.substring(0, 150) + "..." : undefined),
+        body.description ||
+        (body.title ? body.title.substring(0, 150) + "..." : undefined),
       content_body: body.body || body.content_body,
-      content_type: body.content_type || "post", // Keep type post
+      content_type: body.content_type || "post",
       status,
-      category_id: body.category_id || null,
-      excalidraw_data: body.excalidraw_data || null,
+      category_id: body.category_id ?? null,
+      excalidraw_data: body.excalidraw_data ?? null,
       updated_at: new Date(),
     };
+
+    // ✅ Only store visibility if published
+    if (status === CONTENT_STATUS.PUBLISHED) {
+      updateData.visibility = visibility;
+    }
 
     // ✅ Update main content record
     const [updatedPost] = await db

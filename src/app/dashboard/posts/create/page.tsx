@@ -161,30 +161,39 @@ const handleStay = () => {
     router.push("/dashboard/posts");
   };
 
-  const handleSave = async (isPublished: boolean) => {
-    if (!title.trim() || !body.trim() || !token) {
-      alert("Title, body, and token are required");
-      return;
-    }
+  const handleSave = async (visibility: "private" | "public" | boolean) => {
+  if (!title.trim() || !body.trim() || !token) {
+    alert("Title, body, and token are required");
+    return;
+  }
 
     if (selectedTags.some((ref) => !ref.id)) {
       alert("References cannot be empty");
       return;
     }
 
-    setSaving(true);
+     setSaving(true);
     try {
       const dataToSend: Partial<AnyContent> & {
         tag_ids?: string[];
         category_id?: string | null;
         status: string;
+        visibility?: "private" | "public";
       } = {
         title,
         content_body: body,
-        status: isPublished ? CONTENT_STATUS.PUBLISHED : CONTENT_STATUS.DRAFT,
+        status:
+          visibility === true || visibility === "public"
+            ? CONTENT_STATUS.PUBLISHED
+            : CONTENT_STATUS.DRAFT,
         category_id: selectedCategoryId ?? undefined,
         tag_ids: selectedTags.map((t) => t.id),
       };
+
+      // Only add visibility if dropdown was used
+    if (visibility === "private" || visibility === "public") {
+      dataToSend.visibility = visibility;
+    }
 
       const response = researchId
         ? await updateContent(researchId, dataToSend, token)
@@ -210,7 +219,7 @@ const handleStay = () => {
   };
 
   const handleSaveAsDraft = () => handleSave(false);
-  const handleSavePublish = () => handleSave(true);
+
 
   if (!ready || contentLoading) {
     return (
@@ -224,7 +233,9 @@ const handleStay = () => {
         <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
           {/* 🔹 Header */}
           <CreatePageHeader
-            onSave={handleSavePublish}
+            onSave={async (visibility: "private" | "public") => {
+              await handleSave(visibility);
+            }}
             onSaveAsDraft={handleSaveAsDraft}
             onCancel={handleCancel}
             saving={isLoading}
@@ -269,7 +280,9 @@ const handleStay = () => {
                                     />
       <div className={`main-content ${sidebarCollapsed ? "collapsed" : ""}`}>
         <CreatePageHeader
-          onSave={handleSavePublish}
+          onSave={async (visibility: "private" | "public") => {
+            await handleSave(visibility);
+          }}
           onSaveAsDraft={handleSaveAsDraft}
           onCancel={handleCancel}
           saving={isLoading}

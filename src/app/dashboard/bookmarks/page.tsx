@@ -52,24 +52,7 @@ export default function ExplorePage() {
     setFilters((prev) => ({ ...prev, q: debouncedSearchQuery }));
   }, [debouncedSearchQuery]);
 
-  // Fetch categories and tags on mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [catRes, tagRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/tags"),
-        ]);
-        const catData = await catRes.json();
-        const tagData = await tagRes.json();
-        if (catData.categories) setCategories(catData.categories);
-        if (tagData.tags) setTags(tagData.tags);
-      } catch (error) {
-        console.error("Error fetching categories/tags:", error);
-      }
-    };
-    fetchData();
-  }, []);
+  
 
   const handleSearchChange = (q: string) => setSearchQuery(q);
 
@@ -183,6 +166,85 @@ export default function ExplorePage() {
       setSelectedContentId(params.get("id"));
     }
   }, []);
+
+
+  // Category search + pagination
+  const [categorySearch, setCategorySearch] = useState("");
+  const debouncedCategorySearch = useDebounce(categorySearch, 400);
+  const [categoryPage, setCategoryPage] = useState(1);
+  const [categoryHasMore, setCategoryHasMore] = useState(true);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+
+  useEffect(() => {
+    if (!categoryDropdownOpen) return;
+
+    const fetchCategories = async () => {
+      if (!categoryHasMore && categoryPage !== 1) return;
+
+      setCategoryLoading(true);
+
+      try {
+        const res = await fetch(
+    `/api/categories/search?q=${debouncedCategorySearch}&page=${categoryPage}&limit=20`
+  );
+
+        const data = await res.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+
+        setCategories(prev =>
+          categoryPage === 1 ? items : [...prev, ...items]
+        );
+
+        setCategoryHasMore(Boolean(data.hasMore));
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+        setCategories([]);
+        setCategoryHasMore(false);
+      } finally {
+        setCategoryLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [debouncedCategorySearch, categoryPage, categoryDropdownOpen]);
+
+
+  // Tag search + pagination
+  const [tagSearch, setTagSearch] = useState("");
+  const debouncedTagSearch = useDebounce(tagSearch, 400);
+  const [tagPage, setTagPage] = useState(1);
+  const [tagHasMore, setTagHasMore] = useState(true);
+  const [tagLoading, setTagLoading] = useState(false);
+
+
+  useEffect(() => {
+    if (!tagDropdownOpen) return; // only fetch when dropdown is open
+
+    const fetchTags = async () => {
+      if (!tagHasMore && tagPage !== 1) return;
+
+      setTagLoading(true);
+
+      const res = await fetch(
+        `/api/tags/search?q=${debouncedTagSearch}&page=${tagPage}&limit=20`
+      );
+
+      const data = await res.json();
+
+      const items = Array.isArray(data.items) ? data.items : [];
+
+      setTags(prev =>
+        tagPage === 1 ? items : [...prev, ...items]
+      );
+
+      setTagHasMore(Boolean(data.hasMore));
+      setTagLoading(false);
+    };
+
+    fetchTags();
+  }, [debouncedTagSearch, tagPage, tagDropdownOpen]);
+
+
 
   // Skeleton while loading
   if (loading || !user) {
@@ -390,75 +452,130 @@ export default function ExplorePage() {
                                               )}
                                             </div>
                         
-                                            {/* Category Select */}
-                                            <div className="relative w-full">
-                                              <label className="block text-sm text-gray-300 mb-1">Category</label>
-                                              <div
-                                                onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                                                className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] transition hover:bg-white/20"
-                                              >
-                                                {filters.category ? categories.find(c => c.id === filters.category)?.name || "Select Category" : "All Categories"}
-                                                <span className="ml-2 text-xs opacity-70">▼</span>
-                                              </div>
-                                              {categoryDropdownOpen && (
-                                                <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
-                                                  style={{
-                                                      scrollbarWidth: "none", // Firefox
-                                                      msOverflowStyle: "none", // IE/Edge
+                                            {/* ✅ Category Searchable Dropdown */}
+                                                <div className="relative w-full">
+                                                  <label className="block text-sm text-gray-300 mb-1">Category</label>
+
+                                                  <input
+                                                    type="text"
+                                                    value={categorySearch}
+                                                    onChange={(e) => {
+                                                      setCategorySearch(e.target.value);
+                                                      setCategoryPage(1);
+                                                      setCategoryDropdownOpen(true);
                                                     }}
-                                                >
-                                                  <div
-                                                    onClick={() => { handleCategoryChange(""); setCategoryDropdownOpen(false); }}
-                                                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                                                  >
-                                                    All Categories
-                                                  </div>
-                                                  {categories.map((cat) => (
+                                                    onFocus={() => {
+                                                      setCategoryDropdownOpen(true);
+                                                      setCategoryPage(1);
+                                                    }}
+                                                    placeholder="Search categories..."
+                                                    className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-400"
+                                                  />
+
+                                                  {categoryDropdownOpen && (
+                                                    <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg z-50 max-h-48 overflow-y-auto"
+                                                    style={{
+                                                scrollbarWidth: "none", // Firefox
+                                                msOverflowStyle: "none", // IE/Edge
+                                              }}>
+                                                {/* Hide scrollbar for Chrome, Safari, Edge */}
+                                              <style>
+                                                {`
+                                                  div::-webkit-scrollbar {
+                                                    display: none;
+                                                  }
+                                                `}
+                                              </style>
+                                                {Array.isArray(categories) && categories.length > 0 ? (
+                                                  categories.map((cat) => (
                                                     <div
                                                       key={cat.id}
-                                                      onClick={() => { handleCategoryChange(cat.id); setCategoryDropdownOpen(false); }}
+                                                      onClick={() => {
+                                                        handleCategoryChange(cat.id); // store the ID
+                                                        setCategoryDropdownOpen(false);
+                                                        setCategorySearch(cat.name); // show the name in input
+                                                      }}
                                                       className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
                                                     >
                                                       {cat.name}
                                                     </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-                        
-                                          {/* Tag Select */}
-                                            <div className="relative w-full">
-                                              <label className="block text-sm text-gray-300 mb-1">Tag</label>
-                                              <div
-                                                onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
-                                                className="flex justify-between items-center p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm cursor-pointer backdrop-blur-md shadow-[inset_0_0_10px_rgba(255,255,255,0.2)] transition hover:bg-white/20"
-                                              >
-                                                {filters.tag || "All Tags"}  {/* FIXED: Display filters.tag directly (it's now the name) */}
-                                                <span className="ml-2 text-xs opacity-70">▼</span>
-                                              </div>
-                                              {tagDropdownOpen && (
-                                                <div
-                                                  className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.4)] z-50 max-h-48 overflow-y-scroll"
-                                                  style={{
-                                                    scrollbarWidth: "none", // Firefox
-                                                    msOverflowStyle: "none", // IE/Edge
-                                                  }}
-                                                >
-                                                  <div
-                                                    onClick={() => { handleTagChange(""); setTagDropdownOpen(false); }}
-                                                    className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-                                                  >
-                                                    All Tags
+                                                  ))
+                                                ) : categoryLoading ? (
+                                                  <div className="p-2 text-gray-400 text-sm">Loading...</div>
+                                                ) : (
+                                                  <div className="p-2 text-gray-400 text-sm italic">
+                                                    No categories found
                                                   </div>
-                                                  {tags.map((tag) => (
+                                                )}
+
+
+                                                    
+                                                    </div>
+                                                  )}
+                                                </div>
+
+
+                                              {/* Tag Select */}
+                                              <div className="relative w-full">
+                                              <label className="block text-sm text-gray-300 mb-1">Tag</label>
+                                              <input
+                                                type="text"
+                                                value={tagSearch}
+                                                onChange={(e) => {
+                                                  setTagSearch(e.target.value);
+                                                  setTagPage(1);
+                                                  setTagDropdownOpen(true);
+                                                }}
+                                                onFocus={() => {
+                                                  setTagDropdownOpen(true);
+                                                  setTagPage(1);
+                                                }}
+                                                placeholder="Search tags..."
+                                                className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-400"
+                                              />
+
+                                              {tagDropdownOpen && (
+                                                <div className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg z-50 max-h-48 overflow-y-auto"
+                                                style={{
+                                                scrollbarWidth: "none", // Firefox
+                                                msOverflowStyle: "none", // IE/Edge
+                                              }}>
+                                                {/* Hide scrollbar for Chrome, Safari, Edge */}
+                                              <style>
+                                                {`
+                                                  div::-webkit-scrollbar {
+                                                    display: none;
+                                                  }
+                                                `}
+                                              </style>
+                                                  {tags.map(tag => (
                                                     <div
                                                       key={tag.id}
-                                                      onClick={() => { handleTagChange(tag.name); setTagDropdownOpen(false); }} 
+                                                      onClick={() => {
+                                                        handleTagChange(tag.name); // save selected tag
+                                                        setTagDropdownOpen(false);
+                                                        setTagSearch(tag.name); // show selected tag in input
+                                                      }}
                                                       className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
                                                     >
                                                       {tag.name}
                                                     </div>
                                                   ))}
+
+                                                  {tagLoading && <div className="p-2 text-gray-400 text-sm">Loading...</div>}
+
+                                                  {!tagLoading && tagHasMore && (
+                                                    <div
+                                                      onClick={() => setTagPage(p => p + 1)}
+                                                      className="p-2 text-center text-sm text-blue-400 cursor-pointer hover:underline"
+                                                    >
+                                                      Load more
+                                                    </div>
+                                                  )}
+
+                                                  {!tagLoading && tags.length === 0 && (
+                                                    <div className="p-2 text-gray-400 text-sm italic">No tags found</div>
+                                                  )}
                                                 </div>
                                               )}
                                             </div>
