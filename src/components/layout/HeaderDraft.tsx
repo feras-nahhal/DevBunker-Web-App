@@ -300,7 +300,7 @@ const handleClearFilters = () => {
                          width: "196px",
                          top: "110%",
                          right: 0,
-                         background: "rgba(255, 255, 255, 0.05)",
+                         background: "rgba(20, 20, 20, 0.85)",
                          border: "1px solid rgba(80, 80, 80, 0.24)",
                          boxShadow: "inset 0px 0px 7px rgba(255, 255, 255, 0.16)",
                          backdropFilter: "blur(12px)",

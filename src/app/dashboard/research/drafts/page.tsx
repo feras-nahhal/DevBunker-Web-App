@@ -295,6 +295,42 @@ useEffect(() => {
     }
   }, [user, loading, router]);
 
+
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const tagRef = useRef<HTMLDivElement>(null);
+  const referenceRef = useRef<HTMLDivElement>(null); // ✅ NEW
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryRef.current &&
+        !categoryRef.current.contains(event.target as Node)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+
+      if (
+        tagRef.current &&
+        !tagRef.current.contains(event.target as Node)
+      ) {
+        setTagDropdownOpen(false);
+      }
+
+      if (
+        referenceRef.current &&
+        !referenceRef.current.contains(event.target as Node)
+      ) {
+        setReferenceDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // -----------------------------
   // Conditional render until auth finishes
   // -----------------------------
@@ -453,7 +489,7 @@ useEffect(() => {
 
 
                                       {/* ✅ Reference Link Searchable Dropdown */}
-                                             <div className="relative w-full">
+                                             <div ref={referenceRef} className="relative w-full">
                                               <label className="block text-sm text-gray-300 mb-1">Reference Link</label>
 
                                               <input
@@ -525,7 +561,7 @@ useEffect(() => {
 
                                     
                                            {/* ✅ Category Searchable Dropdown */}
-                                            <div className="relative w-full">
+                                            <div ref={categoryRef} className="relative w-full">
                                               <label className="block text-sm text-gray-300 mb-1">Category</label>
 
                                               <input
@@ -588,7 +624,7 @@ useEffect(() => {
 
 
                                           {/* Tag Select */}
-                                          <div className="relative w-full">
+                                          <div ref={tagRef} className="relative w-full">
                                           <label className="block text-sm text-gray-300 mb-1">Tag</label>
                                           <input
                                             type="text"

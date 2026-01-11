@@ -70,7 +70,7 @@ export default function TagCard({
     ? [
         {
       name: "Approve Request",
-      icon: "/approve.png", // Your approve icon (add asset if needed)
+      icon: "/approve.svg", // Your approve icon (add asset if needed)
       action: () => {
         console.log("Approve clicked for tag request ID:", id); // Debug (remove in prod)
         setMenuOpen(false);
@@ -79,7 +79,7 @@ export default function TagCard({
         },
         {
           name: "Reject Request",
-          icon: "/reject.png", // Your reject icon (add asset if needed)
+          icon: "/reject.svg", // Your reject icon (add asset if needed)
           action: () => {
             console.log("Reject clicked for tag request ID:", id); // Debug (remove in prod)
             setMenuOpen(false);
@@ -92,7 +92,7 @@ export default function TagCard({
     ? [
         {
           name: "Reject Request",
-          icon: "/reject.png", // Your reject icon (add asset if needed)
+          icon: "/reject.svg", // Your reject icon (add asset if needed)
           action: () => {
             console.log("Reject clicked for tag request ID:", id); // Debug (remove in prod)
             setMenuOpen(false);
@@ -105,7 +105,7 @@ export default function TagCard({
     ? [
         {
       name: "Approve Request",
-      icon: "/approve.png", // Your approve icon (add asset if needed)
+      icon: "/approve.svg", // Your approve icon (add asset if needed)
       action: () => {
         console.log("Approve clicked for tag request ID:", id); // Debug (remove in prod)
         setMenuOpen(false);
@@ -127,8 +127,8 @@ export default function TagCard({
     e.stopPropagation(); // FIXED: Prevent bubbling to card/checkbox
     console.log("Menu button clicked for tag request ID:", id, "Current open state:", menuOpen); // FIXED: Debug (remove in prod)
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const newTop = rect.bottom + 4; // 4px below button
-    let newLeft = rect.left - 180 + 8; // Right-align to button (8px overlap)
+    const newTop = rect.top ; // 4px below button
+    let newLeft = rect.left - 195 + 10; // Right-align to button (8px overlap)
     // FIXED: Prevent off-screen
     if (newLeft + 180 > window.innerWidth) {
       newLeft = window.innerWidth - 180 - 8; // Align to right edge
@@ -285,8 +285,8 @@ export default function TagCard({
                 <Image
                   src={item.icon}
                   alt={item.name}
-                  width={14}
-                  height={14}
+                  width={20}
+                  height={20}
                   className="opacity-80" // FIXED: Subtle icon opacity
                 />
                 <span className="truncate">{item.name}</span>

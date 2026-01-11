@@ -293,6 +293,40 @@ useEffect(() => {
 }, [debouncedReferenceSearch, referencePage, referenceDropdownOpen]);
 
 
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const tagRef = useRef<HTMLDivElement>(null);
+  const referenceRef = useRef<HTMLDivElement>(null); // ✅ NEW
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryRef.current &&
+        !categoryRef.current.contains(event.target as Node)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+
+      if (
+        tagRef.current &&
+        !tagRef.current.contains(event.target as Node)
+      ) {
+        setTagDropdownOpen(false);
+      }
+
+      if (
+        referenceRef.current &&
+        !referenceRef.current.contains(event.target as Node)
+      ) {
+        setReferenceDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
 
 
@@ -470,79 +504,79 @@ useEffect(() => {
                                                         </div>
 
                                                         {/* ✅ Reference Link Searchable Dropdown */}
-<div className="relative w-full">
-  <label className="block text-sm text-gray-300 mb-1">Reference Link</label>
+                                            <div ref={referenceRef} className="relative w-full">
+                                              <label className="block text-sm text-gray-300 mb-1">Reference Link</label>
 
-  <input
-    type="text"
-    value={referenceSearch}
-    onChange={(e) => {
-      setReferenceSearch(e.target.value);
-      setReferencePage(1);
-      setReferenceDropdownOpen(true);
-    }}
-    onFocus={() => {
-      setReferenceDropdownOpen(true);
-      setReferencePage(1);
-    }}
-    placeholder="Search references..."
-    className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-400"
-  />
+                                              <input
+                                                type="text"
+                                                value={referenceSearch}
+                                                onChange={(e) => {
+                                                  setReferenceSearch(e.target.value);
+                                                  setReferencePage(1);
+                                                  setReferenceDropdownOpen(true);
+                                                }}
+                                                onFocus={() => {
+                                                  setReferenceDropdownOpen(true);
+                                                  setReferencePage(1);
+                                                }}
+                                                placeholder="Search references..."
+                                                className="w-full p-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-400"
+                                              />
 
-  {referenceDropdownOpen && (
-    <div
-      className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg z-50 max-h-48 overflow-y-auto"
-      style={{
-        scrollbarWidth: "none", // Firefox
-        msOverflowStyle: "none", // IE/Edge
-      }}
-    >
-      {/* Hide scrollbar for Chrome, Safari, Edge */}
-      <style>
-        {`
-          div::-webkit-scrollbar {
-            display: none;
-          }
-        `}
-      </style>
+                                              {referenceDropdownOpen && (
+                                                <div
+                                                  className="absolute top-full left-0 w-full mt-1 bg-black/80 border border-white/20 rounded-lg z-50 max-h-48 overflow-y-auto"
+                                                  style={{
+                                                    scrollbarWidth: "none", // Firefox
+                                                    msOverflowStyle: "none", // IE/Edge
+                                                  }}
+                                                >
+                                                  {/* Hide scrollbar for Chrome, Safari, Edge */}
+                                                  <style>
+                                                    {`
+                                                      div::-webkit-scrollbar {
+                                                        display: none;
+                                                      }
+                                                    `}
+                                                  </style>
 
-      {Array.isArray(references) && references.length > 0 ? (
-        references.map((ref, idx) => (
-          <div
-            key={idx}
-            onClick={() => {
-              handleReferenceTextChange(ref); // store the selected reference
-              setReferenceDropdownOpen(false);
-              setReferenceSearch(ref); // show the selected reference in input
-            }}
-            className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
-          >
-            {ref}
-          </div>
-        ))
-      ) : referenceLoading ? (
-        <div className="p-2 text-gray-400 text-sm">Loading...</div>
-      ) : (
-        <div className="p-2 text-gray-400 text-sm italic">
-          No references found
-        </div>
-      )}
+                                                  {Array.isArray(references) && references.length > 0 ? (
+                                                    references.map((ref, idx) => (
+                                                      <div
+                                                        key={idx}
+                                                        onClick={() => {
+                                                          handleReferenceTextChange(ref); // store the selected reference
+                                                          setReferenceDropdownOpen(false);
+                                                          setReferenceSearch(ref); // show the selected reference in input
+                                                        }}
+                                                        className="p-2 text-white text-sm hover:bg-white/20 cursor-pointer"
+                                                      >
+                                                        {ref}
+                                                      </div>
+                                                    ))
+                                                  ) : referenceLoading ? (
+                                                    <div className="p-2 text-gray-400 text-sm">Loading...</div>
+                                                  ) : (
+                                                    <div className="p-2 text-gray-400 text-sm italic">
+                                                      No references found
+                                                    </div>
+                                                  )}
 
-      {!referenceLoading && referenceHasMore && (
-        <div
-          onClick={() => setReferencePage(p => p + 1)}
-          className="p-2 text-center text-sm text-blue-400 cursor-pointer hover:underline"
-        >
-          Load more
-        </div>
-      )}
-    </div>
-  )}
-</div>
+                                                  {!referenceLoading && referenceHasMore && (
+                                                    <div
+                                                      onClick={() => setReferencePage(p => p + 1)}
+                                                      className="p-2 text-center text-sm text-blue-400 cursor-pointer hover:underline"
+                                                    >
+                                                      Load more
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
 
                                     
                                            {/* ✅ Category Searchable Dropdown */}
-                                            <div className="relative w-full">
+                                            <div ref={categoryRef} className="relative w-full">
                                               <label className="block text-sm text-gray-300 mb-1">Category</label>
 
                                               <input
@@ -605,7 +639,7 @@ useEffect(() => {
 
 
                                           {/* Tag Select */}
-                                          <div className="relative w-full">
+                                          <div ref={tagRef} className="relative w-full">
                                           <label className="block text-sm text-gray-300 mb-1">Tag</label>
                                           <input
                                             type="text"

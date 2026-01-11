@@ -274,15 +274,18 @@ export default function ResearchCard({
                   }[type]
                 }`}
               />
-              <span className="relative z-10 text-[12px] font-poppins text-white opacity-80 capitalize">
+              <span className="relative z-10 text-[14px] font-bold font-poppins text-white capitalize">
                 {type}
               </span>
             </div>
 
             {/* Status */}
-            <div className="relative flex items-center justify-center w-[140px] h-[28px] rounded-full 
-                bg-[rgba(239,214,255,0.05)] backdrop-blur-[10px] 
-                shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] isolate overflow-hidden">
+            <div
+              className={`relative flex items-center justify-center h-[28px] rounded-full 
+                          bg-[rgba(239,214,255,0.05)] backdrop-blur-[10px] 
+                          shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] isolate overflow-hidden
+                          ${status === "pending_approval" ? "w-[140px]" : "w-[90px]"}`}
+            >
               <div
                 className={`absolute inset-0 rounded-full z-0 ${
                   {
@@ -294,7 +297,7 @@ export default function ResearchCard({
                   }[status]
                 }`}
               />
-              <span className="relative z-10 text-[12px] font-poppins text-white opacity-80 capitalize">
+              <span className="relative z-10 text-[14px] font-bold font-poppins text-white capitalize">
                 {status.replace("_", " ")}
               </span>
             </div>

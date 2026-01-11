@@ -171,7 +171,7 @@ export default function SettingsPage() {
   return (
     <div
       className="custom-scrollbar flex flex-col items-center p-4 gap-4 isolate bg-white/[0.05] border border-[rgba(80,80,80,0.24)] shadow-[inset_0px_0px_7px_rgba(255,255,255,0.16)] backdrop-blur-[37px] rounded-[16px] overflow-y-auto w-full max-w-[920px]"  
-      style={{ maxHeight: "95vh", boxSizing: "border-box", paddingRight: "12px" }}
+      style={{ maxHeight: "100vh", boxSizing: "border-box", paddingRight: "12px" }}
     >
        {/* Title */}
       <div className="flex justify-center items-center mb-4 w-full">
@@ -207,25 +207,59 @@ export default function SettingsPage() {
           </div>
         )}
         {/* Profile Image Upload */}
-            <div className="flex flex-col items-center gap-2 w-full max-w-[300px]">
-              <div className="w-[150px] h-[150px] rounded-full overflow-hidden border border-white/20 relative">
-                {profileImage ? (
-                  <img src={profileImage} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-white/10 text-white/50">No Image</div>
-                )}
-                <input type="file" accept="image/*" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" />
+        <div className="flex flex-col items-center gap-2 w-full max-w-[300px]">
+          <div className="w-[150px] h-[150px] rounded-full overflow-hidden border border-white/20 relative group">
+            {/* Preview or fallback */}
+            <img
+              src={preview || profileImage || ""}
+              alt="Preview"
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                !preview && !profileImage ? "opacity-0" : "opacity-100"
+              }`}
+            />
+            {!preview && !profileImage && (
+              <div className="w-full h-full flex items-center justify-center bg-white/10 text-white/50">
+                No Image
               </div>
-              <button
-        onClick={upload}
-        disabled={!image || uploading}
-        className="relative w-[200px] h-[45px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
-        <span className="relative z-10">{uploading ? "Uploading..." : "Upload Image"}</span>
-      </button>
+            )}
 
-      </div>
+            {/* Overlay for "Upload Image" with camera */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <svg width="27" height="24" viewBox="0 0 27 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M13.3333 9.66673C13.5985 9.66673 13.8529 9.77209 14.0404 9.95962C14.228 10.1472 14.3333 10.4015 14.3333 10.6667V12.3334H16C16.2652 12.3334 16.5196 12.4388 16.7071 12.6263C16.8946 12.8138 17 13.0682 17 13.3334C17 13.5986 16.8946 13.853 16.7071 14.0405C16.5196 14.228 16.2652 14.3334 16 14.3334H14.3333V16.0001C14.3333 16.2653 14.228 16.5196 14.0404 16.7072C13.8529 16.8947 13.5985 17.0001 13.3333 17.0001C13.0681 17.0001 12.8138 16.8947 12.6262 16.7072C12.4387 16.5196 12.3333 16.2653 12.3333 16.0001V14.3334H10.6667C10.4015 14.3334 10.1471 14.228 9.95956 14.0405C9.77202 13.853 9.66667 13.5986 9.66667 13.3334C9.66667 13.0682 9.77202 12.8138 9.95956 12.6263C10.1471 12.4388 10.4015 12.3334 10.6667 12.3334H12.3333V10.6667C12.3333 10.4015 12.4387 10.1472 12.6262 9.95962C12.8138 9.77209 13.0681 9.66673 13.3333 9.66673Z" fill="white"/>
+                <path fillRule="evenodd" clipRule="evenodd" d="M10.3707 24.0001H16.296C20.4573 24.0001 22.5387 24.0001 24.0333 23.0201C24.6783 22.5974 25.2337 22.0519 25.668 21.4147C26.6667 19.9481 26.6667 17.9041 26.6667 13.8187C26.6667 9.73206 26.6667 7.6894 25.668 6.22273C25.2337 5.58554 24.6783 5.04006 24.0333 4.6174C23.0733 3.98673 21.8707 3.7614 20.0293 3.6814C19.1507 3.6814 18.3947 3.02806 18.2227 2.1814C18.0912 1.56122 17.7497 1.00544 17.2558 0.607997C16.7619 0.21055 16.1459 -0.00419308 15.512 6.20411e-05H11.1547C9.83733 6.20411e-05 8.70267 0.913396 8.444 2.1814C8.272 3.02806 7.516 3.6814 6.63733 3.6814C4.79733 3.7614 3.59467 3.98806 2.63333 4.6174C1.98883 5.04015 1.43383 5.58563 1 6.22273C0 7.6894 0 9.73206 0 13.8187C0 17.9041 7.94729e-08 19.9467 0.998667 21.4147C1.43067 22.0494 1.98533 22.5947 2.63333 23.0201C4.128 24.0001 6.20933 24.0001 10.3707 24.0001ZM18.6667 13.3334C18.6667 14.7479 18.1048 16.1044 17.1046 17.1046C16.1044 18.1048 14.7478 18.6667 13.3333 18.6667C11.9188 18.6667 10.5623 18.1048 9.5621 17.1046C8.5619 16.1044 8 14.7479 8 13.3334C8 11.9189 8.5619 10.5624 9.5621 9.56216C10.5623 8.56197 11.9188 8.00006 13.3333 8.00006C14.7478 8.00006 16.1044 8.56197 17.1046 9.56216C18.1048 10.5624 18.6667 11.9189 18.6667 13.3334ZM21.3333 8.3334C21.0681 8.3334 20.8138 8.43875 20.6262 8.62629C20.4387 8.81383 20.3333 9.06818 20.3333 9.3334C20.3333 9.59861 20.4387 9.85297 20.6262 10.0405C20.8138 10.228 21.0681 10.3334 21.3333 10.3334H22.6667C22.9319 10.3334 23.1862 10.228 23.3738 10.0405C23.5613 9.85297 23.6667 9.59861 23.6667 9.3334C23.6667 9.06818 23.5613 8.81383 23.3738 8.62629C23.1862 8.43875 22.9319 8.3334 22.6667 8.3334H21.3333Z" fill="white"/>
+              </svg>
+
+              <span className="text-xs font-semibold">
+                {preview || profileImage ? "Update Image" : "Upload Image"}
+              </span>
+            </div>
+
+            {/* Hidden file input */}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFile}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </div>
+
+          {/* Instructions under photo */}
+          <p className="text-[11px] text-white/50 text-center mt-1">
+            Allowed: *.jpeg, *.jpg, *.png, *.gif<br />Max size: 3.1 MB
+          </p>
+
+          {/* Upload button */}
+          <button
+            onClick={upload}
+            disabled={!image || uploading}
+            className="relative w-[200px] h-[45px] rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-xs flex items-center justify-center transition hover:scale-[1.02] overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(119,237,139,0.5)_0%,transparent_70%)] blur-md" />
+            <span className="relative z-10">{uploading ? "Uploading..." : "Upload Image"}</span>
+          </button>
+        </div>
+
 
        {/* Title */}
       <div className="flex justify-center items-center mb-4 w-full">

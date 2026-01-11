@@ -80,7 +80,7 @@ export default function ContentCard({
 const menuItems = [
   {
     name: `View Research ${commentCount}`, // Always show
-    icon: "/reserchlogo.png",
+    icon: "/Research.svg",
     action: () => {
       console.log('Comments clicked for ID:', id);
       setMenuOpen(false);
@@ -88,14 +88,14 @@ const menuItems = [
     },
   },
   { name: "Share",
-      icon: "/sharelogo.png",
+      icon: "/sharelogo.svg",
       action: handleShareClick, }, // Always show
   // Conditionally show approve/reject based on status
   ...(status === CONTENT_STATUS.PENDING_APPROVAL
     ? [
         {
           name: "Approve Content",
-          icon: "/approve.png",
+          icon: "/approve.svg",
           action: async () => {
             try {
               const token = localStorage.getItem("token");
@@ -116,7 +116,7 @@ const menuItems = [
         },
         {
           name: "Reject Content",
-          icon: "/reject.png",
+          icon: "/reject.svg",
           action: async () => {
             try {
               const token = localStorage.getItem("token");
@@ -140,7 +140,7 @@ const menuItems = [
     ? [
         {
           name: "Reject Content",
-          icon: "/reject.png",
+          icon: "/reject.svg",
           action: async () => {
             try {
               const token = localStorage.getItem("token");
@@ -164,7 +164,7 @@ const menuItems = [
     ? [
         {
           name: "Approve Content",
-          icon: "/approve.png",
+          icon: "/approve.svg",
           action: async () => {
             try {
               const token = localStorage.getItem("token");
@@ -187,7 +187,7 @@ const menuItems = [
     : []), // Fallback: no approve/reject if status is invalid
   {
     name: "Delete",
-    icon: "/deletelogo.png",
+    icon: "/deletelogo.svg",
     action: () => {
       console.log('Delete clicked for ID:', id);
       setMenuOpen(false);
@@ -207,8 +207,8 @@ const menuItems = [
     console.log('Menu button clicked for ID:', id, 'Current open state:', menuOpen); // FIXED: Debug log (remove in prod)
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     // FIXED: Correct positioning (account for scroll + viewport edges)
-    const newTop = rect.bottom + 4; // 4px below button
-    let newLeft = rect.left - 180 + 8; // Right-align menu to button (8px overlap for arrow feel)
+    const newTop = rect.top - 40; // 4px below button
+    let newLeft = rect.left - 195 + 10; // Right-align menu to button (8px overlap for arrow feel)
     // FIXED: Prevent off-screen (adjust if near right edge)
     if (newLeft + 180 > window.innerWidth) {
       newLeft = window.innerWidth - 180 - 8; // Align to right edge
@@ -366,8 +366,8 @@ const menuItems = [
                 <Image
                   src={item.icon}
                   alt={item.name}
-                  width={14}
-                  height={14}
+                  width={20}
+                  height={20}
                   className="opacity-80" // FIXED: Subtle opacity for icons
                 />
                 <span className="truncate">{item.name}</span>

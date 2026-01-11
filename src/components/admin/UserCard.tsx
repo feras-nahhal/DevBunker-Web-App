@@ -107,7 +107,7 @@ export default function UserCard({
     ? [
         {
           name: "Ban User",
-          icon: "/reject.png",
+          icon: "/reject.svg",
           action: async () => {
             try {
               if (typeof window === "undefined") return; // SSR-safe
@@ -145,7 +145,7 @@ export default function UserCard({
   // Always show delete
   {
     name: "Delete",
-    icon: "/deletelogo.png",
+    icon: "/deletelogo.svg",
     action: () => {
       console.log("Delete clicked for user ID:", id);
       setMenuOpen(false);
@@ -164,8 +164,8 @@ export default function UserCard({
     e.stopPropagation(); // FIXED: Prevent bubbling to card/checkbox
     console.log("Menu button clicked for user ID:", id, "Current open state:", menuOpen); // FIXED: Debug (remove in prod)
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const newTop = rect.bottom + 4; // 4px below button
-    let newLeft = rect.left - 180 + 8; // Right-align to button (8px overlap)
+    const newTop = rect.top; // 4px below button
+    let newLeft = rect.left - 195 + 10; // Right-align to button (8px overlap)
     // FIXED: Prevent off-screen
     if (newLeft + 180 > window.innerWidth) {
       newLeft = window.innerWidth - 180 - 8; // Align to right edge
@@ -341,8 +341,8 @@ export default function UserCard({
                 <Image
                   src={item.icon}
                   alt={item.name}
-                  width={14}
-                  height={14}
+                  width={20}
+                  height={20}
                   className="opacity-80" // FIXED: Subtle icon opacity
                 />
                 <span className="truncate">{item.name}</span>

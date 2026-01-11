@@ -251,7 +251,7 @@ if (user?.id === author_id && onDelete) {
                          }[type]
                        }`}
                      />
-                     <span className="relative z-10">{type}</span>
+                     <span className="relative z-10 text-[14px] font-bold font-poppins text-white capitalize">{type}</span>
                    </div>
                  </div>
                

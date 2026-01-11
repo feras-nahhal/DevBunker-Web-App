@@ -70,7 +70,7 @@ const menuItems = [
     ? [
         {
           name: "Approve Request",
-          icon: "/approve.png", // Your approve icon
+          icon: "/approve.svg", // Your approve icon
           action: () => {
             console.log("Approve clicked for category request ID:", id); // Debug (remove in prod)
             setMenuOpen(false);
@@ -79,7 +79,7 @@ const menuItems = [
         },
         {
           name: "Reject Request",
-          icon: "/reject.png", // Your reject icon
+          icon: "/reject.svg", // Your reject icon
           action: () => {
             console.log("Reject clicked for category request ID:", id); // Debug (remove in prod)
             setMenuOpen(false);
@@ -92,7 +92,7 @@ const menuItems = [
     ? [
         {
           name: "Reject Request",
-          icon: "/reject.png", // Your reject icon
+          icon: "/reject.svg", // Your reject icon
           action: () => {
             console.log("Reject clicked for category request ID:", id); // Debug (remove in prod)
             setMenuOpen(false);
@@ -105,7 +105,7 @@ const menuItems = [
     ? [
         {
           name: "Approve Request",
-          icon: "/approve.png", // Your approve icon
+          icon: "/approve.svg", // Your approve icon
           action: () => {
             console.log("Approve clicked for category request ID:", id); // Debug (remove in prod)
             setMenuOpen(false);
@@ -127,8 +127,8 @@ const menuItems = [
     e.stopPropagation(); // FIXED: Prevent bubbling to card/checkbox
     console.log("Menu button clicked for category request ID:", id, "Current open state:", menuOpen); // FIXED: "category request" (debug, remove in prod)
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const newTop = rect.bottom + 4; // 4px below button
-    let newLeft = rect.left - 180 + 8; // Right-align to button (8px overlap)
+    const newTop = rect.top ; // 4px below button
+    let newLeft = rect.left - 195 + 10; // Right-align to button (8px overlap)
     // FIXED: Prevent off-screen
     if (newLeft + 180 > window.innerWidth) {
       newLeft = window.innerWidth - 180 - 8; // Align to right edge
@@ -285,8 +285,8 @@ const menuItems = [
                 <Image
                   src={item.icon}
                   alt={item.name}
-                  width={14}
-                  height={14}
+                  width={20}
+                  height={20}
                   className="opacity-80" // FIXED: Subtle icon opacity
                 />
                 <span className="truncate">{item.name}</span>

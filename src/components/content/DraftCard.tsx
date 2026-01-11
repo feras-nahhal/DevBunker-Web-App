@@ -191,7 +191,7 @@ const handleApprove = async () => {
             width: "300px",
             height: "166px",
             padding: "17px 10px",
-            gap: "19px",
+            gap: "15px",
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -211,12 +211,15 @@ const handleApprove = async () => {
               "
             />
           {/* Type with Strong Glow */}
-          <div className="flex items-center justify-center w-[58px] h-[28px] relative">
-            <div className="w-full h-full rounded-full bg-white/[0.05] border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] backdrop-blur-[10px] text-white font-bold text-[13px] flex items-center justify-center relative overflow-hidden">
-              {/* Radial Glow Overlay */}
-              <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.85)_0%,transparent_70%)] blur-md" />
+          <div className="flex items-center justify-center w-[80px] h-[28px] relative">
+            <div className="w-[90px] h-[28px] rounded-full 
+                            bg-[linear-gradient(89.65deg,rgba(128,128,128,0.18)_0%,#8E8E8E_50%,rgba(128,128,128,0.18)_100%)] 
+                            border border-white/10 shadow-[inset_0_0_4px_rgba(239,214,255,0.25)] 
+                            backdrop-blur-[10px]  flex items-center justify-center relative overflow-hidden">
               {/* Text */}
-              <span className="relative z-10">Draft</span>
+              <span className="relative z-10 text-[14px] font-bold font-poppins text-white capitalize">
+                Draft
+              </span>
             </div>
           </div>
 

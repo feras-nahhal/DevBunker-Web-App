@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import UserCard from "./UserCard";
 import { useUsers } from "@/hooks/useUsers"; // NEW: Custom hook for admin users API
 
@@ -247,6 +247,26 @@ if (createdFrom || createdTo) {
     currentPage < totalPages && setCurrentPage(currentPage + 1);
   const goToLastPage = () => setCurrentPage(totalPages);
 
+  const rolesRef = useRef<HTMLDivElement>(null);
+  const statusesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Close roles dropdown if clicked outside
+      if (rolesRef.current && !rolesRef.current.contains(event.target as Node)) {
+        setRoleDropdownOpen(false);
+      }
+      // Close statuses dropdown if clicked outside
+      if (statusesRef.current && !statusesRef.current.contains(event.target as Node)) {
+        setStatusDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+
   /** Loading/Error States */
   if (loading)
     return (
@@ -346,7 +366,7 @@ if (createdFrom || createdTo) {
             <div className={`${filtersOpen ? "flex" : "hidden"} flex-col md:flex md:flex-row md:gap-3 gap-4`}>
 
             {/* 🎭 Roles (Category) Dropdown */}
-            <div className="w-full md:w-[220px] relative">
+            <div ref={rolesRef} className="w-full md:w-[220px] relative">
               <label className="block text-white text-[12px] mb-1">Roles</label>
               {/* Search Input */}
               <input
@@ -388,7 +408,7 @@ if (createdFrom || createdTo) {
             </div>
 
             {/* 🚦 Statuses Dropdown */}
-            <div className="w-full md:w-[220px] relative">
+            <div ref={statusesRef} className="w-full md:w-[220px] relative">
               <label className="block text-white text-[12px] mb-1">Statuses</label>
               {/* Search Input */}
               <input
@@ -673,7 +693,11 @@ if (createdFrom || createdTo) {
                 className="flex items-center justify-center bg-transparent text-white text-[12px] px-2 py-1 w-[60px] rounded-full outline-none border border-white/[0.2] hover:bg-white/[0.1] transition-all text-center cursor-pointer focus:ring-1 focus:ring-green-400"
               >
                 {itemsPerPage === filteredData.length ? "All" : itemsPerPage}
-                <span className="ml-1  text-[10px]">▼</span>
+                <span className="ml-2  text-[10px]">
+                  <svg width="12" height="6" viewBox="0 0 12 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5.8344 5.8344C5.63969 5.83478 5.45099 5.76696 5.30106 5.64273L0.301063 1.47606C-0.0533202 1.18151 -0.101823 0.655445 0.192729 0.301062C0.487281 -0.0533202 1.01335 -0.101823 1.36773 0.192729L5.8344 3.92606L10.3011 0.326063C10.4732 0.186254 10.694 0.120838 10.9145 0.1443C11.1351 0.167761 11.3372 0.278163 11.4761 0.451063C11.6303 0.624279 11.7054 0.85396 11.6833 1.08486C11.6612 1.31576 11.5438 1.52699 11.3594 1.66773L6.3594 5.69273C6.20516 5.79733 6.02031 5.8472 5.8344 5.8344Z" fill="white"/>
+                  </svg>
+                </span>
               </div>
 
               {/* Dropdown menu */}

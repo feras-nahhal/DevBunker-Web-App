@@ -216,7 +216,7 @@ export default function ContentCard1({
                     research: "bg-[linear-gradient(89.65deg,rgba(34,197,94,0.15)_0%,#22C55E_50%,rgba(34,197,94,0.15)_100%)]"
                   }[type]
                 }`} />
-                <span className="relative z-10 capitalize">{type}</span>
+                <span className="relative z-10 text-[14px] font-bold font-poppins text-white capitalize">{type}</span>
               </div>
             </div>
   

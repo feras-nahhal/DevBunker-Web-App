@@ -32,6 +32,8 @@
   height: 100vh;
   border-radius: 0;
   transform: translateX(-100%); /* Hidden by default */
+  overflow-y: auto;      /* ✅ enable vertical scroll */
+  overflow-x: hidden;    /* prevent horizontal scroll */
 }
 
 .sidebar.mobile.open {

@@ -133,7 +133,8 @@ input[type="date"] {
 
 .react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected {
-  background: rgba(119, 237, 139, 0.5) !important;  /* Green accent to match your "Apply" button */
+  background: rgba(0, 167, 111, 1)
+  !important;  /* Green accent to match your "Apply" button */
   color: white !important;
 }
 

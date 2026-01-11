@@ -240,6 +240,31 @@ export default function PostPage() {
     fetchTags();
   }, [debouncedTagSearch, tagPage, tagDropdownOpen]);
 
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const tagRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryRef.current &&
+        !categoryRef.current.contains(event.target as Node)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+
+      if (
+        tagRef.current &&
+        !tagRef.current.contains(event.target as Node)
+      ) {
+        setTagDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // 🚫 Prevent rendering UI until auth check finishes
  if (loading || !user) {
@@ -376,7 +401,7 @@ export default function PostPage() {
                                             
 
                                             {/* ✅ Category Searchable Dropdown */}
-                                              <div className="relative w-full">
+                                              <div ref={categoryRef} className="relative w-full">
                                                 <label className="block text-sm text-gray-300 mb-1">Category</label>
 
                                                 <input
@@ -439,7 +464,7 @@ export default function PostPage() {
 
 
                                             {/* Tag Select */}
-                                            <div className="relative w-full">
+                                            <div ref={tagRef} className="relative w-full">
                                             <label className="block text-sm text-gray-300 mb-1">Tag</label>
                                             <input
                                               type="text"
